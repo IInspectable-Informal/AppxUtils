@@ -1,0 +1,31 @@
+#pragma once
+
+namespace ABI::AppxUtils::Internal
+{
+	template<typename T>
+	class StructLifetimeFunctions final
+	{
+		static_assert(!ABI::Windows::Foundation::Collections::is_pointer<T>::value && !__is_enum(T) && __is_trivial(T) && __is_standard_layout(T), "T must be a struct");
+
+	public:
+		static HRESULT STDMETHODCALLTYPE DeepCopyStruct(const T& source, T& target)
+		{
+			return E_NOTIMPL;
+		}
+
+		static HRESULT STDMETHODCALLTYPE ReleaseStruct(const T& source)
+		{
+			return E_NOTIMPL;
+		}
+
+		static HRESULT STDMETHODCALLTYPE IsEqualStruct(const T& a, const T& b, bool& result)
+		{
+			return E_NOTIMPL;
+		}
+
+		StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
+		~StructLifetimeFunctions() = delete;
+	};
+}
