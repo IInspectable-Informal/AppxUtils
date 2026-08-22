@@ -156,7 +156,7 @@ PackageDependencies( 3 ):
 ## 限制
 
 > [!Warning]
-> 本项目目前处于**实验性**阶段，因此暂无法保证ABI稳定性！
+> 本项目目前处于**实验性**阶段，**API 和 ABI 可能在未来版本中发生不兼容变更**，请谨慎用于生产环境。
 
 本项目最终依赖 Windows [AppX Packaging API](https://learn.microsoft.com/windows/win32/appxpkg/interfaces) 实现功能，因此**仅支持 Windows 8+ 环境**，暂不支持 Wine 或其它非 Windows 环境。  
 如有需要在不受支持的环境下解析 AppX/MSIX，请自行解析文件流。  
