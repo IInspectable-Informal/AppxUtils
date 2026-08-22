@@ -1,0 +1,247 @@
+import "oaidl.idl";
+import "ocidl.idl";
+import "unknwn.idl";
+import "inspectable.idl";
+import "Windows.Foundation.idl";
+import "Windows.ApplicationModel.idl";
+import "Windows.Data.Xml.Dom.idl";
+import "Windows.Storage.idl";
+import "Windows.Storage.Streams.idl";
+import "Windows.System.idl";
+
+namespace AppxUtils
+{
+	[version(0.61)]
+	[flags]
+	enum AppxPackageCapabilitiesLegacy
+	{
+		NoCapability = 0x0000,
+		InternetClient = 0x0001,
+		InternetClientServer = 0x0002,
+		PrivateNetworkClientServer = 0x0004,
+		DocumentsLibrary = 0x0008,
+		PicturesLibrary = 0x0010,
+		VideosLibrary = 0x0020,
+		MusicLibrary = 0x0040,
+		EnterpriseAuthentication = 0x0080,
+		SharedUserCertificates = 0x0100,
+		RemovableStorage = 0x0200,
+		[version(0.63)] Appointments = 0x0400,
+		[version(0.63)] Contracts = 0x0800,
+	};
+
+	[version(0.61)]
+	[exclusiveto(AppxPackage)]
+	interface IAppxPackageLegacy
+	{
+		Windows.ApplicationModel.PackageVersion MinVersionLegacy{ get; };
+		Windows.ApplicationModel.PackageVersion MaxVersionTestedLegacy{ get; };
+
+		AppxPackageCapabilitiesLegacy CapabilitiesLegacy{ get; };
+	};
+
+	[version(1.0)]
+	struct AppxPackageTargetDeviceFamily
+	{
+		String Name;
+		Windows.ApplicationModel.PackageVersion MinVersion;
+		Windows.ApplicationModel.PackageVersion MaxVersionTested;
+	};
+
+	[version(1.0)]
+	enum AppxPackageCapabilityClassType
+	{
+		Default,
+		General,
+		Restricted,
+		Windows,
+		All,
+		[version(4.0)] Custom,
+	};
+
+	[version(1.0)]
+	[exclusiveto(AppxPackage)]
+	interface IAppxPackage
+	{
+		Windows.Foundation.Collections.IVectorView<AppxPackageTargetDeviceFamily> TargetDeviceFamilies{ get; };
+
+		Windows.Foundation.Collections.IVectorView<String> Capabilities{ get; };
+
+		Windows.Foundation.Collections.IVectorView<String> GetCapabilitiesByCapabilityClass(AppxPackageCapabilityClassType classType);
+	};
+
+	[version(3.0)]
+	struct AppxPackageMainPackageDependency
+	{
+		String Name;
+		String Publisher;
+		String FamilyName;
+	};
+
+	[version(3.0)]
+	[exclusiveto(AppxPackage)]
+	interface IAppxPackage3
+	{
+		Windows.Foundation.Collections.IVectorView<AppxPackageMainPackageDependency> MainPackageDependencies{ get; };
+	};
+
+	[version(10.0)]
+	struct AppxPackageDriverConstraint
+	{
+		String Name;
+		Windows.Foundation.IReference<Windows.ApplicationModel.PackageVersion> MinVersion;
+		String MinDate;
+	};
+
+	[version(10.0)]
+	[default_interface]
+	runtimeclass AppxPackageDriverDependency : Windows.Foundation.Collections.IIterable<AppxPackageDriverConstraint>
+	{
+
+	};
+
+	[version(10.0)]
+	struct AppxPackageOSPackageDependency
+	{
+		String Name;
+		Windows.ApplicationModel.PackageVersion Version;
+	};
+
+	[version(10.0)]
+	struct AppxPackageHostRuntimeDependency
+	{
+		String Name;
+		String Publisher;
+		Windows.ApplicationModel.PackageVersion MinVersion;
+	};
+
+	[version(10.0)]
+	[exclusiveto(AppxPackage)]
+	interface IAppxPackage10
+	{
+		Windows.Foundation.Collections.IVectorView<AppxPackageDriverDependency> DriverDependencies{ get; };
+		Windows.Foundation.Collections.IVectorView<AppxPackageOSPackageDependency> OSPackageDependencies{ get; };
+		Windows.Foundation.Collections.IVectorView<AppxPackageHostRuntimeDependency> HostRuntimeDependencies{ get; };
+	};
+
+	enum AppxPackageType
+	{
+		Main,
+		Framework,
+		Resource
+	};
+
+	struct AppxPackageDependency
+	{
+		String Name;
+		String Publisher;
+		Windows.ApplicationModel.PackageVersion MinVersion;
+		Windows.Foundation.IReference<UInt16> MaxMajorVersionTested;
+		Windows.Foundation.IReference<Boolean> Optional;
+	};
+
+	enum AppxPackageResourceType
+	{
+		Language,
+		Scale,
+		DirectXFeatureLevel
+	};
+
+	enum DirectXFeatureLevel
+	{
+		Unspecified,
+		Level9,
+		Level10,
+		Level11,
+	};
+
+	struct AppxPackageResource
+	{
+		AppxPackageResourceType Type;
+		String Language;
+		UInt32 Scale;
+		DirectXFeatureLevel DirectXFeatureLevel;
+	};
+
+	[exclusiveto(AppxPackage)]
+	interface IAppxPackageCore
+	{
+		String Name{ get; };
+		String FamilyName{ get; };
+		String FullName{ get; };
+		String Publisher{ get; };
+		Windows.ApplicationModel.PackageVersion Version{ get; };
+		Windows.System.ProcessorArchitecture Architecture{ get; };
+		AppxPackageType PackageType{ get; };
+		String ResourceId{ get; };
+
+		String Logo{ get; };
+		String DisplayName{ get; };
+		String PublisherDisplayName{ get; };
+		String Description{ get; };
+
+		Windows.Foundation.Collections.IVectorView<AppxPackageDependency> PackageDependencies{ get; };
+
+		Windows.Foundation.Collections.IVectorView<AppxPackageResource> Resources{ get; };
+
+		Windows.Foundation.Collections.IVectorView<String> DeviceCapabilities{ get; };
+
+		Windows.Storage.Streams.IInputStream GetManifestStream();
+	};
+
+	struct AppxBlockMapBlock
+	{
+		String Hash;
+		UInt32 CompressedSize;
+	};
+
+	[default_interface]
+	runtimeclass AppxBlockMapFile
+	{
+		UInt32 LocalFileHreaderSize{ get; };
+		UInt64 UncompressedSizeSize{ get; };
+		Windows.Foundation.Collections.IVectorView<AppxBlockMapBlock> Blocks{ get; };
+
+		Boolean ValidateFileHash(Windows.Storage.Streams.IInputStream fileStream);
+	}
+
+	[exclusiveto(AppxPackage)]
+	interface IAppxPackageBlockMap
+	{
+		Windows.Foundation.Uri HashMethod{ get; };
+		Windows.Foundation.Collections.IMapView<String, AppxBlockMapFile> Files{ get; };
+
+		Windows.Data.Xml.Dom.XmlDocument GetBlockMapXml();
+	};
+
+	runtimeclass AppxPackage : [default] IAppxPackageCore, IAppxPackageBlockMap, IAppxPackage, IAppxPackage3, IAppxPackage10, IAppxPackageLegacy
+	{
+
+	}
+
+	[default_interface]
+	runtimeclass AppxBundle : Windows.Foundation.Collections.IIterable<AppxPackage>
+	{
+		
+	}
+
+	[exclusiveto(AppxPackageFactory)]
+	interface IAppxPackageFactory
+	{
+		AppxPackage GetAppxPackageFromStream(Windows.Storage.Streams.IRandomAccessStream appxPackageStream);
+	};
+
+	[exclusiveto(AppxPackageFactory)]
+	interface IAppxBundleFactory
+	{
+		AppxBundle GetAppxBundleFromStream(Windows.Storage.Streams.IRandomAccessStream appxBundleStream);
+	}
+
+	[version(0.61)]
+	[static(IAppxPackageFactory, 0.61)]
+	[static(IAppxBundleFactory, 0.63)]
+	static runtimeclass AppxPackageFactory
+	{
+
+	}
+}
