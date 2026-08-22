@@ -1,6 +1,6 @@
 # AppxUtils
 
-**[尚未完成]** 一个用于解析 AppX/MSIX 的轻量级进程内 Windows 运行时组件。  
+**[实验性，尚未完成]** 一个用于解析 AppX/MSIX 的轻量级进程内 Windows 运行时组件。  
 它封装了复杂的 COM 接口，为 .NET 和 C++ 开发者提供了一套简洁的、类型安全的 API。
 
 ## 功能
@@ -154,6 +154,9 @@ PackageDependencies( 3 ):
 * ❌ Windows Server 2003
 
 ## 限制
+
+> [!Warning]
+> 本项目目前处于**实验性**阶段，因此暂无法保证ABI稳定性！
 
 本项目最终依赖 Windows [AppX Packaging API](https://learn.microsoft.com/windows/win32/appxpkg/interfaces) 实现功能，因此**仅支持 Windows 8+ 环境**，暂不支持 Wine 或其它非 Windows 环境。  
 如有需要在不受支持的环境下解析 AppX/MSIX，请自行解析文件流。  
