@@ -1,0 +1,13 @@
+import "oaidl.idl";
+import "ocidl.idl";
+import "unknwn.idl";
+import "AppxPackaging.idl";
+
+[
+	object,
+	uuid(3BFFF155-FC6F-4990-A079-C7C63608BC13)
+]
+interface IAppxPackageInterop : IUnknown
+{
+	[propget] HRESULT PackageReader([out, retval] IAppxPackageReader** value);
+};

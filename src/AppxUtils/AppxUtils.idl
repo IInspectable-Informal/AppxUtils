@@ -51,12 +51,12 @@ namespace AppxUtils
 	[version(1.0)]
 	enum AppxPackageCapabilityClassType
 	{
-		Default,
-		General,
-		Restricted,
-		Windows,
-		All,
-		[version(4.0)] Custom,
+		Default = 0,
+		General = 1,
+		Restricted = 2,
+		Windows = 4,
+		All = 7,
+		[version(4.0)] Custom = 8,
 	};
 
 	[version(1.0)]
@@ -71,6 +71,14 @@ namespace AppxUtils
 	};
 
 	[version(3.0)]
+	[exclusiveto(AppxPackage)]
+	interface IAppxPackage3
+	{
+		Boolean IsOptionalPackage{ get; };
+		String MainPackageName{ get; };
+	};
+
+	[version(4.0)]
 	struct AppxPackageMainPackageDependency
 	{
 		String Name;
@@ -78,11 +86,18 @@ namespace AppxUtils
 		String FamilyName;
 	};
 
-	[version(3.0)]
+	[version(4.0)]
 	[exclusiveto(AppxPackage)]
-	interface IAppxPackage3
+	interface IAppxPackage4
 	{
 		Windows.Foundation.Collections.IVectorView<AppxPackageMainPackageDependency> MainPackageDependencies{ get; };
+	};
+
+	[version(6.0)]
+	[exclusiveto(AppxPackage)]
+	interface IAppxPackage6
+	{
+		Boolean IsNonQualifiedResourcePackage{ get; };
 	};
 
 	[version(10.0)]
@@ -142,6 +157,7 @@ namespace AppxUtils
 
 	enum AppxPackageResourceType
 	{
+		Unspecified,
 		Language,
 		Scale,
 		DirectXFeatureLevel
@@ -214,7 +230,7 @@ namespace AppxUtils
 		Windows.Data.Xml.Dom.XmlDocument GetBlockMapXml();
 	};
 
-	runtimeclass AppxPackage : [default] IAppxPackageCore, IAppxPackageBlockMap, IAppxPackage, IAppxPackage3, IAppxPackage10, IAppxPackageLegacy
+	runtimeclass AppxPackage : [default] IAppxPackageCore, IAppxPackageBlockMap, IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10, IAppxPackageLegacy
 	{
 
 	}

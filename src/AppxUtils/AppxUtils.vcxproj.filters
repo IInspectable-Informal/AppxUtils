@@ -32,6 +32,7 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="AppxUtils.idl" />
+    <Midl Include="AppxPackageInterop.idl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Exports.def" />

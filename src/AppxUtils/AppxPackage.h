@@ -2,7 +2,7 @@
 
 namespace ABI::AppxUtils
 {
-    class AppxPackage final : public InspectableBase<BaseTrust, IAppxPackageCore, IAppxPackage, IAppxPackageLegacy>
+    class AppxPackage final : public InspectableBase<BaseTrust, IAppxPackageCore, IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackageLegacy, IAppxPackageInterop>
     {
     public:
         AppxPackage(IAppxPackageReader*& reader, const CRITICAL_SECTION& criticalSection) noexcept;
@@ -29,10 +29,23 @@ namespace ABI::AppxUtils
         HRESULT STDMETHODCALLTYPE get_Capabilities(ABI::Windows::Foundation::Collections::IVectorView<HSTRING>** value);
         HRESULT STDMETHODCALLTYPE GetCapabilitiesByCapabilityClass(AppxPackageCapabilityClassType classType, ABI::Windows::Foundation::Collections::IVectorView<HSTRING>** result);
 
+        //IAppxPackage3
+        HRESULT STDMETHODCALLTYPE get_IsOptionalPackage(boolean* value);
+        HRESULT STDMETHODCALLTYPE get_MainPackageName(HSTRING* value);
+
+        //IAppxPackage4
+        HRESULT STDMETHODCALLTYPE get_MainPackageDependencies(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageMainPackageDependency>** value);
+
+        //IAppxPackage6
+        HRESULT STDMETHODCALLTYPE get_IsNonQualifiedResourcePackage(boolean* value);
+
         //IAppxPackageLegacy
         HRESULT STDMETHODCALLTYPE get_MinVersionLegacy(struct ABI::Windows::ApplicationModel::PackageVersion* value);
         HRESULT STDMETHODCALLTYPE get_MaxVersionTestedLegacy(struct ABI::Windows::ApplicationModel::PackageVersion* value);
         HRESULT STDMETHODCALLTYPE get_CapabilitiesLegacy(AppxPackageCapabilitiesLegacy* value);
+
+        //IAppxPackageInterop
+        HRESULT STDMETHODCALLTYPE get_PackageReader(IAppxPackageReader** value);
 
         //IInspectable
         HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className);
@@ -46,11 +59,11 @@ namespace ABI::AppxUtils
         HSTRING m_FamilyName{ nullptr };
         HSTRING m_FullName{ nullptr };
         HSTRING m_Publisher{ nullptr };
-        bool m_HasVersion{ false };
+        BOOL m_HasVersion{ false };
         struct ABI::Windows::ApplicationModel::PackageVersion m_Version { 0, 0, 0, 0 };
-        bool m_HasArchitecture{ false };
+        BOOL m_HasArchitecture{ false };
         ABI::Windows::System::ProcessorArchitecture m_Architecture{ ABI::Windows::System::ProcessorArchitecture_Unknown };
-        bool m_HasPackageType{ false };
+        BOOL m_HasPackageType{ false };
         AppxPackageType m_PackageType{ AppxPackageType::Main };
         HSTRING m_ResourceId{ nullptr };
         HSTRING m_Logo{ nullptr };
@@ -65,12 +78,26 @@ namespace ABI::AppxUtils
 
         ABI::AppxUtils::Internal::VectorView<struct AppxPackageTargetDeviceFamily>* m_TargetDeviceFamilies{ nullptr };
         ABI::AppxUtils::Internal::VectorView<HSTRING>* m_Capabilities{ nullptr };
+        ABI::AppxUtils::Internal::VectorView<HSTRING>* m_GeneralCapabilities{ nullptr };
+        ABI::AppxUtils::Internal::VectorView<HSTRING>* m_RestrictedCapabilities{ nullptr };
+        ABI::AppxUtils::Internal::VectorView<HSTRING>* m_WindowsCapabilities{ nullptr };
+        ABI::AppxUtils::Internal::VectorView<HSTRING>* m_AllCapabilities{ nullptr };
+        ABI::AppxUtils::Internal::VectorView<HSTRING>* m_CustomCapabilities{ nullptr };
 
-        bool m_HasMinVersionLegacy{ false };
+        BOOL m_HasIsOptionalPackage{ false };
+        bool m_IsOptionalPackage{ false };
+        HSTRING m_MainPackageName{ nullptr };
+
+        ABI::AppxUtils::Internal::VectorView<struct AppxPackageMainPackageDependency>* m_MainPackageDependencies{ nullptr };
+
+        BOOL m_HasIsNonQualifiedResourcePackage{ false };
+        bool m_IsNonQualifiedResourcePackage{ false };
+
+        BOOL m_HasMinVersionLegacy{ false };
         struct ABI::Windows::ApplicationModel::PackageVersion m_MinVersionLegacy { 0, 0, 0, 0 };
-        bool m_HasMaxVersionTestedLegacy{ false };
+        BOOL m_HasMaxVersionTestedLegacy{ false };
         struct ABI::Windows::ApplicationModel::PackageVersion m_MaxVersionTestedLegacy { 0, 0, 0, 0 };
-        bool m_HasCapabilitiesLegacy{ false };
+        BOOL m_HasCapabilitiesLegacy{ false };
         AppxPackageCapabilitiesLegacy m_CapabilitiesLegacy{ AppxPackageCapabilitiesLegacy::NoCapability };
 
         CRITICAL_SECTION m_CriticalSection{};

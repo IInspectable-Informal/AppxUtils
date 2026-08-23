@@ -70,7 +70,7 @@ namespace ABI::AppxUtils
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Name), nullptr, nullptr));
         }
-        return WindowsDuplicateString(m_Name, value);
+        return WindowsDuplicateString(local, value);
     }
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_FamilyName(HSTRING* value)
@@ -130,7 +130,7 @@ namespace ABI::AppxUtils
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_FullName), nullptr, nullptr));
         }
-        return WindowsDuplicateString(m_FullName, value);
+        return WindowsDuplicateString(local, value);
     }
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_Publisher(HSTRING* value)
@@ -160,12 +160,13 @@ namespace ABI::AppxUtils
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Publisher), nullptr, nullptr));
         }
-        return WindowsDuplicateString(m_Publisher, value);
+        return WindowsDuplicateString(local, value);
     }
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_Version(struct ABI::PackageVersion* value)
     {
-        if (!m_HasVersion)
+        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasVersion), false, false) };
+        if (local == false)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -198,7 +199,8 @@ namespace ABI::AppxUtils
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_Architecture(ABI::ProcessorArchitecture* value)
     {
-        if (!m_HasArchitecture)
+        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasArchitecture), false, false) };
+        if (local == false)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -244,7 +246,8 @@ namespace ABI::AppxUtils
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_PackageType(AppxPackageType* value)
     {
-        if (!m_HasPackageType)
+        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasPackageType), false, false) };
+        if (local == false)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -293,7 +296,8 @@ namespace ABI::AppxUtils
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_ResourceId(HSTRING* value)
     {
-        if (!m_ResourceId)
+        HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ResourceId), nullptr, nullptr)) };
+        if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -320,13 +324,15 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(&m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
+            local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ResourceId), nullptr, nullptr));
         }
-        return WindowsDuplicateString(m_ResourceId, value);
+        return WindowsDuplicateString(local, value);
     }
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_Logo(HSTRING* value)
     {
-        if (!m_Logo)
+        HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Logo), nullptr, nullptr)) };
+        if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -354,13 +360,15 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(&m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
+            local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Logo), nullptr, nullptr));
         }
-        return WindowsDuplicateString(m_Logo, value);
+        return WindowsDuplicateString(local, value);
     }
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_DisplayName(HSTRING* value)
     {
-        if (!m_DisplayName)
+        HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DisplayName), nullptr, nullptr)) };
+        if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -388,13 +396,15 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(&m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
+            local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DisplayName), nullptr, nullptr));
         }
-        return WindowsDuplicateString(m_DisplayName, value);
+        return WindowsDuplicateString(local, value);
     }
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_PublisherDisplayName(HSTRING* value)
     {
-        if (!m_PublisherDisplayName)
+        HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PublisherDisplayName), nullptr, nullptr)) };
+        if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -422,13 +432,15 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(&m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
+            local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PublisherDisplayName), nullptr, nullptr));
         }
-        return WindowsDuplicateString(m_PublisherDisplayName, value);
+        return WindowsDuplicateString(local, value);
     }
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_Description(HSTRING* value)
     {
-        if (!m_Description)
+        HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Description), nullptr, nullptr)) };
+        if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -461,13 +473,15 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(&m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
+            local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Description), nullptr, nullptr));
         }
-        return WindowsDuplicateString(m_Description, value);
+        return WindowsDuplicateString(local, value);
     }
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_PackageDependencies(ABI::IVectorView<struct AppxPackageDependency>** value)
     {
-        if (!m_PackageDependencies)
+        auto local{ reinterpret_cast<VectorView<struct AppxPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PackageDependencies), nullptr, nullptr)) };
+        if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -493,7 +507,7 @@ namespace ABI::AppxUtils
                         hr = reader->GetPackageDependencies(&enumerator);
                         if (SUCCEEDED(hr))
                         {
-                            struct AppxPackageDependency* dependencies{ new struct AppxPackageDependency[count]{ nullptr } };
+                            struct AppxPackageDependency* dependencies{ new struct AppxPackageDependency[count]{} };
                             if (dependencies)
                             {
                                 enumerator->GetHasCurrent(&hasNext);
@@ -585,16 +599,18 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(&m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
+            local = reinterpret_cast<VectorView<struct AppxPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PackageDependencies), nullptr, nullptr));
         }
 
-        m_PackageDependencies->AddRef();
-        *value = m_PackageDependencies;
+        local->AddRef();
+        *value = local;
         return S_OK;
     }
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_Resources(ABI::IVectorView<struct AppxPackageResource>** value)
     {
-        if (!m_Resources)
+        auto local{ reinterpret_cast<VectorView<struct AppxPackageResource>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Resources), nullptr, nullptr)) };
+        if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -641,18 +657,26 @@ namespace ABI::AppxUtils
                                             HRESULT hr1{ S_OK };
                                             HRESULT hr2{ S_OK };
                                             HRESULT hr3{ S_OK };
+                                            bool hasLanguage{ false };
                                             LPWSTR language{ nullptr };
                                             hr1 = resource->GetLanguage(&language);
                                             if (SUCCEEDED(hr1))
                                             {
-                                                HSTRING languageHstr{ nullptr };
-                                                hr1 = WindowsCreateString(language, WStringLength(language), &res.Language);
+                                                UINT32 count{ WStringLength(language) };
+                                                hasLanguage = count;
+                                                hr1 = WindowsCreateString(language, count, &res.Language);
                                                 CoTaskMemFree(language);
                                             }
                                             hr2 = resource->GetScale(&res.Scale);
                                             hr3 = resource->GetDXFeatureLevel(reinterpret_cast<DX_FEATURE_LEVEL*>(&res.DirectXFeatureLevel));
                                             if (SUCCEEDED(hr1) || SUCCEEDED(hr2) || SUCCEEDED(hr3))
                                             {
+                                                if (SUCCEEDED(hr1) && hasLanguage)
+                                                { res.Type = AppxPackageResourceType::Language; }
+                                                else if (SUCCEEDED(hr2) && res.Scale)
+                                                { res.Type = AppxPackageResourceType::Scale; }
+                                                else if (SUCCEEDED(hr3) && res.DirectXFeatureLevel != DirectXFeatureLevel::Unspecified)
+                                                { res.Type = AppxPackageResourceType::DirectXFeatureLevel; }
                                                 ++completed;
                                                 enumerator->MoveNext(&hasNext);
                                             }
@@ -740,16 +764,18 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(&m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
+            local = reinterpret_cast<VectorView<struct AppxPackageResource>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Resources), nullptr, nullptr));
         }
 
-        m_Resources->AddRef();
-        *value = m_Resources;
+        local->AddRef();
+        *value = local;
         return S_OK;
     }
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_DeviceCapabilities(ABI::IVectorView<HSTRING>** value)
     {
-        if (!m_DeviceCapabilities)
+        auto local{ reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DeviceCapabilities), nullptr, nullptr)) };
+        if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -775,7 +801,7 @@ namespace ABI::AppxUtils
                         hr = reader->GetDeviceCapabilities(&enumerator);
                         if (SUCCEEDED(hr))
                         {
-                            HSTRING* capabilities{ new HSTRING[count]{ nullptr } };
+                            HSTRING* capabilities{ new HSTRING[count]{} };
                             if (capabilities)
                             {
                                 enumerator->GetHasCurrent(&hasNext);
@@ -824,17 +850,19 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(&m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
+            local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DeviceCapabilities), nullptr, nullptr));
         }
 
-        m_DeviceCapabilities->AddRef();
-        *value = m_DeviceCapabilities;
+        local->AddRef();
+        *value = local;
         return S_OK;
     }
 
     HRESULT STDMETHODCALLTYPE AppxPackage::GetManifestStream(ABI::IInputStream** result)
     {
         HRESULT hr{ S_OK };
-        if (!m_ManifestStream)
+        auto local{ reinterpret_cast<ABI::IRandomAccessStream*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ManifestStream), nullptr, nullptr)) };
+        if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
             if (!m_ManifestStream)
@@ -855,10 +883,11 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(&m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
+            local = reinterpret_cast<ABI::IRandomAccessStream*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ManifestStream), nullptr, nullptr));
         }
 
         ABI::IRandomAccessStream* clonedStream{ nullptr };
-        hr = m_ManifestStream->CloneStream(&clonedStream);
+        hr = local->CloneStream(&clonedStream);
         if (SUCCEEDED(hr))
         {
             hr = clonedStream->QueryInterface(__uuidof(*result), to_void_pp(*result));
@@ -872,7 +901,8 @@ namespace ABI::AppxUtils
     //IAppxPackage
     HRESULT STDMETHODCALLTYPE AppxPackage::get_TargetDeviceFamilies(ABI::IVectorView<struct AppxPackageTargetDeviceFamily>** value)
     {
-        if (!m_TargetDeviceFamilies)
+        auto local{ reinterpret_cast<VectorView<struct AppxPackageTargetDeviceFamily>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_TargetDeviceFamilies), nullptr, nullptr)) };
+        if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -975,10 +1005,11 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(&m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
+            local = reinterpret_cast<VectorView<struct AppxPackageTargetDeviceFamily>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_TargetDeviceFamilies), nullptr, nullptr));
         }
 
-        m_TargetDeviceFamilies->AddRef();
-        *value = m_TargetDeviceFamilies;
+        local->AddRef();
+        *value = local;
         return S_OK;
     }
 
@@ -987,13 +1018,437 @@ namespace ABI::AppxUtils
 
     HRESULT STDMETHODCALLTYPE AppxPackage::GetCapabilitiesByCapabilityClass(AppxPackageCapabilityClassType classType, ABI::IVectorView<HSTRING>** result)
     {
-        return E_NOTIMPL;
+        VectorView<HSTRING>* local{ nullptr };
+        switch (classType)
+        {
+            case AppxPackageCapabilityClassType::Default:
+                local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Capabilities), nullptr, nullptr));
+                break;
+
+            case AppxPackageCapabilityClassType::General:
+                local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_GeneralCapabilities), nullptr, nullptr));
+                break;
+
+            case AppxPackageCapabilityClassType::Restricted:
+                local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_RestrictedCapabilities), nullptr, nullptr));
+                break;
+
+            case AppxPackageCapabilityClassType::Windows:
+                local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_WindowsCapabilities), nullptr, nullptr));
+                break;
+
+            case AppxPackageCapabilityClassType::All:
+                local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_AllCapabilities), nullptr, nullptr));
+                break;
+
+            case AppxPackageCapabilityClassType::Custom:
+                local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_CustomCapabilities), nullptr, nullptr));
+                break;
+
+            default:
+                return E_INVALIDARG;
+        }
+
+        if (local == nullptr)
+        {
+            EnterCriticalSection(&m_CriticalSection);
+            HRESULT hr{ S_OK };
+            switch (classType)
+            {
+                case AppxPackageCapabilityClassType::Default:
+                    local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Capabilities), nullptr, nullptr));
+                    break;
+
+                case AppxPackageCapabilityClassType::General:
+                    local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_GeneralCapabilities), nullptr, nullptr));
+                   break;
+
+                case AppxPackageCapabilityClassType::Restricted:
+                    local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_RestrictedCapabilities), nullptr, nullptr));
+                    break;
+
+                case AppxPackageCapabilityClassType::Windows:
+                    local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_WindowsCapabilities), nullptr, nullptr));
+                    break;
+
+                case AppxPackageCapabilityClassType::All:
+                    local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_AllCapabilities), nullptr, nullptr));
+                    break;
+
+                case AppxPackageCapabilityClassType::Custom:
+                    local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_CustomCapabilities), nullptr, nullptr));
+                    break;
+            }
+            if (local == nullptr)
+            {
+                IAppxManifestReader* reader{ nullptr };
+                hr = GetManifestReader(reader);
+                if (SUCCEEDED(hr))
+                {
+                    IAppxManifestReader3* reader3{ nullptr };
+                    hr = reader->QueryInterface(__uuidof(reader3), to_void_pp(reader3));
+                    if (SUCCEEDED(hr))
+                    {
+                        IAppxManifestCapabilitiesEnumerator* enumerator{ nullptr };
+                        hr = reader3->GetCapabilitiesByCapabilityClass(static_cast<APPX_CAPABILITY_CLASS_TYPE>(classType), &enumerator);
+                        if (SUCCEEDED(hr))
+                        {
+                            UINT32 count{ 0 };
+                            BOOL hasNext{ false };
+                            enumerator->GetHasCurrent(&hasNext);
+                            while (hasNext)
+                            {
+                                ++count;
+                                enumerator->MoveNext(&hasNext);
+                            }
+                            enumerator->Release();
+                            hr = reader3->GetCapabilitiesByCapabilityClass(static_cast<APPX_CAPABILITY_CLASS_TYPE>(classType), &enumerator);
+                            if (SUCCEEDED(hr))
+                            {
+                                HSTRING* capabilities{ new HSTRING[count]{} };
+                                if (capabilities)
+                                {
+                                    enumerator->GetHasCurrent(&hasNext);
+                                    UINT32 completed{ 0 };
+                                    while (hasNext)
+                                    {
+                                        LPWSTR element{ nullptr };
+                                        hr = enumerator->GetCurrent(&element);
+                                        if (SUCCEEDED(hr))
+                                        {
+                                            hr = WindowsCreateString(element, WStringLength(element), capabilities + completed);
+                                            CoTaskMemFree(element);
+                                            if (SUCCEEDED(hr))
+                                            {
+                                                ++completed;
+                                                enumerator->MoveNext(&hasNext);
+                                            }
+                                        }
+                                        if (FAILED(hr))
+                                        {
+                                            for (UINT32 i{ 0 }; i < completed; ++i)
+                                            { WindowsDeleteString(capabilities[i]); }
+                                            delete[] capabilities;
+                                            break;
+                                        }
+                                    }
+                                    if (SUCCEEDED(hr))
+                                    {
+                                        local = new VectorView<HSTRING>(capabilities, count);
+                                        if (local)
+                                        {
+                                            switch (classType)
+                                            {
+                                                case AppxPackageCapabilityClassType::Default:
+                                                    m_Capabilities = local;
+                                                    break;
+
+                                                case AppxPackageCapabilityClassType::General:
+                                                    m_GeneralCapabilities = local;
+                                                    break;
+
+                                                case AppxPackageCapabilityClassType::Restricted:
+                                                    m_RestrictedCapabilities = local;
+                                                    break;
+
+                                                case AppxPackageCapabilityClassType::Windows:
+                                                    m_WindowsCapabilities = local;
+                                                    break;
+
+                                                case AppxPackageCapabilityClassType::All:
+                                                    m_AllCapabilities = local;
+                                                    break;
+
+                                                case AppxPackageCapabilityClassType::Custom:
+                                                    m_CustomCapabilities = local;
+                                                    break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            hr = E_OUTOFMEMORY;
+                                            for (UINT32 i{ 0 }; i < completed; ++i)
+                                            { WindowsDeleteString(capabilities[i]); }
+                                            delete[] capabilities;
+                                        }
+                                    }
+                                }
+                                else
+                                { hr = E_OUTOFMEMORY; }
+                                enumerator->Release();
+                            }
+                        }
+                        reader3->Release();
+                    }
+                }
+            }
+            LeaveCriticalSection(&m_CriticalSection);
+            if (FAILED(hr))
+            { return hr; }
+        }
+
+        local->AddRef();
+        *result = local;
+        return S_OK;
+    }
+
+    //IAppxPackage3
+    HRESULT STDMETHODCALLTYPE AppxPackage::get_IsOptionalPackage(boolean* value)
+    {
+        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasIsOptionalPackage), false, false) };
+        if (local == false)
+        {
+            EnterCriticalSection(&m_CriticalSection);
+            HRESULT hr{ S_OK };
+            if (!m_HasIsOptionalPackage)
+            {
+                IAppxManifestReader* reader{ nullptr };
+                hr = GetManifestReader(reader);
+                if (SUCCEEDED(hr))
+                {
+                    IAppxManifestReader4* reader4{ nullptr };
+                    hr = reader->QueryInterface(__uuidof(reader4), to_void_pp(reader4));
+                    if (SUCCEEDED(hr))
+                    {
+                        IAppxManifestOptionalPackageInfo* info{ nullptr };
+                        hr = reader4->GetOptionalPackageInfo(&info);
+                        if (SUCCEEDED(hr))
+                        {
+                            BOOL isOptional{ false };
+                            hr = info->GetIsOptionalPackage(&isOptional);
+                            if (SUCCEEDED(hr))
+                            {
+                                m_IsOptionalPackage = isOptional;
+                                m_HasIsOptionalPackage = true;
+                            }
+                            info->Release();
+                        }
+                        reader4->Release();
+                    }
+                }
+            }
+            LeaveCriticalSection(&m_CriticalSection);
+            if (FAILED(hr))
+            { return hr; }
+        }
+
+        *value = m_IsOptionalPackage;
+        return S_OK;
+    }
+
+    HRESULT STDMETHODCALLTYPE AppxPackage::get_MainPackageName(HSTRING* value)
+    {
+        HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageName), nullptr, nullptr)) };
+        if (local == false)
+        {
+            EnterCriticalSection(&m_CriticalSection);
+            HRESULT hr{ S_OK };
+            if (!m_MainPackageName)
+            {
+                IAppxManifestReader* reader{ nullptr };
+                hr = GetManifestReader(reader);
+                if (SUCCEEDED(hr))
+                {
+                    IAppxManifestReader4* reader4{ nullptr };
+                    hr = reader->QueryInterface(__uuidof(reader4), to_void_pp(reader4));
+                    if (SUCCEEDED(hr))
+                    {
+                        IAppxManifestOptionalPackageInfo* info{ nullptr };
+                        hr = reader4->GetOptionalPackageInfo(&info);
+                        if (SUCCEEDED(hr))
+                        {
+                            LPWSTR mainPkgName{ nullptr };
+                            hr = info->GetMainPackageName(&mainPkgName);
+                            if (SUCCEEDED(hr))
+                            {
+                                hr = WindowsCreateString(mainPkgName, WStringLength(mainPkgName), &m_MainPackageName);
+                                CoTaskMemFree(mainPkgName);
+                            }
+                            info->Release();
+                        }
+                        reader4->Release();
+                    }
+                }
+            }
+            LeaveCriticalSection(&m_CriticalSection);
+            if (FAILED(hr))
+            { return hr; }
+            local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageName), false, false));
+        }
+
+        return WindowsDuplicateString(local, value);
+    }
+
+    //IAppxPackage4
+    HRESULT STDMETHODCALLTYPE AppxPackage::get_MainPackageDependencies(ABI::IVectorView<struct AppxPackageMainPackageDependency>** value)
+    {
+        auto local{ reinterpret_cast<VectorView<struct AppxPackageMainPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageDependencies), nullptr, nullptr)) };
+        if (local == nullptr)
+        {
+            EnterCriticalSection(&m_CriticalSection);
+            HRESULT hr{ S_OK };
+            if (!m_MainPackageDependencies)
+            {
+                IAppxManifestReader* reader{ nullptr };
+                hr = GetManifestReader(reader);
+                if (SUCCEEDED(hr))
+                {
+                    IAppxManifestReader5* reader5{ nullptr };
+                    hr = reader->QueryInterface(__uuidof(reader5), to_void_pp(reader5));
+                    if (SUCCEEDED(hr))
+                    {
+                        IAppxManifestMainPackageDependenciesEnumerator* enumerator{ nullptr };
+                        hr = reader5->GetMainPackageDependencies(&enumerator);
+                        if (SUCCEEDED(hr))
+                        {
+                            UINT32 count{ 0 };
+                            BOOL hasNext{ false };
+                            enumerator->GetHasCurrent(&hasNext);
+                            while (hasNext)
+                            {
+                                ++count;
+                                enumerator->MoveNext(&hasNext);
+                            }
+                            enumerator->Release();
+                            hr = reader5->GetMainPackageDependencies(&enumerator);
+                            if (SUCCEEDED(hr))
+                            {
+                                struct AppxPackageMainPackageDependency* dependency{ new AppxPackageMainPackageDependency[count]{} };
+                                if (dependency)
+                                {
+                                    enumerator->GetHasCurrent(&hasNext);
+                                    UINT32 completed{ 0 };
+                                    while (hasNext)
+                                    {
+                                        IAppxManifestMainPackageDependency* element{ nullptr };
+                                        hr = enumerator->GetCurrent(&element);
+                                        if (SUCCEEDED(hr))
+                                        {
+                                            auto& dep{ dependency[completed] };
+                                            LPWSTR name{ nullptr };
+                                            hr = element->GetName(&name);
+                                            if (SUCCEEDED(hr))
+                                            {
+                                                LPWSTR pkgFamilyName{ nullptr };
+                                                hr = element->GetPackageFamilyName(&pkgFamilyName);
+                                                if (SUCCEEDED(hr))
+                                                {
+                                                    LPWSTR publisher{ nullptr };
+                                                    hr = element->GetPublisher(&publisher);
+                                                    if (SUCCEEDED(hr))
+                                                    {
+                                                        hr = WindowsCreateString(name, WStringLength(name), &dep.Name);
+                                                        if (SUCCEEDED(hr))
+                                                        {
+                                                            hr = WindowsCreateString(pkgFamilyName, WStringLength(pkgFamilyName), &dep.FamilyName);
+                                                            if (SUCCEEDED(hr))
+                                                            {
+                                                                hr = WindowsCreateString(publisher, WStringLength(publisher), &dep.Publisher);
+                                                                if (SUCCEEDED(hr))
+                                                                {
+                                                                    ++completed;
+                                                                    enumerator->MoveNext(&hasNext);
+                                                                }
+                                                                else
+                                                                {
+                                                                    WindowsDeleteString(dep.FamilyName);
+                                                                    WindowsDeleteString(dep.Name);
+                                                                }
+                                                            }
+                                                            else
+                                                            { WindowsDeleteString(dep.Name); }
+                                                        }
+                                                        CoTaskMemFree(publisher);
+                                                    }
+                                                    CoTaskMemFree(pkgFamilyName);
+                                                }
+                                                CoTaskMemFree(name);
+                                            }
+                                            element->Release();
+                                        }
+                                        if (FAILED(hr))
+                                        {
+                                            for (UINT32 i{ 0 }; i < completed; ++i)
+                                            { StructLifetimeFunctions<struct AppxPackageMainPackageDependency>::ReleaseStruct(dependency[i]); }
+                                            delete[] dependency;
+                                            break;
+                                        }
+                                    }
+                                    if (SUCCEEDED(hr))
+                                    {
+                                        m_MainPackageDependencies = new VectorView<struct AppxPackageMainPackageDependency>(dependency, count);
+                                        if (!m_MainPackageDependencies)
+                                        {
+                                            hr = E_OUTOFMEMORY;
+                                            for (UINT32 i{ 0 }; i < completed; ++i)
+                                            { StructLifetimeFunctions<struct AppxPackageMainPackageDependency>::ReleaseStruct(dependency[i]); }
+                                            delete[] dependency;
+                                        }
+                                    }
+                                }
+                                else
+                                { hr = E_OUTOFMEMORY; }
+                                enumerator->Release();
+                            }
+                        }
+                        reader5->Release();
+                    }
+                }
+            }
+            LeaveCriticalSection(&m_CriticalSection);
+            if (FAILED(hr))
+            { return S_OK; }
+            local = reinterpret_cast<VectorView<struct AppxPackageMainPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageDependencies), nullptr, nullptr));
+        }
+
+        local->AddRef();
+        *value = local;
+        return S_OK;
+    }
+
+    //IAppxPackage6
+    HRESULT STDMETHODCALLTYPE AppxPackage::get_IsNonQualifiedResourcePackage(boolean* value)
+    {
+        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasIsNonQualifiedResourcePackage), false, false) };
+        if (local == false)
+        {
+            EnterCriticalSection(&m_CriticalSection);
+            HRESULT hr{ S_OK };
+            if (!m_HasIsNonQualifiedResourcePackage)
+            {
+                IAppxManifestReader* reader{ nullptr };
+                hr = GetManifestReader(reader);
+                if (SUCCEEDED(hr))
+                {
+                    IAppxManifestReader6* reader6{ nullptr };
+                    hr = reader->QueryInterface(__uuidof(reader6), to_void_pp(reader6));
+                    if (SUCCEEDED(hr))
+                    {
+                        BOOL isNonQualifiedResourcePackage{ false };
+                        hr = reader6->GetIsNonQualifiedResourcePackage(&isNonQualifiedResourcePackage);
+                        if (SUCCEEDED(hr))
+                        {
+                            m_IsNonQualifiedResourcePackage = isNonQualifiedResourcePackage;
+                            m_HasIsNonQualifiedResourcePackage = true;
+                        }
+                        reader6->Release();
+                    }
+                }
+            }
+            LeaveCriticalSection(&m_CriticalSection);
+            if (FAILED(hr))
+            { return hr; }
+        }
+
+        *value = m_IsNonQualifiedResourcePackage;
+        return S_OK;
     }
 
     //IAppxPackageLegacy
     HRESULT STDMETHODCALLTYPE AppxPackage::get_MinVersionLegacy(struct ABI::PackageVersion* value)
     {
-        if (!m_HasMinVersionLegacy)
+        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasMinVersionLegacy), false, false) };
+        if (local == false)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -1023,7 +1478,8 @@ namespace ABI::AppxUtils
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_MaxVersionTestedLegacy(struct ABI::PackageVersion* value)
     {
-        if (!m_HasMaxVersionTestedLegacy)
+        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasMaxVersionTestedLegacy), false, false) };
+        if (local == false)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -1053,7 +1509,8 @@ namespace ABI::AppxUtils
 
     HRESULT STDMETHODCALLTYPE AppxPackage::get_CapabilitiesLegacy(AppxPackageCapabilitiesLegacy* value)
     {
-        if (!m_HasCapabilitiesLegacy)
+        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasCapabilitiesLegacy), false, false) };
+        if (local == false)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -1109,6 +1566,14 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
+    //IAppxPackageInterop
+    HRESULT STDMETHODCALLTYPE AppxPackage::get_PackageReader(IAppxPackageReader** value)
+    {
+        m_AppxPackageReader->AddRef();
+        *value = m_AppxPackageReader;
+        return S_OK;
+    }
+
     //IInspectable
     HRESULT STDMETHODCALLTYPE AppxPackage::GetRuntimeClassName(HSTRING* className)
     { return WindowsCreateString(L"AppxUtils.AppxPackage", 21, className); }
@@ -1158,6 +1623,22 @@ namespace ABI::AppxUtils
         { m_TargetDeviceFamilies->Release(); }
         if (m_Capabilities)
         { m_Capabilities->Release(); }
+        if (m_GeneralCapabilities)
+        { m_GeneralCapabilities->Release(); }
+        if (m_RestrictedCapabilities)
+        { m_RestrictedCapabilities->Release(); }
+        if (m_WindowsCapabilities)
+        { m_WindowsCapabilities->Release(); }
+        if (m_AllCapabilities)
+        { m_AllCapabilities->Release(); }
+        if (m_CustomCapabilities)
+        { m_CustomCapabilities->Release(); }
+
+        if (m_MainPackageName)
+        { WindowsDeleteString(m_MainPackageName); }
+
+        if (m_MainPackageDependencies)
+        { m_MainPackageDependencies->Release(); }
 
         DeleteCriticalSection(&m_CriticalSection);
     }

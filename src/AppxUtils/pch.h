@@ -27,6 +27,7 @@
 
 //Self
 #include "Generated Files\AppxUtils.g.h"
+#include "Generated Files\AppxPackageInterop.g.h"
 #include "dllmain.h"
 #include "InspectableBase.hpp"
 #include "StaticHelpers.hpp"

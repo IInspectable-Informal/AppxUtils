@@ -220,11 +220,34 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="AppxUtils.cpp" />
     <ClCompile Include="pch.cpp">
-      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="StructLifetimeFunctionsSpecialized.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Midl Include="AppxPackageInterop.idl">
+      <EnableWindowsRuntime Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</EnableWindowsRuntime>
+      <EnableWindowsRuntime Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">false</EnableWindowsRuntime>
+      <EnableWindowsRuntime Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">false</EnableWindowsRuntime>
+      <EnableWindowsRuntime Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</EnableWindowsRuntime>
+      <PrependWithABINamepsace Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</PrependWithABINamepsace>
+      <PrependWithABINamepsace Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">false</PrependWithABINamepsace>
+      <PrependWithABINamepsace Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">false</PrependWithABINamepsace>
+      <PrependWithABINamepsace Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</PrependWithABINamepsace>
+      <MetadataFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </MetadataFileName>
+      <MetadataFileName Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+      </MetadataFileName>
+      <MetadataFileName Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+      </MetadataFileName>
+      <MetadataFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </MetadataFileName>
+      <AdditionalMetadataDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </AdditionalMetadataDirectories>
+    </Midl>
     <Midl Include="AppxUtils.idl" />
   </ItemGroup>
   <ItemGroup>
