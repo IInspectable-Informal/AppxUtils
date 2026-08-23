@@ -8,9 +8,9 @@
 * ✅ 解析应用包最基本信息（由 AppxUtils.IAppxPackageCore 接口提供）
 * ✅ 解析 Win10 MSIX 包/MSIX 捆绑包（需 Win10 1709+（build 16299+））
 * ✅ 解析 Win8 AppX 包遗留属性（由 AppxUtils.IAppxPackageLegacy 接口提供，除非需要解析为 Win8/8.1 开发的 Metro/Modern 应用程序安装包，否则不推荐使用）
-* 🚧 解析 Win10 AppX/MSIX 包基本属性（由 AppxUtils.IAppxPackage 接口提供）
+* ✅ 解析 Win10 AppX/MSIX 包基本属性（由 AppxUtils.IAppxPackage 接口提供）
 * 📋 解析 AppX 捆绑包（需 Win8.1/Win10+）
-* 📋 解析 Win10 AppX/MSIX 包主应用包依赖项（由 AppxUtils.IAppxPackage3 接口提供，需 Win10 1607+（build 14393+））
+* 📋 解析 Win10 AppX/MSIX 包主应用包依赖项（由 AppxUtils.IAppxPackage4 接口提供，受限于操作系统提供的接口，需 Win10 1703+（build 15063+））
 * 📋 解析 Win10 AppX/MSIX 包驱动依赖项、OS包依赖项、宿主运行时依赖项（由 AppxUtils.IAppxPackage10 接口提供，受限于操作系统提供的接口，需 Win10 2004+（build 19041+））
 
 ## 示例
