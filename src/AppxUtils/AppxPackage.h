@@ -2,7 +2,11 @@
 
 namespace ABI::AppxUtils
 {
-    class AppxPackage final : public InspectableBase<BaseTrust, IAppxPackageCore, IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackageLegacy, IAppxPackageInterop>
+    class AppxPackage final : public InspectableBase<BaseTrust,
+        IAppxPackageCore, IAppxPackagePayloadFilesReader,
+        IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6,
+        IAppxPackageLegacy,
+        IAppxPackageInterop>
     {
     public:
         AppxPackage(IAppxPackageReader*& reader, const CRITICAL_SECTION& criticalSection) noexcept;
@@ -22,7 +26,11 @@ namespace ABI::AppxUtils
         HRESULT STDMETHODCALLTYPE get_PackageDependencies(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageDependency>** value);
         HRESULT STDMETHODCALLTYPE get_Resources(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageResource>** value);
         HRESULT STDMETHODCALLTYPE get_DeviceCapabilities(ABI::Windows::Foundation::Collections::IVectorView<HSTRING>** value);
+
         HRESULT STDMETHODCALLTYPE GetManifestStream(ABI::Windows::Storage::Streams::IInputStream** result);
+
+        //IAppxPackagePayloadFilesReader
+        HRESULT STDMETHODCALLTYPE GetPayloadFiles(ABI::Windows::Foundation::Collections::IMapView<HSTRING, AppxPackagePayloadFile*>** result);
 
         //IAppxPackage
         HRESULT STDMETHODCALLTYPE get_TargetDeviceFamilies(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageTargetDeviceFamily>** value);
@@ -70,11 +78,12 @@ namespace ABI::AppxUtils
         HSTRING m_DisplayName{ nullptr };
         HSTRING m_PublisherDisplayName{ nullptr };
         HSTRING m_Description{ nullptr };
-
         ABI::AppxUtils::Internal::VectorView<struct AppxPackageDependency>* m_PackageDependencies{ nullptr };
         ABI::AppxUtils::Internal::VectorView<struct AppxPackageResource>* m_Resources{ nullptr };
         ABI::AppxUtils::Internal::VectorView<HSTRING>* m_DeviceCapabilities{ nullptr };
         ABI::Windows::Storage::Streams::IRandomAccessStream* m_ManifestStream{ nullptr };
+
+        ABI::Windows::Foundation::Collections::IMapView<HSTRING, AppxPackagePayloadFile*>* m_PayloadFiles{ nullptr };
 
         ABI::AppxUtils::Internal::VectorView<struct AppxPackageTargetDeviceFamily>* m_TargetDeviceFamilies{ nullptr };
         ABI::AppxUtils::Internal::VectorView<HSTRING>* m_Capabilities{ nullptr };

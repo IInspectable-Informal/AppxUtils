@@ -12,6 +12,7 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="AppxPackage.cpp" />
     <ClCompile Include="StructLifetimeFunctionsSpecialized.cpp" />
+    <ClCompile Include="AppxPackagePayloadFile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppxUtils.h" />
@@ -29,6 +30,7 @@
     <ClInclude Include="StaticHelpers.hpp" />
     <ClInclude Include="FoundationStructComparer.hpp" />
     <ClInclude Include="GuidHelpers.hpp" />
+    <ClInclude Include="AppxPackagePayloadFile.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="AppxUtils.idl" />

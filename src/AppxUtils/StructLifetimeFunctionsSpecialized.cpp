@@ -14,6 +14,47 @@ namespace ABI::AppxUtils::Internal
 	constexpr inline bool operator ==(const ABI::PackageVersion a, const ABI::PackageVersion b)
 	{ return a.Major == b.Major && a.Minor == b.Minor && a.Build == b.Build && a.Revision == b.Revision; }
 
+	inline bool IsEqualWinRTString(const HSTRING& a, const HSTRING& b)
+	{
+		if (a && b)
+		{
+			if (a != b)
+			{
+				INT32 cmp{ 0 };
+				WindowsCompareStringOrdinal(a, b, &cmp);
+				return cmp == 0;
+			}
+			else
+			{ return true; }
+		}
+		else if (!a && !b)
+		{ return true; }
+		else
+		{ return false; }
+	}
+
+	template<typename T>
+	inline bool IsEqualReference(const ABI::IReference<T>*& a, const ABI::IReference<T>*& b)
+	{
+		if (a && b)
+		{
+			if (a != b)
+			{
+				T aValue{};
+				T bValue{};
+				a->get_Value(&aValue);
+				b->get_Value(&bValue);
+				return aValue == bValue;
+			}
+			else
+			{ return true; }
+		}
+		else if (!a && !b)
+		{ return true; }
+		else
+		{ return false; }
+	}
+
 	//AppxPackageDependency
 	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageDependency>::DeepCopyStruct(const struct ABI::AppxPackageDependency& source, struct ABI::AppxPackageDependency& target)
 	{
@@ -53,22 +94,8 @@ namespace ABI::AppxUtils::Internal
 	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageDependency>::IsEqualStruct(const struct ABI::AppxPackageDependency& a, const struct ABI::AppxPackageDependency& b, bool& result)
 	{
 		bool results[5]{ false, false, false, false, false };
-		if (a.Name != b.Name)
-		{
-			INT32 cmp{ 0 };
-			WindowsCompareStringOrdinal(a.Name, b.Name, &cmp);
-			results[0] = cmp == 0;
-		}
-		else
-		{ results[0] = true; }
-		if (a.Publisher != b.Publisher)
-		{
-			INT32 cmp{ 0 };
-			WindowsCompareStringOrdinal(a.Publisher, b.Publisher, &cmp);
-			results[1] = cmp == 0;
-		}
-		else
-		{ results[1] = true; }
+		results[0] = IsEqualWinRTString(a.Name, b.Name);
+		results[1] = IsEqualWinRTString(a.Publisher, b.Publisher);
 		results[2] = a.MinVersion == b.MinVersion;
 		if (a.MaxMajorVersionTested != b.MaxMajorVersionTested)
 		{
@@ -136,21 +163,7 @@ namespace ABI::AppxUtils::Internal
 	{
 		bool results[4]{ false, false, false, false };
 		results[0] = a.Type == b.Type;
-		if (a.Language && b.Language)
-		{
-			if (a.Language != b.Language)
-			{
-				INT32 cmp{ 0 };
-				WindowsCompareStringOrdinal(a.Language, b.Language, &cmp);
-				results[1] = cmp == 0;
-			}
-			else
-			{ results[1] = true; }
-		}
-		else if (!a.Language && !b.Language)
-		{ results[1] = true; }
-		else
-		{ results[1] = false; }
+		results[1] = IsEqualWinRTString(a.Language, b.Language);
 		results[2] = a.Scale == b.Scale;
 		results[3] = a.DirectXFeatureLevel == b.DirectXFeatureLevel;
 		result = results[0] && results[1] && results[2] && results[3];
@@ -190,23 +203,49 @@ namespace ABI::AppxUtils::Internal
 	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageTargetDeviceFamily>::IsEqualStruct(const struct ABI::AppxPackageTargetDeviceFamily& a, const struct ABI::AppxPackageTargetDeviceFamily& b, bool& result)
 	{
 		bool results[3]{ false, false, false };
-		if (a.Name && b.Name)
-		{
-			if (a.Name != b.Name)
-			{
-				INT32 cmp{ 0 };
-				WindowsCompareStringOrdinal(a.Name, b.Name, &cmp);
-				results[0] = cmp == 0;
-			}
-			else
-			{ results[0] = true; }
-		}
-		else if (!a.Name && !b.Name)
-		{ results[0] = true; }
-		else
-		{ results[0] = false; }
+		results[0] = IsEqualWinRTString(a.Name, b.Name);
 		results[1] = a.MinVersion == b.MinVersion;
 		results[2] = a.MaxVersionTested == b.MaxVersionTested;
+		result = results[0] && results[1] && results[2];
+		return S_OK;
+	}
+
+	//AppxPackageMainPackageDependency
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageMainPackageDependency>::DeepCopyStruct(const struct ABI::AppxPackageMainPackageDependency& source, struct ABI::AppxPackageMainPackageDependency& target)
+	{
+		HRESULT hr{ WindowsDuplicateString(source.Name, &target.Name) };
+		if (SUCCEEDED(hr))
+		{
+			hr = WindowsDuplicateString(source.FamilyName, &target.FamilyName);
+			if (SUCCEEDED(hr))
+			{
+				hr = WindowsDuplicateString(source.Publisher, &target.Publisher);
+				if (FAILED(hr))
+				{
+					WindowsDeleteString(target.FamilyName);
+					WindowsDeleteString(target.Name);
+				}
+			}
+			else
+			{ WindowsDeleteString(target.Name); }
+		}
+		return hr;
+	}
+
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageMainPackageDependency>::ReleaseStruct(const struct ABI::AppxPackageMainPackageDependency& source)
+	{
+		WindowsDeleteString(source.Name);
+		WindowsDeleteString(source.FamilyName);
+		WindowsDeleteString(source.Publisher);
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageMainPackageDependency>::IsEqualStruct(const struct ABI::AppxPackageMainPackageDependency& a, const struct ABI::AppxPackageMainPackageDependency& b, bool& result)
+	{
+		bool results[3]{ false, false, false };
+		results[0] = IsEqualWinRTString(a.Name, b.Name);
+		results[1] = IsEqualWinRTString(a.FamilyName, b.FamilyName);
+		results[2] = IsEqualWinRTString(a.Publisher, b.Publisher);
 		result = results[0] && results[1] && results[2];
 		return S_OK;
 	}

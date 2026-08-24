@@ -43,4 +43,18 @@ namespace ABI::AppxUtils::Internal
 		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
 		~StructLifetimeFunctions() = delete;
 	};
+
+	template<>
+	class StructLifetimeFunctions<struct ABI::AppxUtils::AppxPackageMainPackageDependency> final
+	{
+	public:
+		static HRESULT STDMETHODCALLTYPE DeepCopyStruct(const struct ABI::AppxUtils::AppxPackageMainPackageDependency& source, struct ABI::AppxUtils::AppxPackageMainPackageDependency& target);
+		static HRESULT STDMETHODCALLTYPE ReleaseStruct(const struct ABI::AppxUtils::AppxPackageMainPackageDependency& source);
+		static HRESULT STDMETHODCALLTYPE IsEqualStruct(const struct ABI::AppxUtils::AppxPackageMainPackageDependency& a, const struct ABI::AppxUtils::AppxPackageMainPackageDependency& b, bool& result);
+
+		StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
+		~StructLifetimeFunctions() = delete;
+	};
 }

@@ -205,6 +205,33 @@ namespace AppxUtils
 		Windows.Storage.Streams.IInputStream GetManifestStream();
 	};
 
+	enum AppxPackagePayloadFileCompressionOption
+	{
+		None,
+		Normal,
+		Maximum,
+		Fast,
+		Superfast,
+	};
+
+	[exclusiveto(AppxPackagePayloadFile)]
+	interface IAppxPackagePayloadFile
+	{
+		AppxPackagePayloadFileCompressionOption CompressionOption{ get; };
+		String RelativePath{ get; };
+	};
+
+	runtimeclass AppxPackagePayloadFile : [default] IAppxPackagePayloadFile, Windows.Storage.IStorageFile, Windows.Storage.IStorageFile2, Windows.Storage.IStorageFilePropertiesWithAvailability
+	{
+
+	}
+
+	[exclusiveto(AppxPackage)]
+	interface IAppxPackagePayloadFilesReader
+	{
+		Windows.Foundation.Collections.IMapView<String, AppxPackagePayloadFile> GetPayloadFiles();
+	};
+
 	struct AppxBlockMapBlock
 	{
 		String Hash;
@@ -230,7 +257,7 @@ namespace AppxUtils
 		Windows.Data.Xml.Dom.XmlDocument GetBlockMapXml();
 	};
 
-	runtimeclass AppxPackage : [default] IAppxPackageCore, IAppxPackageBlockMap, IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10, IAppxPackageLegacy
+	runtimeclass AppxPackage : [default] IAppxPackageCore, IAppxPackagePayloadFilesReader, IAppxPackageBlockMap, IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10, IAppxPackageLegacy
 	{
 
 	}

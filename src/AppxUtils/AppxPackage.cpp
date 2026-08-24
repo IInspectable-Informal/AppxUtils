@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "AppxPackage.h"
+#include "AppxPackagePayloadFile.h"
 #include "helpers.hpp"
 
 namespace ABI
@@ -14,18 +15,7 @@ namespace ABI
 }
 
 namespace ABI::AppxUtils
-{
-    constexpr inline UINT32 WStringLength(LPCWSTR wstr)
-    {
-        UINT32 count{ 0 };
-        if (wstr)
-        {
-            while (*(wstr + count))
-            { ++count; }
-        }
-        return count;
-    }
-    
+{    
     constexpr inline ABI::PackageVersion UInt64ToPkgVer(UINT64 verNum)
     {
         ABI::PackageVersion ver{};
@@ -892,10 +882,31 @@ namespace ABI::AppxUtils
         {
             hr = clonedStream->QueryInterface(__uuidof(*result), to_void_pp(*result));
             clonedStream->Release();
-            return hr;
         }
-        else
-        { return hr; }
+        return hr;
+    }
+
+    //IAppxPackagePayloadFilesReader
+    HRESULT STDMETHODCALLTYPE AppxPackage::GetPayloadFiles(ABI::IMapView<HSTRING, AppxPackagePayloadFile*>** result)
+    {
+        auto local{ reinterpret_cast<ABI::IMapView<HSTRING, AppxPackagePayloadFile*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PayloadFiles), nullptr, nullptr)) };
+        if (local == nullptr)
+        {
+            EnterCriticalSection(&m_CriticalSection);
+            HRESULT hr{ S_OK };
+            if (!m_PayloadFiles)
+            {
+                hr = E_NOTIMPL;
+            }
+            LeaveCriticalSection(&m_CriticalSection);
+            if (FAILED(hr))
+            { return hr; }
+            local = reinterpret_cast<ABI::IMapView<HSTRING, AppxPackagePayloadFile*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PayloadFiles), nullptr, nullptr));
+        }
+
+        local->AddRef();
+        *result = local;
+        return S_OK;
     }
 
     //IAppxPackage
@@ -1618,6 +1629,9 @@ namespace ABI::AppxUtils
             closable->Release();
             m_ManifestStream->Release();
         }
+
+        if (m_PayloadFiles)
+        { m_PayloadFiles->Release(); }
 
         if (m_TargetDeviceFamilies)
         { m_TargetDeviceFamilies->Release(); }

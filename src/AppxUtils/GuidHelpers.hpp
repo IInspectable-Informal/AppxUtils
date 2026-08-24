@@ -20,8 +20,8 @@ constexpr inline bool IsEqualGuid(const GUID& a, const GUID& b)
 		};
 		const struct GuidStruct left{ *reinterpret_cast<const struct GuidStruct*>(&a) };
 		const struct GuidStruct right{ *reinterpret_cast<const struct GuidStruct*>(&b) };
-		return left.Data1 == left.Data1 && left.Data2 == left.Data2 &&
-			left.Data3 == left.Data3 && left.Data4 == left.Data4;
+		return left.Data1 == right.Data1 && left.Data2 == right.Data2 &&
+			left.Data3 == right.Data3 && left.Data4 == right.Data4;
 	}
 #else
 	return a.Data1 == b.Data1 && a.Data2 == b.Data2 && a.Data3 == b.Data3 &&

@@ -200,6 +200,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AppxPackage.h" />
+    <ClInclude Include="AppxPackagePayloadFile.h" />
     <ClInclude Include="AppxUtils.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="FoundationStructComparer.hpp" />
@@ -217,6 +218,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AppxPackage.cpp" />
+    <ClCompile Include="AppxPackagePayloadFile.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="AppxUtils.cpp" />
     <ClCompile Include="pch.cpp">

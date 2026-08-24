@@ -11,3 +11,12 @@ interface IAppxPackageInterop : IUnknown
 {
 	[propget] HRESULT PackageReader([out, retval] IAppxPackageReader** value);
 };
+
+[
+	object,
+	uuid(58B6BF5F-5EAE-429C-A76D-74156EC1E38B)
+]
+interface IAppxPackagePayloadFileInterop : IUnknown
+{
+	[propget] HRESULT AppxPayloadFile([out, retval] IAppxFile** value);
+};
