@@ -1250,7 +1250,7 @@ namespace ABI::AppxUtils
     HRESULT STDMETHODCALLTYPE AppxPackage::get_MainPackageName(HSTRING* value)
     {
         HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageName), nullptr, nullptr)) };
-        if (local == false)
+        if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
             HRESULT hr{ S_OK };
@@ -1284,7 +1284,7 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(&m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
-            local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageName), false, false));
+            local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageName), nullptr, nullptr));
         }
 
         return WindowsDuplicateString(local, value);
