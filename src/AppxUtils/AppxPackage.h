@@ -4,7 +4,7 @@ namespace ABI::AppxUtils
 {
     class AppxPackage final : public InspectableBase<BaseTrust,
         IAppxPackageCore, IAppxPackagePayloadFilesReader,
-        IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6,
+        IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10
         IAppxPackageLegacy,
         IAppxPackageInterop>
     {
@@ -46,6 +46,11 @@ namespace ABI::AppxUtils
 
         //IAppxPackage6
         HRESULT STDMETHODCALLTYPE get_IsNonQualifiedResourcePackage(boolean* value);
+
+        //IAppxPackage10
+        HRESULT STDMETHODCALLTYPE get_DriverDependencies(ABI::Windows::Foundation::Collections::IVectorView<AppxPackageDriverDependency*>** value);
+        HRESULT STDMETHODCALLTYPE get_OSPackageDependencies(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageOSPackageDependency>** value);
+        HRESULT STDMETHODCALLTYPE get_HostRuntimeDependencies(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageHostRuntimeDependency>** value);
 
         //IAppxPackageLegacy
         HRESULT STDMETHODCALLTYPE get_MinVersionLegacy(struct ABI::Windows::ApplicationModel::PackageVersion* value);
