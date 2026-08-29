@@ -57,4 +57,32 @@ namespace ABI::AppxUtils::Internal
 		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
 		~StructLifetimeFunctions() = delete;
 	};
+	
+	template<>
+	class StructLifetimeFunctions<struct ABI::AppxUtils::AppxPackageOSPackageDependency> final
+	{
+	public:
+		static HRESULT STDMETHODCALLTYPE DeepCopyStruct(const struct ABI::AppxUtils::AppxPackageOSPackageDependency& source, struct ABI::AppxUtils::AppxPackageOSPackageDependency& target);
+		static HRESULT STDMETHODCALLTYPE ReleaseStruct(const struct ABI::AppxUtils::AppxPackageOSPackageDependency& source);
+		static HRESULT STDMETHODCALLTYPE IsEqualStruct(const struct ABI::AppxUtils::AppxPackageOSPackageDependency& a, const struct ABI::AppxUtils::AppxPackageOSPackageDependency& b, bool& result);
+
+		StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
+		~StructLifetimeFunctions() = delete;
+	};
+	
+	template<>
+	class StructLifetimeFunctions<struct ABI::AppxUtils::AppxPackageHostRuntimeDependency> final
+	{
+	public:
+		static HRESULT STDMETHODCALLTYPE DeepCopyStruct(const struct ABI::AppxUtils::AppxPackageHostRuntimeDependency& source, struct ABI::AppxUtils::AppxPackageHostRuntimeDependency& target);
+		static HRESULT STDMETHODCALLTYPE ReleaseStruct(const struct ABI::AppxUtils::AppxPackageHostRuntimeDependency& source);
+		static HRESULT STDMETHODCALLTYPE IsEqualStruct(const struct ABI::AppxUtils::AppxPackageHostRuntimeDependency& a, const struct ABI::AppxUtils::AppxPackageHostRuntimeDependency& b, bool& result);
+
+		StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
+		~StructLifetimeFunctions() = delete;
+	};
 }
