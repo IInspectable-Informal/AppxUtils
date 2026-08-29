@@ -4,7 +4,7 @@ namespace ABI::AppxUtils
 {
     class AppxPackage final : public InspectableBase<BaseTrust,
         IAppxPackageCore, IAppxPackagePayloadFilesReader,
-        IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10
+        IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10,
         IAppxPackageLegacy,
         IAppxPackageInterop>
     {
