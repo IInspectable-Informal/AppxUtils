@@ -51,7 +51,7 @@ namespace ABI::AppxUtils
 		{
 			EnterCriticalSection(m_CriticalSection);
 			HRESULT hr{ S_OK };
-			if (m_RelativePath)
+			if (!m_RelativePath)
 			{
 				LPWSTR relativePath{ nullptr };
 				hr = m_AppxPayloadFile->GetName(&relativePath);
@@ -85,7 +85,7 @@ namespace ABI::AppxUtils
 		{
 			EnterCriticalSection(m_CriticalSection);
 			HRESULT hr{ S_OK };
-			if (m_FileType)
+			if (!m_FileType)
 			{
 				LPWSTR relativePath{ nullptr };
 				hr = m_AppxPayloadFile->GetName(&relativePath);
@@ -136,7 +136,7 @@ namespace ABI::AppxUtils
 		{
 			EnterCriticalSection(m_CriticalSection);
 			HRESULT hr{ S_OK };
-			if (m_ContentType)
+			if (!m_ContentType)
 			{
 				LPWSTR contentType{ nullptr };
 				hr = m_AppxPayloadFile->GetContentType(&contentType);
@@ -261,7 +261,7 @@ namespace ABI::AppxUtils
 		{
 			EnterCriticalSection(m_CriticalSection);
 			HRESULT hr{ S_OK };
-			if (m_Name)
+			if (!m_Name)
 			{
 				LPWSTR relativePath{ nullptr };
 				hr = m_AppxPayloadFile->GetName(&relativePath);
