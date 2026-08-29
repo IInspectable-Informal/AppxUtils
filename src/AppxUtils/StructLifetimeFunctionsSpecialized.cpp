@@ -234,9 +234,12 @@ namespace ABI::AppxUtils::Internal
 
 	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageMainPackageDependency>::ReleaseStruct(const struct ABI::AppxPackageMainPackageDependency& source)
 	{
-		WindowsDeleteString(source.Name);
-		WindowsDeleteString(source.FamilyName);
-		WindowsDeleteString(source.Publisher);
+	    if (source.Name)
+		{ WindowsDeleteString(source.Name); }
+		if (source.FamilyName))
+		{ WindowsDeleteString(source.FamilyName); }
+		if (source.Publisher)
+		{ WindowsDeleteString(source.Publisher); }
 		return S_OK;
 	}
 
@@ -246,6 +249,65 @@ namespace ABI::AppxUtils::Internal
 		results[0] = IsEqualWinRTString(a.Name, b.Name);
 		results[1] = IsEqualWinRTString(a.FamilyName, b.FamilyName);
 		results[2] = IsEqualWinRTString(a.Publisher, b.Publisher);
+		result = results[0] && results[1] && results[2];
+		return S_OK;
+	}
+	
+	//AppxPackageOSPackageDependency
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageOSPackageDependency>::DeepCopyStruct(const struct ABI::AppxPackageOSPackageDependency& source, struct ABI::AppxPackageOSPackageDependency& target)
+	{
+		HRESULT hr{ WindowsDuplicateString(source.Name, &target.Name) };
+		if (SUCCEEDED(hr))
+		{ target.Version = source.Version; }
+		return hr;
+	}
+
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageOSPackageDependency>::ReleaseStruct(const struct ABI::AppxPackageOSPackageDependency& source)
+	{
+	    if (source.Name))
+		{ WindowsDeleteString(source.Name); }
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageOSPackageDependency>::IsEqualStruct(const struct ABI::AppxPackageOSPackageDependency& a, const struct ABI::AppxPackageOSPackageDependency& b, bool& result)
+	{
+		bool results[2]{ false, false };
+		results[0] = IsEqualWinRTString(a.Name, b.Name);
+		results[1] = a.Version == b.Version;
+		result = results[0] && results[1];
+		return S_OK;
+	}
+	
+	//AppxPackageHostRuntimeDependency
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageHostRuntimeDependency>::DeepCopyStruct(const struct ABI::AppxPackageHostRuntimeDependency& source, struct ABI::AppxPackageHostRuntimeDependency& target)
+	{
+		HRESULT hr{ WindowsDuplicateString(source.Name, &target.Name) };
+		if (SUCCEEDED(hr))
+		{
+		    hr = WindowsDuplicateString(source.Publisher, &target.Punlisher);
+		    if (SUCCEEDED(hr);
+		    { target.MinVersion = source.MinVersion; }
+		    else
+		    { WindowsDeleteString(target.Name);}
+		}
+		return hr;
+	}
+
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageHostRuntimeDependency>::ReleaseStruct(const struct ABI::AppxPackageHostRuntimeDependency& source)
+	{
+		if (source.Name))
+		{ WindowsDeleteString(source.Name); }
+		if (source.Publisher)
+		{ WindowsDeleteString(source.Publisher); }
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageHostRuntimeDependency>::IsEqualStruct(const struct ABI::AppxPackageHostRuntimeDependency& a, const struct ABI::AppxPackageHostRuntimeDependency& b, bool& result)
+	{
+		bool results[3]{ false, false };
+		results[0] = IsEqualWinRTString(a.Name, b.Name);
+		results[1] = IsEqualWinRTString(a.Publisher, b.Publisher);
+		results[2] = a.MinVersion == b.MinVersion;
 		result = results[0] && results[1] && results[2];
 		return S_OK;
 	}
