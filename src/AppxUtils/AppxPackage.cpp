@@ -1455,6 +1455,22 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
+    //IAppxPackage10
+    HRESULT STDMETHODCALLTYPE AppxPackage::get_DriverDependencies(ABI::IVectorView<AppxPackageDriverDependency*>** value)
+    {
+        return E_NOTIMPL;
+    }
+    
+    HRESULT STDMETHODCALLTYPE AppxPackage::get_OSPackageDependencies(ABI::IVectorView<struct AppxPackageOSPackageDependency>** value)
+    {
+        return E_NOTIMPL;
+    }
+    
+    HRESULT STDMETHODCALLTYPE AppxPackage::get_HostRuntimeDependencies(ABI::IVectorView<struct AppxPackageHostRuntimeDependency>** value)
+    {
+        return E_NOTIMPL;
+    }
+
     //IAppxPackageLegacy
     HRESULT STDMETHODCALLTYPE AppxPackage::get_MinVersionLegacy(struct ABI::PackageVersion* value)
     {
