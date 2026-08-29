@@ -264,7 +264,7 @@ namespace ABI::AppxUtils::Internal
 
 	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageOSPackageDependency>::ReleaseStruct(const struct ABI::AppxPackageOSPackageDependency& source)
 	{
-	    if (source.Name))
+	    if (source.Name)
 		{ WindowsDeleteString(source.Name); }
 		return S_OK;
 	}
@@ -284,18 +284,18 @@ namespace ABI::AppxUtils::Internal
 		HRESULT hr{ WindowsDuplicateString(source.Name, &target.Name) };
 		if (SUCCEEDED(hr))
 		{
-		    hr = WindowsDuplicateString(source.Publisher, &target.Punlisher);
-		    if (SUCCEEDED(hr);
+		    hr = WindowsDuplicateString(source.Publisher, &target.Publisher);
+		    if (SUCCEEDED(hr))
 		    { target.MinVersion = source.MinVersion; }
 		    else
-		    { WindowsDeleteString(target.Name);}
+		    { WindowsDeleteString(target.Name); }
 		}
 		return hr;
 	}
 
 	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageHostRuntimeDependency>::ReleaseStruct(const struct ABI::AppxPackageHostRuntimeDependency& source)
 	{
-		if (source.Name))
+	    if (source.Name)
 		{ WindowsDeleteString(source.Name); }
 		if (source.Publisher)
 		{ WindowsDeleteString(source.Publisher); }
