@@ -1471,7 +1471,7 @@ namespace ABI::AppxUtils
             if (!m_OSPackageDependencies)
             {
                 IAppxManifestReader* reader{ nullptr };
-                hr = GetManifrstReader(reader);
+                hr = GetManifestReader(reader);
                 if (SUCCEEDED(hr))
                 {
                     IAppxManifestReader7* reader7{ nullptr };
@@ -1578,7 +1578,7 @@ namespace ABI::AppxUtils
             if (!m_HostRuntimeDependencies)
             {
                 IAppxManifestReader* reader{ nullptr };
-                hr = GetManifrstReader(reader);
+                hr = GetManifestReader(reader);
                 if (SUCCEEDED(hr))
                 {
                     IAppxManifestReader7* reader7{ nullptr };
