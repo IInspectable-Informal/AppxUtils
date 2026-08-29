@@ -236,7 +236,7 @@ namespace ABI::AppxUtils::Internal
 	{
 	    if (source.Name)
 		{ WindowsDeleteString(source.Name); }
-		if (source.FamilyName))
+		if (source.FamilyName)
 		{ WindowsDeleteString(source.FamilyName); }
 		if (source.Publisher)
 		{ WindowsDeleteString(source.Publisher); }
