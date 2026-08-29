@@ -1463,12 +1463,231 @@ namespace ABI::AppxUtils
     
     HRESULT STDMETHODCALLTYPE AppxPackage::get_OSPackageDependencies(ABI::IVectorView<struct AppxPackageOSPackageDependency>** value)
     {
-        return E_NOTIMPL;
+        auto local{ reinterpret_cast<VectorView<struct AppxPackageOSPackageDependencies>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_OSPackageDependencies), nullptr, nullptr)) };
+        if (local == nullptr)
+        {
+            EnterCriticalSection(&m_CriticalSection);
+            HRESULT hr{ S_OK };
+            if (!m_OSPackageDependencies)
+            {
+                IAppxManifestReader* reader{ nullptr };
+                hr = GetManifrstReader(reader);
+                if (SUCCEEDED(hr))
+                {
+                    IAppxManifestReader7* reader7{ nullptr };
+                    hr = reader->QueryInterface(__uuidof(reader7), to_void_pp(reader7));
+                    if (SUCCEEDED(hr))
+                    {
+                        IAppxManifestOSPackageDependenciesEnumerator* enumerator{ nullptr };
+                        hr = reader7->GetOSPackageDependencies(&enumerator);
+                        if (SUCCEEDED(hr))
+                        {
+                            UINT32 count{ 0 };
+                            BOOL hasNext{ false };
+                            enumerator->GetHasCurrent(&hasNext);
+                            while (hasNext)
+                            {
+                                ++count;
+                                enumerator->MoveNext(&hasNext);
+                            }
+                            enumerator->Release();
+                            hr = reader7->GetOSPackageDependencies(&enumerator);
+                            if (SUCCEEDED(hr))
+                            {
+                                struct AppxPackageOSPackageDependency* dependencies{ new AppxPackageOSPackageDependency[count]{} };
+                                if (dependencies)
+                                {
+                                    enumerator->GetHasCurrent(&hasNext);
+                                    UINT32 completed{ 0 };
+                                    while (hasNext)
+                                    {
+                                        IAppxManifestOSPackageDependency* element{ nullptr };
+                                        hr = enumerator->GetCurrent(&element);
+                                        if (SUCCEEDED(hr))
+                                        {
+                                            auto& dep{ dependencies[completed] };
+                                            LPWSTR name{ nullptr };
+                                            hr = element->GetName(&name);
+                                            if (SUCCEEDED(hr))
+                                            {
+                                                hr = WindowsCreateString(name, WStringLength(name), &dep.Name);
+                                                CoTaskMemFree(name);
+                                                if (SUCCEEDED(hr))
+                                                {
+                                                    UINT64 ver{};
+                                                    hr = element->GetVersion(&ver);
+                                                    if (SUCCEEDED(hr))
+                                                    {
+                                                        dep.Version = UInt64ToPkgVer(ver);
+                                                        ++completed;
+                                                        element->MoveNext(&hasNext);
+                                                    }
+                                                    else
+                                                    { WindowsDeleteString(dep.Name); }
+                                                }
+                                            }
+                                            element->Release();
+                                        }
+                                        if (FAILED(hr))
+                                        {
+                                            for (UINT32 i{ 0 }; i < completed; ++i)
+                                            { WindowsDeleteString(dependencies[i].Name); }
+                                            delete[] dependencies;
+                                            break;
+                                        }
+                                    }
+                                    if (SUCCEEDED(hr))
+                                    {
+                                        m_OSPackageDependencies = new VectorView<struct AppxPackageOSPackageDependency>(dependencies, count);
+                                        if (!m_OSPackageDependencies)
+                                        {
+                                            hr = E_OUTOFMEMORY;
+                                            for (UINT32 i{ 0 }; i < completed; ++i)
+                                            { WindowsDeleteString(dependencies[i].Name); }
+                                            delete[] dependencies;
+                                        }
+                                    }
+                                }
+                                else
+                                { hr = E_OUTOFMEMORY; }
+                                enumerator->Release();
+                            }
+                        }
+                        reader7->Release();
+                    }
+                }
+            }
+            local = m_OSPackageDependencies;
+            LeaveCriticalSection(&m_CriticalSection);
+            if (FAILED(hr))
+            { return hr; }
+        }
+        
+        local->AddRef();
+        *value = local;
+        return S_OK;
     }
     
     HRESULT STDMETHODCALLTYPE AppxPackage::get_HostRuntimeDependencies(ABI::IVectorView<struct AppxPackageHostRuntimeDependency>** value)
     {
-        return E_NOTIMPL;
+        auto local{ reinterpret_cast<VectorView<struct AppxPackageOSPackageDependencies>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_HostRuntimeDependencies), nullptr, nullptr)) };
+        if (local == nullptr)
+        {
+            EnterCriticalSection(&m_CriticalSection);
+            HRESULT hr{ S_OK };
+            if (!m_HostRuntimeDependencies)
+            {
+                IAppxManifestReader* reader{ nullptr };
+                hr = GetManifrstReader(reader);
+                if (SUCCEEDED(hr))
+                {
+                    IAppxManifestReader7* reader7{ nullptr };
+                    hr = reader->QueryInterface(__uuidof(reader7), to_void_pp(reader7));
+                    if (SUCCEEDED(hr))
+                    {
+                        IAppxManifestHostRuntimeDependenciesEnumerator* enumerator{ nullptr };
+                        hr = reader7->GetHostRuntimeDependencies(&enumerator);
+                        if (SUCCEEDED(hr))
+                        {
+                            UINT32 count{ 0 };
+                            BOOL hasNext{ false };
+                            enumerator->GetHasCurrent(&hasNext);
+                            while (hasNext)
+                            {
+                                ++count;
+                                enumerator->MoveNext(&hasNext);
+                            }
+                            enumerator->Release();
+                            hr = reader7->GetHostRuntimeDependencies(&enumerator);
+                            if (SUCCEEDED(hr))
+                            {
+                                struct AppxPackageHostRuntimeDependency* dependencies{ new AppxPackageHostRuntimeDependency[count]{} };
+                                if (dependencies)
+                                {
+                                    enumerator->GetHasCurrent(&hasNext);
+                                    UINT32 completed{ 0 };
+                                    while (hasNext)
+                                    {
+                                        IAppxManifestHostRuntimeDependency* element{ nullptr };
+                                        hr = enumerator->GetCurrent(&element);
+                                        if (SUCCEEDED(hr))
+                                        {
+                                            auto& dep{ dependencies[completed] };
+                                            LPWSTR name{ nullptr };
+                                            hr = element->GetName(&name);
+                                            if (SUCCEEDED(hr))
+                                            {
+                                                LPWSTR publisher{ nullptr };
+                                                hr = element->GetPublisher(&publisher);
+                                                if (SUCCEEDED(hr))
+                                                {
+                                                    hr = WindowsCreateString(name, WStringLength(name), &dep.Name);
+                                                    if (SUCCEEDED(hr))
+                                                    {
+                                                        hr = WindowsCreateString(publisher, WStringLength(publisher), &dep.Publisher);
+                                                        if (SUCCEEDED(hr))
+                                                        {
+                                                            UINT64 minVer{};
+                                                            hr = element->GetMinVersion(&minVer);
+                                                            if (SUCCEEDED(hr))
+                                                            {
+                                                                dep.MinVersion = UInt64ToPkgVer(minVer);
+                                                                ++completed;
+                                                                element->MoveNext(&hasNext);
+                                                            }
+                                                            else
+                                                            {
+                                                                WindowsDeleteString(dep.Publisher);
+                                                                WindowsDeleteString(dep.Name);
+                                                            }
+                                                        }
+                                                        else
+                                                        { WindowsDeleteString(dep.Name); }
+                                                    }
+                                                    CoTaskMemFree(publisher);
+                                                }
+                                                CoTaskMemFree(name);
+                                            }
+                                            element->Release();
+                                        }
+                                        if (FAILED(hr))
+                                        {
+                                            for (UINT32 i{ 0 }; i < completed; ++i)
+                                            { StructLifetimeFunctions<struct AppxPackageHostRuntimeDependency>::ReleaseStruct(dependencies[i]); }
+                                            delete[] dependencies;
+                                            break;
+                                        }
+                                    }
+                                    if (SUCCEEDED(hr))
+                                    {
+                                        m_HostRuntimeDependencies = new VectorView<struct AppxPackageHostRuntimeDependency>(dependencies, count);
+                                        if (!m_HostRuntimeDependencies)
+                                        {
+                                            hr = E_OUTOFMEMORY;
+                                            for (UINT32 i{ 0 }; i < completed; ++i)
+                                            { StructLifetimeFunctions<struct AppxPackageHostRuntimeDependency>::ReleaseStruct(dependencies[i]); }
+                                            delete[] dependencies;
+                                        }
+                                    }
+                                }
+                                else
+                                { hr = E_OUTOFMEMORY; }
+                                enumerator->Release();
+                            }
+                        }
+                        reader7->Release();
+                    }
+                }
+            }
+            local = m_HostRuntimeDependencies;
+            LeaveCriticalSection(&m_CriticalSection);
+            if (FAILED(hr))
+            { return hr; }
+        }
+        
+        local->AddRef();
+        *value = local;
+        return S_OK;
     }
 
     //IAppxPackageLegacy
@@ -1669,6 +1888,11 @@ namespace ABI::AppxUtils
 
         if (m_MainPackageDependencies)
         { m_MainPackageDependencies->Release(); }
+        
+        if (m_OSPackageDependencies)
+        { m_OSPackageDependencies->Release(); }
+        if (m_HostRuntimeDependencies)
+        { m_HostRuntimeDependencies->Release(); }
 
         DeleteCriticalSection(&m_CriticalSection);
     }
