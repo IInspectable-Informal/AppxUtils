@@ -106,6 +106,9 @@ namespace ABI::AppxUtils
 
         BOOL m_HasIsNonQualifiedResourcePackage{ false };
         bool m_IsNonQualifiedResourcePackage{ false };
+        
+        ABI::AppxUtils::Internal::VectorView<struct AppxPackageOSPackageDependency>* m_OSPackageDependencies{ nullptr };
+        ABI::AppxUtils::Internal::VectorView<struct AppxPackageHostRuntimeDependency>* m_HostRuntimeDependencies{ nullptr };
 
         BOOL m_HasMinVersionLegacy{ false };
         struct ABI::Windows::ApplicationModel::PackageVersion m_MinVersionLegacy { 0, 0, 0, 0 };
