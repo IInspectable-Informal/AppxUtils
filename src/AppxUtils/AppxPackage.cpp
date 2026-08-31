@@ -1463,7 +1463,7 @@ namespace ABI::AppxUtils
     
     HRESULT STDMETHODCALLTYPE AppxPackage::get_OSPackageDependencies(ABI::IVectorView<struct AppxPackageOSPackageDependency>** value)
     {
-        auto local{ reinterpret_cast<VectorView<struct AppxPackageOSPackageDependencies>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_OSPackageDependencies), nullptr, nullptr)) };
+        auto local{ reinterpret_cast<VectorView<struct AppxPackageOSPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_OSPackageDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
@@ -1520,7 +1520,7 @@ namespace ABI::AppxUtils
                                                     {
                                                         dep.Version = UInt64ToPkgVer(ver);
                                                         ++completed;
-                                                        element->MoveNext(&hasNext);
+                                                        enumerator->MoveNext(&hasNext);
                                                     }
                                                     else
                                                     { WindowsDeleteString(dep.Name); }
@@ -1570,7 +1570,7 @@ namespace ABI::AppxUtils
     
     HRESULT STDMETHODCALLTYPE AppxPackage::get_HostRuntimeDependencies(ABI::IVectorView<struct AppxPackageHostRuntimeDependency>** value)
     {
-        auto local{ reinterpret_cast<VectorView<struct AppxPackageOSPackageDependencies>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_HostRuntimeDependencies), nullptr, nullptr)) };
+        auto local{ reinterpret_cast<VectorView<struct AppxPackageOSPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_HostRuntimeDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
@@ -1633,7 +1633,7 @@ namespace ABI::AppxUtils
                                                             {
                                                                 dep.MinVersion = UInt64ToPkgVer(minVer);
                                                                 ++completed;
-                                                                element->MoveNext(&hasNext);
+                                                                enumerator->MoveNext(&hasNext);
                                                             }
                                                             else
                                                             {
