@@ -13,7 +13,7 @@
 * ✅ 解析 Win10 AppX/MSIX 包的非限定资源包属性（由 AppxUtils.IAppxPackage6 接口提供，需 Win10 1803+（build 17134+））
 * ✅ 解析 Win8 AppX 包遗留属性（由 AppxUtils.IAppxPackageLegacy 接口提供，除非需要解析为 Win8/8.1 开发的 Metro/Modern 应用程序安装包，否则不推荐使用）
 * ✅ 通过 IAppxPackageInterop 低级别 COM 接口获取底层的 IAppxPackageReader 接口实例（⚠️这是低级别操作，除非必要，否则不建议在生产环境下使用）
-* 🚧 解析 Win10 AppX/MSIX 包驱动依赖项、OS包依赖项、宿主运行时依赖项（由 AppxUtils.IAppxPackage10 接口提供，受限于操作系统提供的接口，需 Win10 2004+（build 19041+））
+* ✅ 解析 Win10 AppX/MSIX 包驱动依赖项、OS包依赖项、宿主运行时依赖项（由 AppxUtils.IAppxPackage10 接口提供，受限于操作系统提供的接口，需 Win10 2004+（build 19041+））
 * 🚧 获取 AppX/MSIX 包里的载荷文件（由 AppxUtils.IAppxPackagePayloadFilesReader 接口提供）
 * 📋 解析 AppX 捆绑包（需 Win8.1/Win10+）
 
