@@ -1,0 +1,41 @@
+import "oaidl.idl";
+import "ocidl.idl";
+import "unknwn.idl";
+import "AppxPackaging.idl";
+
+[
+	object,
+	uuid(3BFFF155-FC6F-4990-A079-C7C63608BC13)
+]
+interface IAppxPackageInterop : IUnknown
+{
+	[propget] HRESULT PackageReader([out, retval] IAppxPackageReader** value);
+};
+
+[
+	object,
+	uuid(0ABFF568-2744-48DB-9B23-39DCABD321B0)
+]
+interface IAppxPackageApplicationInterop : IUnknown
+{
+	[propget] HRESULT Application([out, retval] IAppxManifestApplication** value);
+};
+
+[
+	object,
+	uuid(58B6BF5F-5EAE-429C-A76D-74156EC1E38B)
+]
+interface IAppxPackagePayloadFileInterop : IUnknown
+{
+	[propget] HRESULT AppxPayloadFile([out, retval] IAppxFile** value);
+};
+
+[
+	object,
+	uuid(EBC32721-9D69-4F08-BB2B-A4581785E9C7)
+]
+interface IAppxPackageDriverDependencyInterop : IUnknown
+{
+	[propget] HRESULT DriverDependency([out, retval] IAppxManifestDriverDependency** value);
+	[propget] HRESULT DriverConstraints([out, retval] IAppxManifestDriverConstraintsEnumerator** value);
+};

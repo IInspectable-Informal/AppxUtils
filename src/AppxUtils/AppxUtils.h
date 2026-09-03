@@ -2,7 +2,7 @@
 
 namespace ABI::AppxUtils
 {
-    class AppxPackageFactory : public InspectableBase<BaseTrust, IAppxPackageFactory>
+    class AppxPackageFactory : public InspectableBase<BaseTrust, IAppxPackageFactory, IAgileObject>
     {
     public:
         AppxPackageFactory();

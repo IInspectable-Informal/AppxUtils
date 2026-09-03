@@ -10,7 +10,8 @@ namespace ABI::AppxUtils
         ABI::Windows::Storage::IStorageFilePropertiesWithAvailability,
         ABI::Windows::Storage::Streams::IInputStreamReference,
         ABI::Windows::Storage::Streams::IRandomAccessStreamReference,
-        IAppxPackagePayloadFileInterop
+        IAppxPackagePayloadFileInterop,
+        IAgileObject
     >
 	{
 	public:

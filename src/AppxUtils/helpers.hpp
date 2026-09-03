@@ -14,3 +14,13 @@ constexpr inline UINT32 WStringLength(LPCWSTR wstr)
     }
     return count;
 }
+
+constexpr inline ABI::Windows::ApplicationModel::PackageVersion UInt64ToPkgVer(UINT64 verNum)
+{
+    ABI::Windows::ApplicationModel::PackageVersion ver{};
+    ver.Major = (verNum >> 48) & 0xFFFF;
+    ver.Minor = (verNum >> 32) & 0xFFFF;
+    ver.Build = (verNum >> 16) & 0xFFFF;
+    ver.Revision = verNum & 0xFFFF;
+    return ver;
+}

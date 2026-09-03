@@ -14,6 +14,8 @@ namespace ABI::AppxUtils::Internal
 		StructLifetimeFunctions(const StructLifetimeFunctions&) = delete;
 		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
 		~StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions& operator =(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions& operator =(StructLifetimeFunctions&&) = delete;
 	};
 
 	template<>
@@ -28,6 +30,8 @@ namespace ABI::AppxUtils::Internal
 		StructLifetimeFunctions(const StructLifetimeFunctions&) = delete;
 		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
 		~StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions& operator =(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions& operator =(StructLifetimeFunctions&&) = delete;
 	};
 
 	template<>
@@ -42,6 +46,8 @@ namespace ABI::AppxUtils::Internal
 		StructLifetimeFunctions(const StructLifetimeFunctions&) = delete;
 		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
 		~StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions& operator =(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions& operator =(StructLifetimeFunctions&&) = delete;
 	};
 
 	template<>
@@ -56,6 +62,8 @@ namespace ABI::AppxUtils::Internal
 		StructLifetimeFunctions(const StructLifetimeFunctions&) = delete;
 		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
 		~StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions& operator =(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions& operator =(StructLifetimeFunctions&&) = delete;
 	};
 	
 	template<>
@@ -70,6 +78,8 @@ namespace ABI::AppxUtils::Internal
 		StructLifetimeFunctions(const StructLifetimeFunctions&) = delete;
 		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
 		~StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions& operator =(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions& operator =(StructLifetimeFunctions&&) = delete;
 	};
 	
 	template<>
@@ -84,5 +94,39 @@ namespace ABI::AppxUtils::Internal
 		StructLifetimeFunctions(const StructLifetimeFunctions&) = delete;
 		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
 		~StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions& operator =(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions& operator =(StructLifetimeFunctions&&) = delete;
+	};
+
+	template<>
+	class StructLifetimeFunctions<struct ABI::AppxUtils::AppxPackageDriverConstraint> final
+	{
+	public:
+		static HRESULT STDMETHODCALLTYPE DeepCopyStruct(const struct ABI::AppxUtils::AppxPackageDriverConstraint& source, struct ABI::AppxUtils::AppxPackageDriverConstraint& target);
+		static HRESULT STDMETHODCALLTYPE ReleaseStruct(const struct ABI::AppxUtils::AppxPackageDriverConstraint& source);
+		static HRESULT STDMETHODCALLTYPE IsEqualStruct(const struct ABI::AppxUtils::AppxPackageDriverConstraint& a, const struct ABI::AppxUtils::AppxPackageDriverConstraint& b, bool& result);
+
+		StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
+		~StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions& operator =(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions& operator =(StructLifetimeFunctions&&) = delete;
+	};
+
+	template<>
+	class StructLifetimeFunctions<struct ABI::Windows::ApplicationModel::PackageVersion> final
+	{
+	public:
+		static HRESULT STDMETHODCALLTYPE DeepCopyStruct(const struct ABI::Windows::ApplicationModel::PackageVersion& source, struct ABI::Windows::ApplicationModel::PackageVersion& target);
+		static HRESULT STDMETHODCALLTYPE ReleaseStruct(const struct ABI::Windows::ApplicationModel::PackageVersion& source);
+		static HRESULT STDMETHODCALLTYPE IsEqualStruct(const struct ABI::Windows::ApplicationModel::PackageVersion& a, const struct ABI::Windows::ApplicationModel::PackageVersion& b, bool& result);
+
+		StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions(StructLifetimeFunctions&&) = delete;
+		~StructLifetimeFunctions() = delete;
+		StructLifetimeFunctions& operator =(const StructLifetimeFunctions&) = delete;
+		StructLifetimeFunctions& operator =(StructLifetimeFunctions&&) = delete;
 	};
 }

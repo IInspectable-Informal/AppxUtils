@@ -9,6 +9,7 @@
 #include <unknwn.h>
 #include <appxpackaging.h>
 #include <shcore.h>
+#include <heapapi.h>
 
 //WinRT
 #include <hstring.h>
@@ -27,7 +28,8 @@
 
 //Self
 #include "Generated Files\AppxUtils.g.h"
-#include "Generated Files\AppxPackageInterop.g.h"
+#include "Generated Files\AppxUtilsInterop.g.h"
+#include "HeapManagement.h"
 #include "dllmain.h"
 #include "InspectableBase.hpp"
 #include "StaticHelpers.hpp"

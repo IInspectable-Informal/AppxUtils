@@ -110,7 +110,7 @@ namespace AppxUtils
 
 	[version(10.0)]
 	[default_interface]
-	runtimeclass AppxPackageDriverDependency : Windows.Foundation.Collections.IIterable<AppxPackageDriverConstraint>
+	runtimeclass AppxPackageDriverDependency : Windows.Foundation.Collections.IVectorView<AppxPackageDriverConstraint>
 	{
 
 	};
@@ -179,6 +179,54 @@ namespace AppxUtils
 		DirectXFeatureLevel DirectXFeatureLevel;
 	};
 
+	enum AppxPackageApplicationProperty
+	{
+		AppListEntry,
+		BackgroundColor,
+		DefaultSize,
+		Description,
+		DisplayName,
+		EntryPoint,
+		Executable,
+		ForegroundText,
+		Id,
+		LockScreenLogo,
+		LockScreenNotification,
+		Logo,
+		MinWidth,
+		ShortName,
+		SmallLogo,
+		Square150x150Logo,
+		Square30x30Logo,
+		Square310x310Logo,
+		Square44x44Logo,
+		Square70x70Logo,
+		Square71x71Logo,
+		StartPage,
+		Tall150x310Logo,
+		VisualGroup,
+		WideLogo,
+		Wide310x150Logo,
+	};
+
+	[exclusiveto(AppxPackageApplication)]
+	interface IAppxPackageApplication
+	{
+		String AppUserModelId{ get; };
+		String Id{ get; };
+		String DisplayName{ get; };
+		String Description{ get; };
+		String BackgroundColor{ get; };
+
+		String GetPropertyValue(AppxPackageApplicationProperty prop);
+		Boolean TryGetPropertyValue(AppxPackageApplicationProperty prop, out String propValue);
+	};
+
+	runtimeclass AppxPackageApplication : [default] IAppxPackageApplication
+	{
+
+	}
+
 	[exclusiveto(AppxPackage)]
 	interface IAppxPackageCore
 	{
@@ -195,6 +243,8 @@ namespace AppxUtils
 		String DisplayName{ get; };
 		String PublisherDisplayName{ get; };
 		String Description{ get; };
+
+		Windows.Foundation.Collections.IVectorView<AppxPackageApplication> Applications{ get; };
 
 		Windows.Foundation.Collections.IVectorView<AppxPackageDependency> PackageDependencies{ get; };
 

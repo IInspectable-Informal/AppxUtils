@@ -200,11 +200,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AppxPackage.h" />
+    <ClInclude Include="AppxPackageApplication.h" />
+    <ClInclude Include="AppxPackageDriverDependency.h" />
     <ClInclude Include="AppxPackagePayloadFile.h" />
     <ClInclude Include="AppxUtils.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="FoundationStructComparer.hpp" />
     <ClInclude Include="GuidHelpers.hpp" />
+    <ClInclude Include="HeapManagement.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="helpers.hpp" />
     <ClInclude Include="InspectableBase.hpp" />
@@ -218,9 +221,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AppxPackage.cpp" />
+    <ClCompile Include="AppxPackageApplication.cpp" />
+    <ClCompile Include="AppxPackageDriverDependency.cpp" />
     <ClCompile Include="AppxPackagePayloadFile.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="AppxUtils.cpp" />
+    <ClCompile Include="HeapManagement.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
@@ -230,7 +236,7 @@
     <ClCompile Include="StructLifetimeFunctionsSpecialized.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="AppxPackageInterop.idl">
+    <Midl Include="AppxUtilsInterop.idl">
       <EnableWindowsRuntime Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</EnableWindowsRuntime>
       <EnableWindowsRuntime Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">false</EnableWindowsRuntime>
       <EnableWindowsRuntime Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">false</EnableWindowsRuntime>

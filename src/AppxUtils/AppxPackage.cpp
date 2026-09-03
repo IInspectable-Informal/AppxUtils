@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "AppxPackage.h"
+#include "AppxPackageApplication.h"
 #include "AppxPackagePayloadFile.h"
+#include "AppxPackageDriverDependency.h"
 #include "helpers.hpp"
 
 namespace ABI
@@ -16,23 +18,12 @@ namespace ABI
 
 namespace ABI::AppxUtils
 {    
-    constexpr inline ABI::PackageVersion UInt64ToPkgVer(UINT64 verNum)
-    {
-        ABI::PackageVersion ver{};
-        ver.Major = (verNum >> 48) & 0xFFFF;
-        ver.Minor = (verNum >> 32) & 0xFFFF;
-        ver.Build = (verNum >> 16) & 0xFFFF;
-        ver.Revision = verNum & 0xFFFF;
-        return ver;
-    }
-
-    //AppxPackage
-    //This member methods
     AppxPackage::AppxPackage(IAppxPackageReader*& reader, const CRITICAL_SECTION& criticalSection) noexcept : m_AppxPackageReader(reader), m_CriticalSection(criticalSection)
     {
 
     }
 
+#pragma region IAppxPackageCore
     HRESULT STDMETHODCALLTYPE AppxPackage::get_Name(HSTRING* value)
     {
         HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Name), nullptr, nullptr)) };
@@ -468,6 +459,106 @@ namespace ABI::AppxUtils
         return WindowsDuplicateString(local, value);
     }
 
+    HRESULT STDMETHODCALLTYPE AppxPackage::get_Applications(ABI::IVectorView<AppxPackageApplication*>** value)
+    {
+        auto* local{ reinterpret_cast<VectorView<AppxPackageApplication*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Applications), nullptr, nullptr)) };
+        if (local == nullptr)
+        {
+            EnterCriticalSection(&m_CriticalSection);
+            HRESULT hr{ S_OK };
+            if (!m_Applications)
+            {
+                IAppxManifestReader* reader{ nullptr };
+                hr = GetManifestReader(reader);
+                if (SUCCEEDED(hr))
+                {
+                    IAppxManifestApplicationsEnumerator* enumerator{ nullptr };
+                    hr = reader->GetApplications(&enumerator);
+                    if (SUCCEEDED(hr))
+                    {
+                        UINT32 count{ 0 };
+                        BOOL hasNext{ false };
+                        enumerator->GetHasCurrent(&hasNext);
+                        while (hasNext)
+                        {
+                            ++count;
+                            enumerator->MoveNext(&hasNext);
+                        }
+                        enumerator->Release();
+                        hr = reader->GetApplications(&enumerator);
+                        if (SUCCEEDED(hr))
+                        {
+                            auto* applications{ reinterpret_cast<AppxPackageApplication*>(new byte[__aligned_size_of<AppxPackageApplication> * count]) };
+                            if (applications)
+                            {
+                                auto* criticalSections{ new CRITICAL_SECTION[count] };
+                                if (criticalSections)
+                                {
+                                    enumerator->GetHasCurrent(&hasNext);
+                                    UINT32 completed{ 0 };
+                                    while (hasNext)
+                                    {
+                                        IAppxManifestApplication* element{ nullptr };
+                                        hr = enumerator->GetCurrent(&element);
+                                        if (SUCCEEDED(hr))
+                                        {
+                                            if (InitializeCriticalSectionEx(criticalSections + completed, 0, CRITICAL_SECTION_NO_DEBUG_INFO))
+                                            {
+                                                new (applications + completed) AppxPackageApplication(element, criticalSections + completed);
+                                                ++completed;
+                                                enumerator->MoveNext(&hasNext);
+                                            }
+                                            else
+                                            {
+                                                hr = HRESULT_FROM_WIN32(GetLastError());
+                                                element->Release();
+                                            }
+                                        }
+                                        if (FAILED(hr))
+                                        {
+                                            for (UINT32 i{ 0 }; i < completed; ++i)
+                                            { applications[i].Release(); }
+                                            delete[] criticalSections;
+                                            delete[] applications;
+                                            break;
+                                        }
+                                    }
+                                    if (SUCCEEDED(hr))
+                                    {
+                                        m_Applications = new VectorView<AppxPackageApplication*>(applications, count, criticalSections);
+                                        if (!m_Applications)
+                                        {
+                                            hr = E_OUTOFMEMORY;
+                                            for (UINT32 i{ 0 }; i < completed; ++i)
+                                            { applications[i].Release(); }
+                                            delete[] criticalSections;
+                                            delete[] applications;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    hr = E_OUTOFMEMORY;
+                                    delete[] applications;
+                                }
+                            }
+                            else
+                            { hr = E_OUTOFMEMORY; }
+                            enumerator->Release();
+                        }
+                    }
+                }
+            }
+            local = m_Applications;
+            LeaveCriticalSection(&m_CriticalSection);
+            if (FAILED(hr))
+            { return hr; }
+        }
+        local->AddRef();
+        *value = local;
+        return S_OK;
+    }
+
     HRESULT STDMETHODCALLTYPE AppxPackage::get_PackageDependencies(ABI::IVectorView<struct AppxPackageDependency>** value)
     {
         auto local{ reinterpret_cast<VectorView<struct AppxPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PackageDependencies), nullptr, nullptr)) };
@@ -885,8 +976,9 @@ namespace ABI::AppxUtils
         }
         return hr;
     }
+#pragma endregion
 
-    //IAppxPackagePayloadFilesReader
+#pragma region IAppxPackagePayloadFilesReader
     HRESULT STDMETHODCALLTYPE AppxPackage::GetPayloadFiles(ABI::IMapView<HSTRING, AppxPackagePayloadFile*>** result)
     {
         auto local{ reinterpret_cast<ABI::IMapView<HSTRING, AppxPackagePayloadFile*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PayloadFiles), nullptr, nullptr)) };
@@ -908,8 +1000,9 @@ namespace ABI::AppxUtils
         *result = local;
         return S_OK;
     }
+#pragma endregion
 
-    //IAppxPackage
+#pragma region IAppxPackage
     HRESULT STDMETHODCALLTYPE AppxPackage::get_TargetDeviceFamilies(ABI::IVectorView<struct AppxPackageTargetDeviceFamily>** value)
     {
         auto local{ reinterpret_cast<VectorView<struct AppxPackageTargetDeviceFamily>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_TargetDeviceFamilies), nullptr, nullptr)) };
@@ -1202,8 +1295,9 @@ namespace ABI::AppxUtils
         *result = local;
         return S_OK;
     }
+#pragma endregion
 
-    //IAppxPackage3
+#pragma region IAppxPackage3
     HRESULT STDMETHODCALLTYPE AppxPackage::get_IsOptionalPackage(boolean* value)
     {
         long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasIsOptionalPackage), false, false) };
@@ -1289,8 +1383,9 @@ namespace ABI::AppxUtils
 
         return WindowsDuplicateString(local, value);
     }
+#pragma endregion
 
-    //IAppxPackage4
+#pragma region IAppxPackage4
     HRESULT STDMETHODCALLTYPE AppxPackage::get_MainPackageDependencies(ABI::IVectorView<struct AppxPackageMainPackageDependency>** value)
     {
         auto local{ reinterpret_cast<VectorView<struct AppxPackageMainPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageDependencies), nullptr, nullptr)) };
@@ -1416,8 +1511,9 @@ namespace ABI::AppxUtils
         *value = local;
         return S_OK;
     }
+#pragma endregion
 
-    //IAppxPackage6
+#pragma region IAppxPackage6
     HRESULT STDMETHODCALLTYPE AppxPackage::get_IsNonQualifiedResourcePackage(boolean* value)
     {
         long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasIsNonQualifiedResourcePackage), false, false) };
@@ -1454,11 +1550,95 @@ namespace ABI::AppxUtils
         *value = m_IsNonQualifiedResourcePackage;
         return S_OK;
     }
+#pragma endregion
 
-    //IAppxPackage10
+#pragma region IAppxPackage10
     HRESULT STDMETHODCALLTYPE AppxPackage::get_DriverDependencies(ABI::IVectorView<AppxPackageDriverDependency*>** value)
     {
-        return E_NOTIMPL;
+        auto local{ reinterpret_cast<VectorView<AppxPackageDriverDependency*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DriverDependencies), nullptr, nullptr)) };
+        if (local == nullptr)
+        {
+            EnterCriticalSection(&m_CriticalSection);
+            HRESULT hr{ S_OK };
+            if (!m_DriverDependencies)
+            {
+                IAppxManifestReader* reader{ nullptr };
+                hr = GetManifestReader(reader);
+                if (SUCCEEDED(hr))
+                {
+                    IAppxManifestReader7* reader7{ nullptr };
+                    hr = reader->QueryInterface(__uuidof(reader7), to_void_pp(reader7));
+                    if (SUCCEEDED(hr))
+                    {
+                        IAppxManifestDriverDependenciesEnumerator* enumerator{ nullptr };
+                        hr = reader7->GetDriverDependencies(&enumerator);
+                        if (SUCCEEDED(hr))
+                        {
+                            UINT32 count{ 0 };
+                            BOOL hasNext{ false };
+                            enumerator->GetHasCurrent(&hasNext);
+                            while (hasNext)
+                            {
+                                ++count;
+                                enumerator->MoveNext(&hasNext);
+                            }
+                            enumerator->Release();
+                            hr = reader7->GetDriverDependencies(&enumerator);
+                            if (SUCCEEDED(hr))
+                            {
+                                auto* dependencies{ reinterpret_cast<AppxPackageDriverDependency*>(new byte[__aligned_size_of<AppxPackageDriverDependency> * count]) };
+                                if (dependencies)
+                                {
+                                    enumerator->GetHasCurrent(&hasNext);
+                                    UINT32 completed{ 0 };
+                                    while (hasNext)
+                                    {
+                                        IAppxManifestDriverDependency* element{ nullptr };
+                                        hr = enumerator->GetCurrent(&element);
+                                        if (SUCCEEDED(hr))
+                                        {
+                                            new (dependencies + completed) AppxPackageDriverDependency(element);
+                                            ++completed;
+                                            enumerator->MoveNext(&hasNext);
+                                        }
+                                        else
+                                        {
+                                            for (UINT32 i{ 0 }; i < completed; ++i)
+                                            { dependencies[i].Release(); }
+                                            delete[] dependencies;
+                                            break;
+                                        }
+                                    }
+                                    if (SUCCEEDED(hr))
+                                    {
+                                        m_DriverDependencies = new VectorView<AppxPackageDriverDependency*>(dependencies, count);
+                                        if (!m_DriverDependencies)
+                                        {
+                                            hr = E_OUTOFMEMORY;
+                                            for (UINT32 i{ 0 }; i < completed; ++i)
+                                            { dependencies[i].Release(); }
+                                            delete[] dependencies;
+                                        }
+                                    }
+                                }
+                                else
+                                { hr = E_OUTOFMEMORY; }
+                                enumerator->Release();
+                            }
+                        }
+                        reader7->Release();
+                    }
+                }
+            }
+            local = m_DriverDependencies;
+            LeaveCriticalSection(&m_CriticalSection);
+            if (FAILED(hr))
+            { return hr; }
+        }
+
+        local->AddRef();
+        *value = local;
+        return S_OK;
     }
     
     HRESULT STDMETHODCALLTYPE AppxPackage::get_OSPackageDependencies(ABI::IVectorView<struct AppxPackageOSPackageDependency>** value)
@@ -1570,7 +1750,7 @@ namespace ABI::AppxUtils
     
     HRESULT STDMETHODCALLTYPE AppxPackage::get_HostRuntimeDependencies(ABI::IVectorView<struct AppxPackageHostRuntimeDependency>** value)
     {
-        auto local{ reinterpret_cast<VectorView<struct AppxPackageOSPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_HostRuntimeDependencies), nullptr, nullptr)) };
+        auto local{ reinterpret_cast<VectorView<struct AppxPackageHostRuntimeDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_HostRuntimeDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
             EnterCriticalSection(&m_CriticalSection);
@@ -1689,8 +1869,9 @@ namespace ABI::AppxUtils
         *value = local;
         return S_OK;
     }
+#pragma endregion
 
-    //IAppxPackageLegacy
+#pragma region IAppxPackageLegacy
     HRESULT STDMETHODCALLTYPE AppxPackage::get_MinVersionLegacy(struct ABI::PackageVersion* value)
     {
         long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasMinVersionLegacy), false, false) };
@@ -1779,15 +1960,32 @@ namespace ABI::AppxUtils
         *value = m_CapabilitiesLegacy;
         return S_OK;
     }
+#pragma endregion
 
-    //Private methods
+#pragma region IAppxPackageInterop
+    HRESULT STDMETHODCALLTYPE AppxPackage::get_PackageReader(IAppxPackageReader** value)
+    {
+        m_AppxPackageReader->AddRef();
+        *value = m_AppxPackageReader;
+        return S_OK;
+    }
+#pragma endregion
+
+#pragma region IInspectable
+    HRESULT STDMETHODCALLTYPE AppxPackage::GetRuntimeClassName(HSTRING* className)
+    { return WindowsCreateString(L"AppxUtils.AppxPackage", 21, className); }
+#pragma endregion
+
+#pragma region Private methods
     HRESULT STDMETHODCALLTYPE AppxPackage::GetManifestReader(IAppxManifestReader*& manifestReader)
     {
         if (!m_ManifestReader)
         {
             HRESULT hr{ m_AppxPackageReader->GetManifest(&m_ManifestReader) };
             if (FAILED(hr))
-            { return hr; }
+            {
+                return hr;
+            }
         }
         manifestReader = m_ManifestReader;
         return S_OK;
@@ -1806,23 +2004,14 @@ namespace ABI::AppxUtils
             }
 
             if (FAILED(hr))
-            { return hr; }
+            {
+                return hr;
+            }
         }
         pkgId = m_PackageId;
         return S_OK;
     }
-
-    //IAppxPackageInterop
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_PackageReader(IAppxPackageReader** value)
-    {
-        m_AppxPackageReader->AddRef();
-        *value = m_AppxPackageReader;
-        return S_OK;
-    }
-
-    //IInspectable
-    HRESULT STDMETHODCALLTYPE AppxPackage::GetRuntimeClassName(HSTRING* className)
-    { return WindowsCreateString(L"AppxUtils.AppxPackage", 21, className); }
+#pragma endregion
 
     //Destructor
     AppxPackage::~AppxPackage() noexcept
@@ -1850,6 +2039,8 @@ namespace ABI::AppxUtils
         { WindowsDeleteString(m_PublisherDisplayName); }
         if (m_Description)
         { WindowsDeleteString(m_Description); }
+        if (m_Applications)
+        { m_Applications->Release(); }
         if (m_PackageDependencies)
         { m_PackageDependencies->Release(); }
         if (m_Resources)
@@ -1889,6 +2080,8 @@ namespace ABI::AppxUtils
         if (m_MainPackageDependencies)
         { m_MainPackageDependencies->Release(); }
         
+        if (m_DriverDependencies)
+        { m_DriverDependencies->Release(); }
         if (m_OSPackageDependencies)
         { m_OSPackageDependencies->Release(); }
         if (m_HostRuntimeDependencies)

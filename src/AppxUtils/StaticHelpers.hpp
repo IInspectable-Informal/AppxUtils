@@ -81,6 +81,9 @@ namespace ABI::AppxUtils::Internal
 	constexpr bool IsFundamentalType<bool>{ true };
 
 	template<typename T>
+	constexpr auto __aligned_size_of{ alignof(T) ? (sizeof(T) % alignof(T) ? (sizeof(T) / alignof(T) + 1) * alignof(T) : sizeof(T)) : 0 };
+
+	template<typename T>
 	struct RemovePointer
 	{ using type = T; };
 

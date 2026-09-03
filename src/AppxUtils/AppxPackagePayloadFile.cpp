@@ -311,7 +311,7 @@ namespace ABI::AppxUtils
 
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::get_DateCreated(ABI::DateTime* value)
 	{
-		value->UniversalTime = 116,444,736,000,000,000;
+		value->UniversalTime = 116,444,736,000,000,000; // Jan 1, 1970 00:00:00
 		return S_OK;
 	}
 

@@ -6,7 +6,9 @@ namespace ABI::AppxUtils
         IAppxPackageCore, IAppxPackagePayloadFilesReader,
         IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10,
         IAppxPackageLegacy,
-        IAppxPackageInterop>
+        IAppxPackageInterop,
+        IAgileObject
+    >
     {
     public:
         AppxPackage(IAppxPackageReader*& reader, const CRITICAL_SECTION& criticalSection) noexcept;
@@ -23,6 +25,7 @@ namespace ABI::AppxUtils
         HRESULT STDMETHODCALLTYPE get_DisplayName(HSTRING* value);
         HRESULT STDMETHODCALLTYPE get_PublisherDisplayName(HSTRING* value);
         HRESULT STDMETHODCALLTYPE get_Description(HSTRING* value);
+        HRESULT STDMETHODCALLTYPE get_Applications(ABI::Windows::Foundation::Collections::IVectorView<AppxPackageApplication*>** value);
         HRESULT STDMETHODCALLTYPE get_PackageDependencies(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageDependency>** value);
         HRESULT STDMETHODCALLTYPE get_Resources(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageResource>** value);
         HRESULT STDMETHODCALLTYPE get_DeviceCapabilities(ABI::Windows::Foundation::Collections::IVectorView<HSTRING>** value);
@@ -83,6 +86,7 @@ namespace ABI::AppxUtils
         HSTRING m_DisplayName{ nullptr };
         HSTRING m_PublisherDisplayName{ nullptr };
         HSTRING m_Description{ nullptr };
+        ABI::AppxUtils::Internal::VectorView<AppxPackageApplication*>* m_Applications{ nullptr };
         ABI::AppxUtils::Internal::VectorView<struct AppxPackageDependency>* m_PackageDependencies{ nullptr };
         ABI::AppxUtils::Internal::VectorView<struct AppxPackageResource>* m_Resources{ nullptr };
         ABI::AppxUtils::Internal::VectorView<HSTRING>* m_DeviceCapabilities{ nullptr };
@@ -107,6 +111,7 @@ namespace ABI::AppxUtils
         BOOL m_HasIsNonQualifiedResourcePackage{ false };
         bool m_IsNonQualifiedResourcePackage{ false };
         
+        ABI::AppxUtils::Internal::VectorView<AppxPackageDriverDependency*>* m_DriverDependencies{ nullptr };
         ABI::AppxUtils::Internal::VectorView<struct AppxPackageOSPackageDependency>* m_OSPackageDependencies{ nullptr };
         ABI::AppxUtils::Internal::VectorView<struct AppxPackageHostRuntimeDependency>* m_HostRuntimeDependencies{ nullptr };
 

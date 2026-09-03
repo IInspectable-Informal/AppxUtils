@@ -34,7 +34,7 @@ namespace ABI::AppxUtils::Internal
 	}
 
 	template<typename T>
-	inline bool IsEqualReference(const ABI::IReference<T>*& a, const ABI::IReference<T>*& b)
+	inline bool IsEqualReference(ABI::IReference<T>* a, ABI::IReference<T>* b)
 	{
 		if (a && b)
 		{
@@ -309,6 +309,64 @@ namespace ABI::AppxUtils::Internal
 		results[1] = IsEqualWinRTString(a.Publisher, b.Publisher);
 		results[2] = a.MinVersion == b.MinVersion;
 		result = results[0] && results[1] && results[2];
+		return S_OK;
+	}
+
+	//AppxPackageDriverConstraint
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageDriverConstraint>::DeepCopyStruct(const struct ABI::AppxPackageDriverConstraint& source, struct ABI::AppxPackageDriverConstraint& target)
+	{
+		HRESULT hr{ WindowsDuplicateString(source.Name, &target.Name) };
+		if (SUCCEEDED(hr))
+		{
+			hr = WindowsDuplicateString(source.MinDate, &target.MinDate);
+			if (SUCCEEDED(hr))
+			{
+				target.MinVersion = source.MinVersion;
+				if (target.MinVersion)
+				{ target.MinVersion->AddRef(); }
+			}
+			else
+			{ WindowsDeleteString(target.Name); }
+		}
+		return hr;
+	}
+
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageDriverConstraint>::ReleaseStruct(const struct ABI::AppxPackageDriverConstraint& source)
+	{
+		if (source.Name)
+		{ WindowsDeleteString(source.Name); }
+		if (source.MinVersion)
+		{ source.MinVersion->Release(); }
+		if (source.MinDate)
+		{ WindowsDeleteString(source.MinDate); }
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::AppxPackageDriverConstraint>::IsEqualStruct(const struct ABI::AppxPackageDriverConstraint& a, const struct ABI::AppxPackageDriverConstraint& b, bool& result)
+	{
+		bool results[3]{ false, false, false };
+		results[0] = IsEqualWinRTString(a.Name, b.Name);
+		results[1] = IsEqualReference(a.MinVersion, b.MinVersion);
+		results[2] = IsEqualWinRTString(a.MinDate, b.MinDate);
+		result = results[0] && results[1] && results[2];
+		return S_OK;
+	}
+
+	//PackageVersion
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::PackageVersion>::DeepCopyStruct(const struct ABI::PackageVersion& source, struct ABI::PackageVersion& target)
+	{
+		target = source;
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::PackageVersion>::ReleaseStruct(const struct ABI::PackageVersion& source)
+	{
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE StructLifetimeFunctions<struct ABI::PackageVersion>::IsEqualStruct(const struct ABI::PackageVersion& a, const struct ABI::PackageVersion& b, bool& result)
+	{
+		result = a == b;
 		return S_OK;
 	}
 }

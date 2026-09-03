@@ -5,7 +5,8 @@ namespace ABI::AppxUtils::Internal
 	template<typename T>
     class Reference final : public InspectableBase<BaseTrust,
         ABI::Windows::Foundation::IReference<T>,
-        ABI::Windows::Foundation::IPropertyValue
+        ABI::Windows::Foundation::IPropertyValue,
+        IAgileObject
     >
     {
     private:
