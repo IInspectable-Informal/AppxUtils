@@ -5,6 +5,15 @@ import "AppxPackaging.idl";
 
 [
 	object,
+	uuid(4365BA6F-D162-45AB-97AA-F7AFB0A2289C)
+]
+interface IAppxBundleInterop : IUnknown
+{
+	[propget] HRESULT BundleReader([out, retval] IAppxBundleReader** value);
+};
+
+[
+	object,
 	uuid(3BFFF155-FC6F-4990-A079-C7C63608BC13)
 ]
 interface IAppxPackageInterop : IUnknown

@@ -34,7 +34,7 @@ STDAPI DllGetActivationFactory(HSTRING className, IInspectable** factory)
         ABI::AppxUtils::AppxPackageFactory* instance{ new ABI::AppxUtils::AppxPackageFactory{} };
         if (instance)
         {
-            *factory = instance;
+            *factory = reinterpret_cast<IInspectable*>(instance);
             return S_OK;
         }
         else

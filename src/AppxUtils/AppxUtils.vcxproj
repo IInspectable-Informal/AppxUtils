@@ -199,6 +199,7 @@
     </Midl>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AppxBundle.h" />
     <ClInclude Include="AppxPackage.h" />
     <ClInclude Include="AppxPackageApplication.h" />
     <ClInclude Include="AppxPackageDriverDependency.h" />
@@ -220,6 +221,7 @@
     <ClInclude Include="VectorView.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AppxBundle.cpp" />
     <ClCompile Include="AppxPackage.cpp" />
     <ClCompile Include="AppxPackageApplication.cpp" />
     <ClCompile Include="AppxPackageDriverDependency.cpp" />

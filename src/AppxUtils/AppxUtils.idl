@@ -312,8 +312,30 @@ namespace AppxUtils
 
 	}
 
-	[default_interface]
-	runtimeclass AppxBundle : Windows.Foundation.Collections.IIterable<AppxPackage>
+	[version(0.63)]
+	[exclusiveto(AppxBundle)]
+	interface IAppxBundleCore
+	{
+		String Name{ get; };
+		String FamilyName{ get; };
+		String FullName{ get; };
+		String Publisher{ get; };
+		Windows.ApplicationModel.PackageVersion Version{ get; };
+		Windows.System.ProcessorArchitecture Architecture{ get; };
+		String ResourceId{ get; };
+
+		Windows.Storage.Streams.IInputStream GetManifestStream();
+	};
+
+	[version(4.0)]
+	[exclusiveto(AppxBundle)]
+	interface IAppxBundle4
+	{
+		void DummyFunc();
+	};
+
+	[version(0.63)]
+	runtimeclass AppxBundle : [default] IAppxBundleCore, Windows.Foundation.Collections.IVectorView<AppxPackage>, IAppxBundle4
 	{
 		
 	}
@@ -324,15 +346,16 @@ namespace AppxUtils
 		AppxPackage GetAppxPackageFromStream(Windows.Storage.Streams.IRandomAccessStream appxPackageStream);
 	};
 
+	[version(0.63)]
 	[exclusiveto(AppxPackageFactory)]
-	interface IAppxBundleFactory
+	interface IAppxBundleRuntimeClassFactory
 	{
 		AppxBundle GetAppxBundleFromStream(Windows.Storage.Streams.IRandomAccessStream appxBundleStream);
-	}
+	};
 
 	[version(0.61)]
 	[static(IAppxPackageFactory, 0.61)]
-	[static(IAppxBundleFactory, 0.63)]
+	[static(IAppxBundleRuntimeClassFactory, 0.63)]
 	static runtimeclass AppxPackageFactory
 	{
 

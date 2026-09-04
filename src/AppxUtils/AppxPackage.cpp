@@ -18,18 +18,19 @@ namespace ABI
 
 namespace ABI::AppxUtils
 {    
-    AppxPackage::AppxPackage(IAppxPackageReader*& reader, const CRITICAL_SECTION& criticalSection) noexcept : m_AppxPackageReader(reader), m_CriticalSection(criticalSection)
+#pragma region AppxPackageBase
+    AppxPackageBase::AppxPackageBase(IAppxPackageReader*& reader, CRITICAL_SECTION* criticalSection) noexcept : m_AppxPackageReader(reader), m_CriticalSection(criticalSection)
     {
 
     }
 
 #pragma region IAppxPackageCore
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_Name(HSTRING* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_Name(HSTRING* value)
     {
         HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Name), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_Name)
             {
@@ -46,7 +47,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Name), nullptr, nullptr));
@@ -54,12 +55,12 @@ namespace ABI::AppxUtils
         return WindowsDuplicateString(local, value);
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_FamilyName(HSTRING* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_FamilyName(HSTRING* value)
     {
         HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_FamilyName), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_FamilyName)
             {
@@ -76,7 +77,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_FamilyName), nullptr, nullptr));
@@ -84,12 +85,12 @@ namespace ABI::AppxUtils
         return WindowsDuplicateString(local, value);
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_FullName(HSTRING* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_FullName(HSTRING* value)
     {
         HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_FullName), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_FullName)
             {
@@ -106,7 +107,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_FullName), nullptr, nullptr));
@@ -114,12 +115,12 @@ namespace ABI::AppxUtils
         return WindowsDuplicateString(local, value);
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_Publisher(HSTRING* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_Publisher(HSTRING* value)
     {
         HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Publisher), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_Publisher)
             {
@@ -136,7 +137,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Publisher), nullptr, nullptr));
@@ -144,12 +145,12 @@ namespace ABI::AppxUtils
         return WindowsDuplicateString(local, value);
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_Version(struct ABI::PackageVersion* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_Version(struct ABI::PackageVersion* value)
     {
-        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasVersion), false, false) };
+        short local{ InterlockedCompareExchange16(&m_HasVersion, false, false) };
         if (local == false)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_HasVersion)
             {
@@ -162,14 +163,11 @@ namespace ABI::AppxUtils
                     if (SUCCEEDED(hr))
                     {
                         m_HasVersion = true;
-                        m_Version.Major = (ver >> 48) & 0xFFFF;
-                        m_Version.Minor = (ver >> 32) & 0xFFFF;
-                        m_Version.Build = (ver >> 16) & 0xFFFF;
-                        m_Version.Revision = ver & 0xFFFF;
+                        m_Version = UInt64ToPkgVer(ver);
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -178,12 +176,12 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_Architecture(ABI::ProcessorArchitecture* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_Architecture(ABI::ProcessorArchitecture* value)
     {
-        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasArchitecture), false, false) };
+        short local{ InterlockedCompareExchange16(&m_HasArchitecture, false, false) };
         if (local == false)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_HasArchitecture)
             {
@@ -216,7 +214,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -225,12 +223,12 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_PackageType(AppxPackageType* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_PackageType(AppxPackageType* value)
     {
-        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasPackageType), false, false) };
+        short local{ InterlockedCompareExchange16(&m_HasPackageType, false, false) };
         if (local == false)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_HasPackageType)
             {
@@ -266,7 +264,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -275,12 +273,12 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_ResourceId(HSTRING* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_ResourceId(HSTRING* value)
     {
         HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ResourceId), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_ResourceId)
             {
@@ -302,7 +300,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ResourceId), nullptr, nullptr));
@@ -310,12 +308,12 @@ namespace ABI::AppxUtils
         return WindowsDuplicateString(local, value);
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_Logo(HSTRING* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_Logo(HSTRING* value)
     {
         HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Logo), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_Logo)
             {
@@ -338,7 +336,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Logo), nullptr, nullptr));
@@ -346,12 +344,12 @@ namespace ABI::AppxUtils
         return WindowsDuplicateString(local, value);
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_DisplayName(HSTRING* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_DisplayName(HSTRING* value)
     {
         HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DisplayName), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_DisplayName)
             {
@@ -374,7 +372,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DisplayName), nullptr, nullptr));
@@ -382,12 +380,12 @@ namespace ABI::AppxUtils
         return WindowsDuplicateString(local, value);
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_PublisherDisplayName(HSTRING* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_PublisherDisplayName(HSTRING* value)
     {
         HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PublisherDisplayName), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_PublisherDisplayName)
             {
@@ -410,7 +408,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PublisherDisplayName), nullptr, nullptr));
@@ -418,12 +416,12 @@ namespace ABI::AppxUtils
         return WindowsDuplicateString(local, value);
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_Description(HSTRING* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_Description(HSTRING* value)
     {
         HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Description), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_Description)
             {
@@ -451,7 +449,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Description), nullptr, nullptr));
@@ -459,12 +457,12 @@ namespace ABI::AppxUtils
         return WindowsDuplicateString(local, value);
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_Applications(ABI::IVectorView<AppxPackageApplication*>** value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_Applications(ABI::IVectorView<AppxPackageApplication*>** value)
     {
         auto* local{ reinterpret_cast<VectorView<AppxPackageApplication*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Applications), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_Applications)
             {
@@ -550,7 +548,7 @@ namespace ABI::AppxUtils
                 }
             }
             local = m_Applications;
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -559,12 +557,12 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_PackageDependencies(ABI::IVectorView<struct AppxPackageDependency>** value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_PackageDependencies(ABI::IVectorView<struct AppxPackageDependency>** value)
     {
         auto local{ reinterpret_cast<VectorView<struct AppxPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PackageDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_PackageDependencies)
             {
@@ -677,7 +675,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<VectorView<struct AppxPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PackageDependencies), nullptr, nullptr));
@@ -688,12 +686,12 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_Resources(ABI::IVectorView<struct AppxPackageResource>** value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_Resources(ABI::IVectorView<struct AppxPackageResource>** value)
     {
         auto local{ reinterpret_cast<VectorView<struct AppxPackageResource>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Resources), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_Resources)
             {
@@ -842,7 +840,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<VectorView<struct AppxPackageResource>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Resources), nullptr, nullptr));
@@ -853,12 +851,12 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_DeviceCapabilities(ABI::IVectorView<HSTRING>** value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_DeviceCapabilities(ABI::IVectorView<HSTRING>** value)
     {
         auto local{ reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DeviceCapabilities), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_DeviceCapabilities)
             {
@@ -928,7 +926,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DeviceCapabilities), nullptr, nullptr));
@@ -939,13 +937,13 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::GetManifestStream(ABI::IInputStream** result)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::GetManifestStream(ABI::IInputStream** result)
     {
         HRESULT hr{ S_OK };
         auto local{ reinterpret_cast<ABI::IRandomAccessStream*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ManifestStream), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             if (!m_ManifestStream)
             {
                 IAppxManifestReader* reader{ nullptr };
@@ -961,7 +959,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<ABI::IRandomAccessStream*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ManifestStream), nullptr, nullptr));
@@ -979,18 +977,18 @@ namespace ABI::AppxUtils
 #pragma endregion
 
 #pragma region IAppxPackagePayloadFilesReader
-    HRESULT STDMETHODCALLTYPE AppxPackage::GetPayloadFiles(ABI::IMapView<HSTRING, AppxPackagePayloadFile*>** result)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::GetPayloadFiles(ABI::IMapView<HSTRING, AppxPackagePayloadFile*>** result)
     {
         auto local{ reinterpret_cast<ABI::IMapView<HSTRING, AppxPackagePayloadFile*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PayloadFiles), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_PayloadFiles)
             {
                 hr = E_NOTIMPL;
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<ABI::IMapView<HSTRING, AppxPackagePayloadFile*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PayloadFiles), nullptr, nullptr));
@@ -1003,12 +1001,12 @@ namespace ABI::AppxUtils
 #pragma endregion
 
 #pragma region IAppxPackage
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_TargetDeviceFamilies(ABI::IVectorView<struct AppxPackageTargetDeviceFamily>** value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_TargetDeviceFamilies(ABI::IVectorView<struct AppxPackageTargetDeviceFamily>** value)
     {
         auto local{ reinterpret_cast<VectorView<struct AppxPackageTargetDeviceFamily>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_TargetDeviceFamilies), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_TargetDeviceFamilies)
             {
@@ -1106,7 +1104,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<VectorView<struct AppxPackageTargetDeviceFamily>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_TargetDeviceFamilies), nullptr, nullptr));
@@ -1117,10 +1115,10 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_Capabilities(ABI::IVectorView<HSTRING>** value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_Capabilities(ABI::IVectorView<HSTRING>** value)
     { return this->GetCapabilitiesByCapabilityClass(AppxPackageCapabilityClassType::Default, value); }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::GetCapabilitiesByCapabilityClass(AppxPackageCapabilityClassType classType, ABI::IVectorView<HSTRING>** result)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::GetCapabilitiesByCapabilityClass(AppxPackageCapabilityClassType classType, ABI::IVectorView<HSTRING>** result)
     {
         VectorView<HSTRING>* local{ nullptr };
         switch (classType)
@@ -1155,7 +1153,7 @@ namespace ABI::AppxUtils
 
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             switch (classType)
             {
@@ -1286,7 +1284,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -1298,12 +1296,12 @@ namespace ABI::AppxUtils
 #pragma endregion
 
 #pragma region IAppxPackage3
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_IsOptionalPackage(boolean* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_IsOptionalPackage(boolean* value)
     {
-        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasIsOptionalPackage), false, false) };
+        short local{ InterlockedCompareExchange16(&m_HasIsOptionalPackage, false, false) };
         if (local == false)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_HasIsOptionalPackage)
             {
@@ -1332,7 +1330,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -1341,12 +1339,12 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_MainPackageName(HSTRING* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_MainPackageName(HSTRING* value)
     {
         HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageName), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_MainPackageName)
             {
@@ -1375,7 +1373,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
             local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageName), nullptr, nullptr));
@@ -1386,12 +1384,12 @@ namespace ABI::AppxUtils
 #pragma endregion
 
 #pragma region IAppxPackage4
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_MainPackageDependencies(ABI::IVectorView<struct AppxPackageMainPackageDependency>** value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_MainPackageDependencies(ABI::IVectorView<struct AppxPackageMainPackageDependency>** value)
     {
         auto local{ reinterpret_cast<VectorView<struct AppxPackageMainPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_MainPackageDependencies)
             {
@@ -1501,7 +1499,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return S_OK; }
             local = reinterpret_cast<VectorView<struct AppxPackageMainPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageDependencies), nullptr, nullptr));
@@ -1514,12 +1512,12 @@ namespace ABI::AppxUtils
 #pragma endregion
 
 #pragma region IAppxPackage6
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_IsNonQualifiedResourcePackage(boolean* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_IsNonQualifiedResourcePackage(boolean* value)
     {
-        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasIsNonQualifiedResourcePackage), false, false) };
+        short local{ InterlockedCompareExchange16(&m_HasIsNonQualifiedResourcePackage, false, false) };
         if (local == false)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_HasIsNonQualifiedResourcePackage)
             {
@@ -1542,7 +1540,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -1553,12 +1551,12 @@ namespace ABI::AppxUtils
 #pragma endregion
 
 #pragma region IAppxPackage10
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_DriverDependencies(ABI::IVectorView<AppxPackageDriverDependency*>** value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_DriverDependencies(ABI::IVectorView<AppxPackageDriverDependency*>** value)
     {
         auto local{ reinterpret_cast<VectorView<AppxPackageDriverDependency*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DriverDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_DriverDependencies)
             {
@@ -1631,7 +1629,7 @@ namespace ABI::AppxUtils
                 }
             }
             local = m_DriverDependencies;
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -1641,12 +1639,12 @@ namespace ABI::AppxUtils
         return S_OK;
     }
     
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_OSPackageDependencies(ABI::IVectorView<struct AppxPackageOSPackageDependency>** value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_OSPackageDependencies(ABI::IVectorView<struct AppxPackageOSPackageDependency>** value)
     {
         auto local{ reinterpret_cast<VectorView<struct AppxPackageOSPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_OSPackageDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_OSPackageDependencies)
             {
@@ -1738,7 +1736,7 @@ namespace ABI::AppxUtils
                 }
             }
             local = m_OSPackageDependencies;
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -1748,12 +1746,12 @@ namespace ABI::AppxUtils
         return S_OK;
     }
     
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_HostRuntimeDependencies(ABI::IVectorView<struct AppxPackageHostRuntimeDependency>** value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_HostRuntimeDependencies(ABI::IVectorView<struct AppxPackageHostRuntimeDependency>** value)
     {
         auto local{ reinterpret_cast<VectorView<struct AppxPackageHostRuntimeDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_HostRuntimeDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_HostRuntimeDependencies)
             {
@@ -1860,7 +1858,7 @@ namespace ABI::AppxUtils
                 }
             }
             local = m_HostRuntimeDependencies;
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -1872,12 +1870,12 @@ namespace ABI::AppxUtils
 #pragma endregion
 
 #pragma region IAppxPackageLegacy
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_MinVersionLegacy(struct ABI::PackageVersion* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_MinVersionLegacy(struct ABI::PackageVersion* value)
     {
-        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasMinVersionLegacy), false, false) };
+        short local{ InterlockedCompareExchange16(&m_HasMinVersionLegacy, false, false) };
         if (local == false)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_HasMinVersionLegacy)
             {
@@ -1894,7 +1892,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -1903,12 +1901,12 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_MaxVersionTestedLegacy(struct ABI::PackageVersion* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_MaxVersionTestedLegacy(struct ABI::PackageVersion* value)
     {
-        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasMaxVersionTestedLegacy), false, false) };
+        short local{ InterlockedCompareExchange16(&m_HasMaxVersionTestedLegacy, false, false) };
         if (local == false)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_HasMaxVersionTestedLegacy)
             {
@@ -1925,7 +1923,7 @@ namespace ABI::AppxUtils
                     }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -1934,12 +1932,12 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_CapabilitiesLegacy(AppxPackageCapabilitiesLegacy* value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_CapabilitiesLegacy(AppxPackageCapabilitiesLegacy* value)
     {
-        long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasCapabilitiesLegacy), false, false) };
+        short local{ InterlockedCompareExchange16(&m_HasCapabilitiesLegacy, false, false) };
         if (local == false)
         {
-            EnterCriticalSection(&m_CriticalSection);
+            EnterCriticalSection(m_CriticalSection);
             HRESULT hr{ S_OK };
             if (!m_HasCapabilitiesLegacy)
             {
@@ -1952,7 +1950,7 @@ namespace ABI::AppxUtils
                     { m_HasCapabilitiesLegacy = true; }
                 }
             }
-            LeaveCriticalSection(&m_CriticalSection);
+            LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
         }
@@ -1963,7 +1961,7 @@ namespace ABI::AppxUtils
 #pragma endregion
 
 #pragma region IAppxPackageInterop
-    HRESULT STDMETHODCALLTYPE AppxPackage::get_PackageReader(IAppxPackageReader** value)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::get_PackageReader(IAppxPackageReader** value)
     {
         m_AppxPackageReader->AddRef();
         *value = m_AppxPackageReader;
@@ -1972,12 +1970,12 @@ namespace ABI::AppxUtils
 #pragma endregion
 
 #pragma region IInspectable
-    HRESULT STDMETHODCALLTYPE AppxPackage::GetRuntimeClassName(HSTRING* className)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::GetRuntimeClassName(HSTRING* className)
     { return WindowsCreateString(L"AppxUtils.AppxPackage", 21, className); }
 #pragma endregion
 
 #pragma region Private methods
-    HRESULT STDMETHODCALLTYPE AppxPackage::GetManifestReader(IAppxManifestReader*& manifestReader)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::GetManifestReader(IAppxManifestReader*& manifestReader)
     {
         if (!m_ManifestReader)
         {
@@ -1991,7 +1989,7 @@ namespace ABI::AppxUtils
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE AppxPackage::GetPackageId(IAppxManifestPackageId*& pkgId)
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::GetPackageId(IAppxManifestPackageId*& pkgId)
     {
         if (!m_PackageId)
         {
@@ -2014,7 +2012,7 @@ namespace ABI::AppxUtils
 #pragma endregion
 
     //Destructor
-    AppxPackage::~AppxPackage() noexcept
+    AppxPackageBase::~AppxPackageBase() noexcept
     {
         if (m_ManifestReader)
         { m_ManifestReader->Release(); }
@@ -2087,6 +2085,35 @@ namespace ABI::AppxUtils
         if (m_HostRuntimeDependencies)
         { m_HostRuntimeDependencies->Release(); }
 
-        DeleteCriticalSection(&m_CriticalSection);
+        DeleteCriticalSection(m_CriticalSection);
     }
+#pragma endregion
+
+#pragma region AppxPackage
+#pragma region IUnknown
+    ULONG STDMETHODCALLTYPE AppxPackage::Release()
+    {
+        ULONG cRef{ InterlockedDecrement(&m_RefCount) };
+        if (!cRef)
+        { delete this; }
+        return cRef;
+    }
+#pragma endregion
+
+    //Destructor
+    AppxPackage::~AppxPackage() noexcept
+    { delete m_CriticalSection; }
+#pragma endregion
+
+#pragma region AppxPackageElement
+#pragma region IUnknown
+    ULONG STDMETHODCALLTYPE AppxPackageElement::Release()
+    {
+        ULONG cRef{ InterlockedDecrement(&m_RefCount) };
+        if (!cRef)
+        { this->~AppxPackageElement(); }
+        return cRef;
+    }
+#pragma endregion
+#pragma endregion
 }

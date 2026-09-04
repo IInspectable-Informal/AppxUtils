@@ -2,7 +2,7 @@
 
 namespace ABI::AppxUtils
 {
-    class AppxPackage final : public InspectableBase<BaseTrust,
+    class AppxPackageBase abstract : public InspectableCommonBase<BaseTrust,
         IAppxPackageCore, IAppxPackagePayloadFilesReader,
         IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10,
         IAppxPackageLegacy,
@@ -11,7 +11,7 @@ namespace ABI::AppxUtils
     >
     {
     public:
-        AppxPackage(IAppxPackageReader*& reader, const CRITICAL_SECTION& criticalSection) noexcept;
+        AppxPackageBase(IAppxPackageReader*& reader, CRITICAL_SECTION* criticalSection) noexcept;
 
         HRESULT STDMETHODCALLTYPE get_Name(HSTRING* value);
         HRESULT STDMETHODCALLTYPE get_FamilyName(HSTRING* value);
@@ -66,20 +66,18 @@ namespace ABI::AppxUtils
         //IInspectable
         HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className);
 
-        ~AppxPackage() noexcept;
+        virtual ~AppxPackageBase() noexcept;
 
     private:
-        IAppxPackageReader* m_AppxPackageReader{ nullptr };
-
         HSTRING m_Name{ nullptr };
         HSTRING m_FamilyName{ nullptr };
         HSTRING m_FullName{ nullptr };
         HSTRING m_Publisher{ nullptr };
-        BOOL m_HasVersion{ false };
-        struct ABI::Windows::ApplicationModel::PackageVersion m_Version { 0, 0, 0, 0 };
-        BOOL m_HasArchitecture{ false };
+        short m_HasVersion{ false };
+        short m_HasArchitecture{ false };
+        short m_HasPackageType{ false };
+        struct ABI::Windows::ApplicationModel::PackageVersion m_Version{ 0, 0, 0, 0 };
         ABI::Windows::System::ProcessorArchitecture m_Architecture{ ABI::Windows::System::ProcessorArchitecture_Unknown };
-        BOOL m_HasPackageType{ false };
         AppxPackageType m_PackageType{ AppxPackageType::Main };
         HSTRING m_ResourceId{ nullptr };
         HSTRING m_Logo{ nullptr };
@@ -102,32 +100,54 @@ namespace ABI::AppxUtils
         ABI::AppxUtils::Internal::VectorView<HSTRING>* m_AllCapabilities{ nullptr };
         ABI::AppxUtils::Internal::VectorView<HSTRING>* m_CustomCapabilities{ nullptr };
 
-        BOOL m_HasIsOptionalPackage{ false };
+        short m_HasIsOptionalPackage{ false };
         bool m_IsOptionalPackage{ false };
         HSTRING m_MainPackageName{ nullptr };
 
         ABI::AppxUtils::Internal::VectorView<struct AppxPackageMainPackageDependency>* m_MainPackageDependencies{ nullptr };
 
-        BOOL m_HasIsNonQualifiedResourcePackage{ false };
+        short m_HasIsNonQualifiedResourcePackage{ false };
         bool m_IsNonQualifiedResourcePackage{ false };
         
         ABI::AppxUtils::Internal::VectorView<AppxPackageDriverDependency*>* m_DriverDependencies{ nullptr };
         ABI::AppxUtils::Internal::VectorView<struct AppxPackageOSPackageDependency>* m_OSPackageDependencies{ nullptr };
         ABI::AppxUtils::Internal::VectorView<struct AppxPackageHostRuntimeDependency>* m_HostRuntimeDependencies{ nullptr };
 
-        BOOL m_HasMinVersionLegacy{ false };
+        short m_HasMinVersionLegacy{ false };
+        short m_HasMaxVersionTestedLegacy{ false };
+        short m_HasCapabilitiesLegacy{ false };
         struct ABI::Windows::ApplicationModel::PackageVersion m_MinVersionLegacy { 0, 0, 0, 0 };
-        BOOL m_HasMaxVersionTestedLegacy{ false };
         struct ABI::Windows::ApplicationModel::PackageVersion m_MaxVersionTestedLegacy { 0, 0, 0, 0 };
-        BOOL m_HasCapabilitiesLegacy{ false };
         AppxPackageCapabilitiesLegacy m_CapabilitiesLegacy{ AppxPackageCapabilitiesLegacy::NoCapability };
 
-        CRITICAL_SECTION m_CriticalSection{};
+        IAppxPackageReader* m_AppxPackageReader{ nullptr };
+    protected:
+        CRITICAL_SECTION* m_CriticalSection{};
+    private:
+        IAppxManifestReader* m_ManifestReader{ nullptr };
+        IAppxManifestPackageId* m_PackageId{ nullptr };
 
         HRESULT STDMETHODCALLTYPE GetManifestReader(IAppxManifestReader*& manifestReader);
         HRESULT STDMETHODCALLTYPE GetPackageId(IAppxManifestPackageId*& pkgId);
+    };
 
-        IAppxManifestReader* m_ManifestReader{ nullptr };
-        IAppxManifestPackageId* m_PackageId{ nullptr };
+    class AppxPackage final : public AppxPackageBase
+    {
+    public:
+        using AppxPackageBase::AppxPackageBase;
+
+        //IUnknown
+        ULONG STDMETHODCALLTYPE Release() override;
+
+        ~AppxPackage() noexcept;
+    };
+
+    class AppxPackageElement final : public AppxPackageBase
+    {
+    public:
+        using AppxPackageBase::AppxPackageBase;
+
+        //IUnknown
+        ULONG STDMETHODCALLTYPE Release() override;
     };
 }

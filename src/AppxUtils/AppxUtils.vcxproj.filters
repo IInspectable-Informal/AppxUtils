@@ -16,6 +16,7 @@
     <ClCompile Include="AppxPackageDriverDependency.cpp" />
     <ClCompile Include="HeapManagement.cpp" />
     <ClCompile Include="AppxPackageApplication.cpp" />
+    <ClCompile Include="AppxBundle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppxUtils.h" />
@@ -37,6 +38,7 @@
     <ClInclude Include="AppxPackageDriverDependency.h" />
     <ClInclude Include="HeapManagement.h" />
     <ClInclude Include="AppxPackageApplication.h" />
+    <ClInclude Include="AppxBundle.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="AppxUtils.idl" />

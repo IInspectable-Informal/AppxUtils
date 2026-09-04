@@ -440,13 +440,10 @@ namespace ABI::AppxUtils::Internal
         //IInspectable
         HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className)
         {
-            if (!m_ClassName)
-            {
-                m_ClassName = ABI::Windows::Foundation::IReference<T>::z_get_rc_name_impl();
-                while (*(m_ClassName + m_ClassNameSize))
-                { ++m_ClassNameSize; }
-            }
-            return WindowsCreateString(m_ClassName, m_ClassNameSize, className);
+            if (InitOnceExecuteOnce(&s_InitOnce, InitStringStatic, nullptr, nullptr))
+            { return WindowsCreateString(s_ClassName, s_ClassNameSize, className); }
+            else
+            { return HRESULT_FROM_WIN32(GetLastError()); }
         }
 
         ~Reference() noexcept
@@ -460,7 +457,16 @@ namespace ABI::AppxUtils::Internal
         private:
             T_ABI m_Value{};
 
-            const wchar_t* m_ClassName{ nullptr };
-            UINT32 m_ClassNameSize{ 0 };
+            static inline INIT_ONCE s_InitOnce{ INIT_ONCE_STATIC_INIT };
+            static inline const wchar_t* s_ClassName{ nullptr };
+            static inline UINT32 s_ClassNameSize{ 0 };
+
+            static BOOL WINAPI InitStringStatic(INIT_ONCE* InitOnce, void* Parameter, void** Context)
+            {
+                s_ClassName = ABI::Windows::Foundation::IReference<T>::z_get_rc_name_impl();
+                while (*(s_ClassName + s_ClassNameSize))
+                { ++s_ClassNameSize; }
+                return true;
+            }
     };
 }
