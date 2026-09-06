@@ -547,6 +547,13 @@ namespace ABI::AppxUtils
 		}
 		DeleteCriticalSection(m_CriticalSection);
 		delete m_CriticalSection;
+		if (m_AppxPackages)
+		{
+			for (UINT32 i{ 0 }; i < m_Size; ++i)
+			{ m_AppxPackages[i].Release(); }
+			delete[] m_CriticalSections;
+			delete[] m_AppxPackages;
+		}
 		auto* factoryRefCopy = reinterpret_cast<IAppxFactory*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&g_AppxPackageFactory), nullptr, nullptr));
 		if (InterlockedCompareExchange(&g_FactoryRefCount, 0, 0) && !InterlockedDecrement(&g_FactoryRefCount))
 		{
