@@ -1,3 +1,5 @@
+// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
 #pragma once
 #include "dllmain.h"
 
@@ -66,7 +68,29 @@ namespace ABI::AppxUtils::Internal
 
 			HRESULT STDMETHODCALLTYPE GetMany(UINT32 capacity, T_ABI* value, UINT32* actual) override
 			{
-				return E_NOTIMPL;
+				UINT32 itemsGot{ 0 };
+				for (; itemsGot < capacity && m_Current < m_Size; ++m_Current, ++itemsGot)
+				{
+					T_ABI& element{ m_Array[m_Current] };
+					if constexpr (IsFundamentalType<T_ABI> || __is_enum(T_ABI))
+					{ value[itemsGot] = element; }
+					else if constexpr (ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value)
+					{ value[itemsGot] = element; }
+					else if constexpr (__is_trivial(T_ABI) && __is_standard_layout(T_ABI))
+					{
+						HRESULT hr{ StructLifetimeFunctions<T>::DeepCopyStruct(element, value[itemsGot]) };
+						if (FAILED(hr))
+						{
+							for (UINT32 i{ 0 }; i < itemsGot; ++i)
+							{ StructLifetimeFunctions<T>::ReleaseStruct(value[i]); }
+							return hr;
+						}
+					}
+					else
+					{ value[itemsGot] = element; }
+				}
+				*actual = itemsGot;
+				return S_OK;
 			}
 
 			//IInspectable
@@ -75,7 +99,7 @@ namespace ABI::AppxUtils::Internal
 				if (InitOnceExecuteOnce(&s_InitOnce, InitStringStatic, nullptr, nullptr))
 				{ return WindowsCreateString(s_ClassName, s_ClassNameSize, className); }
 				else
-				{ return HRESULT_FROM_WIN32(GetLastError()); }
+				{ return E_OUTOFMEMORY; }
 			}
 
 			~InternalIterator() noexcept
@@ -185,13 +209,41 @@ namespace ABI::AppxUtils::Internal
 					}
 				}
 			}
+			*index = 0;
 			*found = false;
 			return S_OK;
 		}
 
 		HRESULT STDMETHODCALLTYPE GetMany(UINT32 startIndex, UINT32 capacity, T_ABI* value, UINT32* actual) override
 		{
-			return E_NOTIMPL;
+			if (startIndex <= m_Size)
+			{
+				UINT32 itemsGot{ 0 };
+				for (UINT32 i{ startIndex }; itemsGot < capacity && i < m_Size; ++i, ++itemsGot)
+				{
+					T_ABI& element{ m_Array[i] };
+					if constexpr (IsFundamentalType<T_ABI> || __is_enum(T_ABI))
+					{ value[itemsGot] = element; }
+					else if constexpr (ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value)
+					{ value[itemsGot] = element; }
+					else if constexpr (__is_trivial(T_ABI) && __is_standard_layout(T_ABI))
+					{
+						HRESULT hr{ StructLifetimeFunctions<T>::DeepCopyStruct(element, value[itemsGot]) };
+						if (FAILED(hr))
+						{
+							for (UINT32 j{ 0 }; j < itemsGot; ++j)
+							{ StructLifetimeFunctions<T>::ReleaseStruct(value[j]); }
+							return hr;
+						}
+					}
+					else
+					{ value[itemsGot] = element; }
+				}
+				*actual = itemsGot;
+				return S_OK;
+			}
+			else
+			{ return E_BOUNDS; }
 		}
 
 		//IIterable
@@ -213,7 +265,7 @@ namespace ABI::AppxUtils::Internal
 			if (InitOnceExecuteOnce(&s_InitOnce, InitStringStatic, nullptr, nullptr))
 			{ return WindowsCreateString(s_ClassName, s_ClassNameSize, className); }
 			else
-			{ return HRESULT_FROM_WIN32(GetLastError()); }
+			{ return E_OUTOFMEMORY; }
 		}
 
 		virtual ~VectorView() noexcept
@@ -288,16 +340,15 @@ namespace ABI::AppxUtils::Internal
 			{
 				if (m_Current < m_Size)
 				{
-					__if_exists(T)
+					T* element{ m_Array + m_Current };
+					if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
 					{
-						T* element{ m_Array + m_Current };
-						if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
-						{
-							element->AddRef();
-							*current = element;
-						}
-						else
-						{ *current = element; }
+						element->AddRef();
+						*current = element;
+					}
+					else
+					{
+						*current = element;
 					}
 					return S_OK;
 				}
@@ -325,7 +376,18 @@ namespace ABI::AppxUtils::Internal
 
 			HRESULT STDMETHODCALLTYPE GetMany(UINT32 capacity, T_ABI* value, UINT32* actual) override
 			{
-				return E_NOTIMPL;
+				UINT32 itemsGot{ 0 };
+				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
+				{
+					for (; itemsGot < capacity && m_Current < m_Size; ++m_Current, ++itemsGot)
+					{
+						T* element{ m_Array + m_Current };
+						element->AddRef();
+						value[itemsGot] = element;
+					}
+				}
+				*actual = itemsGot;
+				return S_OK;
 			}
 
 			//IInspectable
@@ -334,7 +396,7 @@ namespace ABI::AppxUtils::Internal
 				if (InitOnceExecuteOnce(&s_InitOnce, InitStringStatic, nullptr, nullptr))
 				{ return WindowsCreateString(s_ClassName, s_ClassNameSize, className); }
 				else
-				{ return HRESULT_FROM_WIN32(GetLastError()); }
+				{ return E_OUTOFMEMORY; }
 			}
 
 			~InternalIterator() noexcept
@@ -366,18 +428,15 @@ namespace ABI::AppxUtils::Internal
 		{
 			if (index < m_Size)
 			{
-				__if_exists(T)
+				T* element{ m_Array + index };
+				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
 				{
-					T* element{ m_Array + index };
-					if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
-					{
-						element->AddRef();
-						*item = element;
-					}
-					else
-					{
-						*item = element;
-					}
+					element->AddRef();
+					*item = element;
+				}
+				else
+				{
+					*item = element;
 				}
 				return S_OK;
 			}
@@ -395,36 +454,50 @@ namespace ABI::AppxUtils::Internal
 		{
 			for (UINT32 i = 0; i < m_Size; ++i)
 			{
-				__if_exists(T)
+				T* element{ m_Array + i };
+				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
 				{
-					T* element{ m_Array + i };
-					if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
+					if (static_cast<T_ABI>(element) == value)
 					{
-						if (element == value)
-						{
-							*index = i;
-							*found = true;
-							return S_OK;
-						}
+						*index = i;
+						*found = true;
+						return S_OK;
 					}
-					else
+				}
+				else
+				{
+					if (element == value)
 					{
-						if (element == value)
-						{
-							*index = i;
-							*found = true;
-							return S_OK;
-						}
+						*index = i;
+						*found = true;
+						return S_OK;
 					}
 				}
 			}
+			*index = 0;
 			*found = false;
 			return S_OK;
 		}
 
 		HRESULT STDMETHODCALLTYPE GetMany(UINT32 startIndex, UINT32 capacity, T_ABI* value, UINT32* actual) override
 		{
-			return E_NOTIMPL;
+			if (startIndex <= m_Size)
+			{
+				UINT32 itemsGot{ 0 };
+				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
+				{
+					for (UINT32 i{ startIndex }; itemsGot < capacity && i < m_Size; ++i, ++itemsGot)
+					{
+						auto* element{ m_Array + i };
+						element->AddRef();
+						value[itemsGot] = element;
+					}
+				}
+				*actual = itemsGot;
+				return S_OK;
+			}
+			else
+			{ return E_BOUNDS; }
 		}
 
 		//IIterable
@@ -446,18 +519,17 @@ namespace ABI::AppxUtils::Internal
 			if (InitOnceExecuteOnce(&s_InitOnce, InitStringStatic, nullptr, nullptr))
 			{ return WindowsCreateString(s_ClassName, s_ClassNameSize, className); }
 			else
-			{ return HRESULT_FROM_WIN32(GetLastError()); }
+			{ return E_OUTOFMEMORY; }
 		}
 
 		virtual ~VectorView() noexcept
 		{
 			for (UINT32 i = 0; i < m_Size; ++i)
 			{
-				__if_exists(T)
+				T* element{ m_Array + i };
+				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
 				{
-					T* element{ m_Array + i };
-					if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
-					{ element->Release(); }
+					element->Release();
 				}
 			}
 			delete[] m_Array;
@@ -544,7 +616,19 @@ namespace ABI::AppxUtils::Internal
 
 			HRESULT STDMETHODCALLTYPE GetMany(UINT32 capacity, HSTRING* value, UINT32* actual) override
 			{
-				return E_NOTIMPL;
+				UINT32 itemsGot{ 0 };
+				for (; itemsGot < capacity && m_Current < m_Size; ++m_Current, ++itemsGot)
+				{
+					HRESULT hr{ WindowsDuplicateString(m_Array[m_Current], value + itemsGot) };
+					if (FAILED(hr))
+					{
+						for (UINT32 i{ 0 }; i < itemsGot; ++i)
+						{ WindowsDeleteString(value[i]); }
+						return hr;
+					}
+				}
+				*actual = itemsGot;
+				return S_OK;
 			}
 
 			//IInspectable
@@ -601,13 +685,31 @@ namespace ABI::AppxUtils::Internal
 					}
 				}
 			}
+			*index = 0;
 			*found = false;
 			return S_OK;
 		}
 
 		HRESULT STDMETHODCALLTYPE GetMany(UINT32 startIndex, UINT32 capacity, HSTRING* value, UINT32* actual) override
 		{
-			return E_NOTIMPL;
+			if (startIndex <= m_Size)
+			{
+				UINT32 itemsGot{ 0 };
+				for (UINT32 i{ startIndex }; itemsGot < capacity && i < m_Size; ++i, ++itemsGot)
+				{
+					HRESULT hr{ WindowsDuplicateString(m_Array[i], value + itemsGot) };
+					if (FAILED(hr))
+					{
+						for (UINT32 j{ 0 }; j < itemsGot; ++j)
+						{ WindowsDeleteString(value[j]); }
+						return hr;
+					}
+				}
+				*actual = itemsGot;
+				return S_OK;
+			}
+			else
+			{ return E_BOUNDS; }
 		}
 
 		//IIterable
@@ -625,9 +727,7 @@ namespace ABI::AppxUtils::Internal
 
 		//IInspectable
 		HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className)
-		{
-			return WindowsCreateString(L"Windows.Foundation.Collections.IVectorView`1<String>", 52, className);
-		}
+		{ return WindowsCreateString(L"Windows.Foundation.Collections.IVectorView`1<String>", 52, className); }
 
 		virtual ~VectorView() noexcept
 		{

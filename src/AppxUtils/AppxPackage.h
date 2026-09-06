@@ -1,3 +1,5 @@
+// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
 #pragma once
 
 namespace ABI::AppxUtils
@@ -84,34 +86,34 @@ namespace ABI::AppxUtils
         HSTRING m_DisplayName{ nullptr };
         HSTRING m_PublisherDisplayName{ nullptr };
         HSTRING m_Description{ nullptr };
-        ABI::AppxUtils::Internal::VectorView<AppxPackageApplication*>* m_Applications{ nullptr };
-        ABI::AppxUtils::Internal::VectorView<struct AppxPackageDependency>* m_PackageDependencies{ nullptr };
-        ABI::AppxUtils::Internal::VectorView<struct AppxPackageResource>* m_Resources{ nullptr };
-        ABI::AppxUtils::Internal::VectorView<HSTRING>* m_DeviceCapabilities{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<AppxPackageApplication*>* m_Applications{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageDependency>* m_PackageDependencies{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageResource>* m_Resources{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<HSTRING>* m_DeviceCapabilities{ nullptr };
         ABI::Windows::Storage::Streams::IRandomAccessStream* m_ManifestStream{ nullptr };
 
         ABI::Windows::Foundation::Collections::IMapView<HSTRING, AppxPackagePayloadFile*>* m_PayloadFiles{ nullptr };
 
-        ABI::AppxUtils::Internal::VectorView<struct AppxPackageTargetDeviceFamily>* m_TargetDeviceFamilies{ nullptr };
-        ABI::AppxUtils::Internal::VectorView<HSTRING>* m_Capabilities{ nullptr };
-        ABI::AppxUtils::Internal::VectorView<HSTRING>* m_GeneralCapabilities{ nullptr };
-        ABI::AppxUtils::Internal::VectorView<HSTRING>* m_RestrictedCapabilities{ nullptr };
-        ABI::AppxUtils::Internal::VectorView<HSTRING>* m_WindowsCapabilities{ nullptr };
-        ABI::AppxUtils::Internal::VectorView<HSTRING>* m_AllCapabilities{ nullptr };
-        ABI::AppxUtils::Internal::VectorView<HSTRING>* m_CustomCapabilities{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageTargetDeviceFamily>* m_TargetDeviceFamilies{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<HSTRING>* m_Capabilities{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<HSTRING>* m_GeneralCapabilities{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<HSTRING>* m_RestrictedCapabilities{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<HSTRING>* m_WindowsCapabilities{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<HSTRING>* m_AllCapabilities{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<HSTRING>* m_CustomCapabilities{ nullptr };
 
         short m_HasIsOptionalPackage{ false };
         bool m_IsOptionalPackage{ false };
         HSTRING m_MainPackageName{ nullptr };
 
-        ABI::AppxUtils::Internal::VectorView<struct AppxPackageMainPackageDependency>* m_MainPackageDependencies{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageMainPackageDependency>* m_MainPackageDependencies{ nullptr };
 
         short m_HasIsNonQualifiedResourcePackage{ false };
         bool m_IsNonQualifiedResourcePackage{ false };
         
-        ABI::AppxUtils::Internal::VectorView<AppxPackageDriverDependency*>* m_DriverDependencies{ nullptr };
-        ABI::AppxUtils::Internal::VectorView<struct AppxPackageOSPackageDependency>* m_OSPackageDependencies{ nullptr };
-        ABI::AppxUtils::Internal::VectorView<struct AppxPackageHostRuntimeDependency>* m_HostRuntimeDependencies{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<AppxPackageDriverDependency*>* m_DriverDependencies{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageOSPackageDependency>* m_OSPackageDependencies{ nullptr };
+        ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageHostRuntimeDependency>* m_HostRuntimeDependencies{ nullptr };
 
         short m_HasMinVersionLegacy{ false };
         short m_HasMaxVersionTestedLegacy{ false };

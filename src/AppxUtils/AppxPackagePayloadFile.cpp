@@ -1,3 +1,5 @@
+// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
 #include "pch.h"
 #include "AppxPackagePayloadFile.h"
 #include "helpers.hpp"

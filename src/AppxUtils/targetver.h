@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
+#pragma once
 
 // 包括 SDKDDKVer.h 将定义可用的最高版本的 Windows 平台。
 

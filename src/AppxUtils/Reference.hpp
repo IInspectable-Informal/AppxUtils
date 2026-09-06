@@ -1,3 +1,5 @@
+// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
 #pragma once
 
 namespace ABI::AppxUtils::Internal
@@ -28,7 +30,13 @@ namespace ABI::AppxUtils::Internal
                 if (SUCCEEDED(hr))
                 {
                     result = new Reference<T>(newString);
-                    return result ? S_OK : E_OUTOFMEMORY;
+                    if (result)
+                    { return S_OK; }
+                    else
+                    {
+                        WindowsDeleteString(newString);
+                        return E_OUTOFMEMORY;
+                    }
                 }
                 else
                 { return hr; }

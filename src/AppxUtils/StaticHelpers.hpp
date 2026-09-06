@@ -1,3 +1,5 @@
+// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
 #pragma once
 
 namespace ABI::AppxUtils::Internal
@@ -82,6 +84,12 @@ namespace ABI::AppxUtils::Internal
 
 	template<typename T>
 	constexpr auto __aligned_size_of{ alignof(T) ? (sizeof(T) % alignof(T) ? (sizeof(T) / alignof(T) + 1) * alignof(T) : sizeof(T)) : 0 };
+
+	template<typename T, typename = void>
+	constexpr bool __is_complete_type{ false };
+
+	template<typename T>
+	constexpr bool __is_complete_type<T, decltype(void(sizeof(T)))>{ true };
 
 	template<typename T>
 	struct RemovePointer

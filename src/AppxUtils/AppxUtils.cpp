@@ -1,4 +1,6 @@
-﻿#include "pch.h"
+﻿// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
+#include "pch.h"
 #include "AppxUtils.h"
 #include "AppxPackage.h"
 #include "AppxBundle.h"
@@ -149,6 +151,10 @@ namespace ABI::AppxUtils
 		else
 		{ return E_INVALIDARG; }
 	}
+
+	//IActivationFactory
+	HRESULT STDMETHODCALLTYPE AppxPackageFactory::ActivateInstance(IInspectable** instance)
+	{ return E_NOTIMPL; }
 
 	//IInspectable
 	HRESULT STDMETHODCALLTYPE AppxPackageFactory::GetRuntimeClassName(HSTRING* className)

@@ -1,4 +1,6 @@
-﻿#include "pch.h"
+﻿// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
+#include "pch.h"
 #include "dllmain.h"
 #include "AppxUtils.h"
 
@@ -27,14 +29,14 @@ void __fastcall DllRelease()
     InterlockedDecrement(&g_DllRefCount);
 }
 
-STDAPI DllGetActivationFactory(HSTRING className, IInspectable** factory)
+STDAPI DllGetActivationFactory(HSTRING className, IActivationFactory** factory)
 {
     if (wcsncmp(L"AppxUtils.AppxPackageFactory", WindowsGetStringRawBuffer(className, nullptr), 28) == 0)
     {
         ABI::AppxUtils::AppxPackageFactory* instance{ new ABI::AppxUtils::AppxPackageFactory{} };
         if (instance)
         {
-            *factory = reinterpret_cast<IInspectable*>(instance);
+            *factory = instance;
             return S_OK;
         }
         else

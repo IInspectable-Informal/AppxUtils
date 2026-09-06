@@ -1,3 +1,5 @@
+// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
 #pragma once
 
 namespace ABI::AppxUtils
@@ -36,7 +38,7 @@ namespace ABI::AppxUtils
 
 		INIT_ONCE m_InitOnce{ INIT_ONCE_STATIC_INIT };
 		struct AppxPackageDriverConstraint* m_Array{ nullptr };
-		UINT32 m_Count{ 0 };
+		UINT32 m_Size{ 0 };
 
 		static BOOL WINAPI InitListStatic(INIT_ONCE* InitOnce, void* Parameter, void** Context);
 	};

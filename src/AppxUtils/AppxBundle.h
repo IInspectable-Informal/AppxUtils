@@ -1,3 +1,5 @@
+// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
 #pragma once
 
 namespace ABI::AppxUtils
@@ -51,6 +53,11 @@ namespace ABI::AppxUtils
         ABI::Windows::System::ProcessorArchitecture m_Architecture{ ABI::Windows::System::ProcessorArchitecture_Unknown };
         HSTRING m_ResourceId{ nullptr };
         ABI::Windows::Storage::Streams::IRandomAccessStream* m_ManifestStream{ nullptr };
+
+        INIT_ONCE m_InitOnce{ INIT_ONCE_STATIC_INIT };
+        UINT32 m_Size{ 0 };
+        AppxPackageElement* m_AppxPackages{ nullptr };
+        CRITICAL_SECTION* m_CriticalSections{ nullptr };
 
         IAppxBundleReader* m_BundleReader{ nullptr };
         CRITICAL_SECTION* m_CriticalSection{ nullptr };

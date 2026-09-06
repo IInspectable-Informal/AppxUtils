@@ -1,9 +1,12 @@
-﻿#pragma once
+﻿// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
+#pragma once
 
 namespace ABI::AppxUtils
 {
     class AppxPackageFactory : public InspectableBase<BaseTrust,
         IAppxPackageFactory, IAppxBundleRuntimeClassFactory,
+        IActivationFactory,
         IAgileObject
     >
     {
@@ -12,6 +15,9 @@ namespace ABI::AppxUtils
 
         HRESULT STDMETHODCALLTYPE GetAppxPackageFromStream(ABI::Windows::Storage::Streams::IRandomAccessStream* appxPackageStream, IAppxPackageCore** result);
         HRESULT STDMETHODCALLTYPE GetAppxBundleFromStream(ABI::Windows::Storage::Streams::IRandomAccessStream* appxBundleStream, IAppxBundleCore** result);
+
+        //IActivationFactory
+        HRESULT STDMETHODCALLTYPE ActivateInstance(IInspectable** instance);
 
         //IInspectable
         HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className);

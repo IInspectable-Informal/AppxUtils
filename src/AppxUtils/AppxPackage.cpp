@@ -1,3 +1,5 @@
+// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
 #include "pch.h"
 #include "AppxPackage.h"
 #include "AppxPackageApplication.h"
@@ -459,7 +461,7 @@ namespace ABI::AppxUtils
 
     HRESULT STDMETHODCALLTYPE AppxPackageBase::get_Applications(ABI::IVectorView<AppxPackageApplication*>** value)
     {
-        auto* local{ reinterpret_cast<VectorView<AppxPackageApplication*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Applications), nullptr, nullptr)) };
+        auto* local{ reinterpret_cast<IVectorView<AppxPackageApplication*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Applications), nullptr, nullptr)) };
         if (local == nullptr)
         {
             EnterCriticalSection(m_CriticalSection);
@@ -559,7 +561,7 @@ namespace ABI::AppxUtils
 
     HRESULT STDMETHODCALLTYPE AppxPackageBase::get_PackageDependencies(ABI::IVectorView<struct AppxPackageDependency>** value)
     {
-        auto local{ reinterpret_cast<VectorView<struct AppxPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PackageDependencies), nullptr, nullptr)) };
+        auto local{ reinterpret_cast<IVectorView<struct AppxPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PackageDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
             EnterCriticalSection(m_CriticalSection);
@@ -678,7 +680,7 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
-            local = reinterpret_cast<VectorView<struct AppxPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PackageDependencies), nullptr, nullptr));
+            local = reinterpret_cast<IVectorView<struct AppxPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PackageDependencies), nullptr, nullptr));
         }
 
         local->AddRef();
@@ -688,7 +690,7 @@ namespace ABI::AppxUtils
 
     HRESULT STDMETHODCALLTYPE AppxPackageBase::get_Resources(ABI::IVectorView<struct AppxPackageResource>** value)
     {
-        auto local{ reinterpret_cast<VectorView<struct AppxPackageResource>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Resources), nullptr, nullptr)) };
+        auto local{ reinterpret_cast<IVectorView<struct AppxPackageResource>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Resources), nullptr, nullptr)) };
         if (local == nullptr)
         {
             EnterCriticalSection(m_CriticalSection);
@@ -843,7 +845,7 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
-            local = reinterpret_cast<VectorView<struct AppxPackageResource>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Resources), nullptr, nullptr));
+            local = reinterpret_cast<IVectorView<struct AppxPackageResource>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Resources), nullptr, nullptr));
         }
 
         local->AddRef();
@@ -853,7 +855,7 @@ namespace ABI::AppxUtils
 
     HRESULT STDMETHODCALLTYPE AppxPackageBase::get_DeviceCapabilities(ABI::IVectorView<HSTRING>** value)
     {
-        auto local{ reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DeviceCapabilities), nullptr, nullptr)) };
+        auto local{ reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DeviceCapabilities), nullptr, nullptr)) };
         if (local == nullptr)
         {
             EnterCriticalSection(m_CriticalSection);
@@ -929,7 +931,7 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
-            local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DeviceCapabilities), nullptr, nullptr));
+            local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DeviceCapabilities), nullptr, nullptr));
         }
 
         local->AddRef();
@@ -1003,7 +1005,7 @@ namespace ABI::AppxUtils
 #pragma region IAppxPackage
     HRESULT STDMETHODCALLTYPE AppxPackageBase::get_TargetDeviceFamilies(ABI::IVectorView<struct AppxPackageTargetDeviceFamily>** value)
     {
-        auto local{ reinterpret_cast<VectorView<struct AppxPackageTargetDeviceFamily>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_TargetDeviceFamilies), nullptr, nullptr)) };
+        auto local{ reinterpret_cast<IVectorView<struct AppxPackageTargetDeviceFamily>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_TargetDeviceFamilies), nullptr, nullptr)) };
         if (local == nullptr)
         {
             EnterCriticalSection(m_CriticalSection);
@@ -1107,7 +1109,7 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return hr; }
-            local = reinterpret_cast<VectorView<struct AppxPackageTargetDeviceFamily>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_TargetDeviceFamilies), nullptr, nullptr));
+            local = reinterpret_cast<IVectorView<struct AppxPackageTargetDeviceFamily>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_TargetDeviceFamilies), nullptr, nullptr));
         }
 
         local->AddRef();
@@ -1120,31 +1122,31 @@ namespace ABI::AppxUtils
 
     HRESULT STDMETHODCALLTYPE AppxPackageBase::GetCapabilitiesByCapabilityClass(AppxPackageCapabilityClassType classType, ABI::IVectorView<HSTRING>** result)
     {
-        VectorView<HSTRING>* local{ nullptr };
+        IVectorView<HSTRING>* local{ nullptr };
         switch (classType)
         {
             case AppxPackageCapabilityClassType::Default:
-                local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Capabilities), nullptr, nullptr));
+                local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Capabilities), nullptr, nullptr));
                 break;
 
             case AppxPackageCapabilityClassType::General:
-                local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_GeneralCapabilities), nullptr, nullptr));
+                local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_GeneralCapabilities), nullptr, nullptr));
                 break;
 
             case AppxPackageCapabilityClassType::Restricted:
-                local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_RestrictedCapabilities), nullptr, nullptr));
+                local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_RestrictedCapabilities), nullptr, nullptr));
                 break;
 
             case AppxPackageCapabilityClassType::Windows:
-                local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_WindowsCapabilities), nullptr, nullptr));
+                local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_WindowsCapabilities), nullptr, nullptr));
                 break;
 
             case AppxPackageCapabilityClassType::All:
-                local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_AllCapabilities), nullptr, nullptr));
+                local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_AllCapabilities), nullptr, nullptr));
                 break;
 
             case AppxPackageCapabilityClassType::Custom:
-                local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_CustomCapabilities), nullptr, nullptr));
+                local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_CustomCapabilities), nullptr, nullptr));
                 break;
 
             default:
@@ -1158,27 +1160,27 @@ namespace ABI::AppxUtils
             switch (classType)
             {
                 case AppxPackageCapabilityClassType::Default:
-                    local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Capabilities), nullptr, nullptr));
+                    local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Capabilities), nullptr, nullptr));
                     break;
 
                 case AppxPackageCapabilityClassType::General:
-                    local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_GeneralCapabilities), nullptr, nullptr));
+                    local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_GeneralCapabilities), nullptr, nullptr));
                    break;
 
                 case AppxPackageCapabilityClassType::Restricted:
-                    local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_RestrictedCapabilities), nullptr, nullptr));
+                    local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_RestrictedCapabilities), nullptr, nullptr));
                     break;
 
                 case AppxPackageCapabilityClassType::Windows:
-                    local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_WindowsCapabilities), nullptr, nullptr));
+                    local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_WindowsCapabilities), nullptr, nullptr));
                     break;
 
                 case AppxPackageCapabilityClassType::All:
-                    local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_AllCapabilities), nullptr, nullptr));
+                    local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_AllCapabilities), nullptr, nullptr));
                     break;
 
                 case AppxPackageCapabilityClassType::Custom:
-                    local = reinterpret_cast<VectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_CustomCapabilities), nullptr, nullptr));
+                    local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_CustomCapabilities), nullptr, nullptr));
                     break;
             }
             if (local == nullptr)
@@ -1386,7 +1388,7 @@ namespace ABI::AppxUtils
 #pragma region IAppxPackage4
     HRESULT STDMETHODCALLTYPE AppxPackageBase::get_MainPackageDependencies(ABI::IVectorView<struct AppxPackageMainPackageDependency>** value)
     {
-        auto local{ reinterpret_cast<VectorView<struct AppxPackageMainPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageDependencies), nullptr, nullptr)) };
+        auto local{ reinterpret_cast<IVectorView<struct AppxPackageMainPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
             EnterCriticalSection(m_CriticalSection);
@@ -1502,7 +1504,7 @@ namespace ABI::AppxUtils
             LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
             { return S_OK; }
-            local = reinterpret_cast<VectorView<struct AppxPackageMainPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageDependencies), nullptr, nullptr));
+            local = reinterpret_cast<IVectorView<struct AppxPackageMainPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageDependencies), nullptr, nullptr));
         }
 
         local->AddRef();
@@ -1550,10 +1552,10 @@ namespace ABI::AppxUtils
     }
 #pragma endregion
 
-#pragma region IAppxPackage10
+    #pragma region IAppxPackage10
     HRESULT STDMETHODCALLTYPE AppxPackageBase::get_DriverDependencies(ABI::IVectorView<AppxPackageDriverDependency*>** value)
     {
-        auto local{ reinterpret_cast<VectorView<AppxPackageDriverDependency*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DriverDependencies), nullptr, nullptr)) };
+        auto local{ reinterpret_cast<IVectorView<AppxPackageDriverDependency*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DriverDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
             EnterCriticalSection(m_CriticalSection);
@@ -1641,7 +1643,7 @@ namespace ABI::AppxUtils
     
     HRESULT STDMETHODCALLTYPE AppxPackageBase::get_OSPackageDependencies(ABI::IVectorView<struct AppxPackageOSPackageDependency>** value)
     {
-        auto local{ reinterpret_cast<VectorView<struct AppxPackageOSPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_OSPackageDependencies), nullptr, nullptr)) };
+        auto local{ reinterpret_cast<IVectorView<struct AppxPackageOSPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_OSPackageDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
             EnterCriticalSection(m_CriticalSection);
@@ -1748,7 +1750,7 @@ namespace ABI::AppxUtils
     
     HRESULT STDMETHODCALLTYPE AppxPackageBase::get_HostRuntimeDependencies(ABI::IVectorView<struct AppxPackageHostRuntimeDependency>** value)
     {
-        auto local{ reinterpret_cast<VectorView<struct AppxPackageHostRuntimeDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_HostRuntimeDependencies), nullptr, nullptr)) };
+        auto local{ reinterpret_cast<IVectorView<struct AppxPackageHostRuntimeDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_HostRuntimeDependencies), nullptr, nullptr)) };
         if (local == nullptr)
         {
             EnterCriticalSection(m_CriticalSection);

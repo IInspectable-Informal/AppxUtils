@@ -1,3 +1,5 @@
+// Copyright 2026 IInspectable-Informal
+// SPDX-License-Identifier: Apache-2.0
 #include "pch.h"
 #include "AppxPackageDriverDependency.h"
 #include "helpers.hpp"
@@ -17,14 +19,14 @@ namespace ABI::AppxUtils::Internal
 		IAgileObject>
 	{
 	public:
-		AppxPackageDriverDependencyIterator(AppxPackageDriverDependency* container, struct AppxPackageDriverConstraint* list, UINT32 count) noexcept : m_Container(container), m_Array(list), m_Capacity(count)
+		AppxPackageDriverDependencyIterator(AppxPackageDriverDependency* container, struct AppxPackageDriverConstraint* list, UINT32 count) noexcept : m_Container(container), m_Array(list), m_Size(count)
 		{
 			container->AddRef();
 		}
 
 		HRESULT STDMETHODCALLTYPE get_Current(struct AppxPackageDriverConstraint* current)
 		{
-			if (m_Current < m_Capacity)
+			if (m_Current < m_Size)
 			{ return StructLifetimeFunctions<struct AppxPackageDriverConstraint>::DeepCopyStruct(m_Array[m_Current], *current); }
 			else
 			{ return E_BOUNDS; }
@@ -32,16 +34,16 @@ namespace ABI::AppxUtils::Internal
 
 		HRESULT STDMETHODCALLTYPE get_HasCurrent(boolean* hasCurrent)
 		{
-			*hasCurrent = m_Current < m_Capacity;
+			*hasCurrent = m_Current < m_Size;
 			return S_OK;
 		}
 
 		HRESULT STDMETHODCALLTYPE MoveNext(boolean* hasCurrent)
 		{
-			if (m_Current <= m_Capacity)
+			if (m_Current <= m_Size)
 			{
 				++m_Current;
-				*hasCurrent = m_Current < m_Capacity;
+				*hasCurrent = m_Current < m_Size;
 				return S_OK;
 			}
 			else
@@ -50,7 +52,19 @@ namespace ABI::AppxUtils::Internal
 
 		HRESULT STDMETHODCALLTYPE GetMany(UINT32 capacity, struct AppxPackageDriverConstraint* value, UINT32* actual)
 		{
-			return E_NOTIMPL;
+			UINT32 itemsGot{ 0 };
+			for (; itemsGot < capacity && m_Current < m_Size; ++m_Current, ++itemsGot)
+			{
+				HRESULT hr{ StructLifetimeFunctions<struct AppxPackageDriverConstraint>::DeepCopyStruct(m_Array[m_Current], value[itemsGot]) };
+				if (FAILED(hr))
+				{
+					for (UINT32 i{ 0 }; i < itemsGot; ++i)
+					{ StructLifetimeFunctions<struct AppxPackageDriverConstraint>::ReleaseStruct(value[i]); }
+					return hr;
+				}
+			}
+			*actual = itemsGot;
+			return S_OK;
 		}
 
 		//IInspectable
@@ -64,7 +78,7 @@ namespace ABI::AppxUtils::Internal
 
 	private:
 		struct AppxPackageDriverConstraint* m_Array{ nullptr };
-		UINT32 m_Capacity{ 0 };
+		UINT32 m_Size{ 0 };
 		UINT32 m_Current{ 0 };
 		AppxPackageDriverDependency* m_Container{ nullptr };
 	};
@@ -82,7 +96,7 @@ namespace ABI::AppxUtils
 	{
 		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, nullptr))
 		{
-			if (index < m_Count)
+			if (index < m_Size)
 			{ return StructLifetimeFunctions<struct AppxPackageDriverConstraint>::DeepCopyStruct(m_Array[index], *item); }
 			else
 			{ return E_BOUNDS; }
@@ -95,7 +109,7 @@ namespace ABI::AppxUtils
 	{
 		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, nullptr))
 		{
-			*size = m_Count;
+			*size = m_Size;
 			return S_OK;
 		}
 		else
@@ -106,7 +120,7 @@ namespace ABI::AppxUtils
 	{
 		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, nullptr))
 		{
-			for (UINT32 i = 0; i < m_Count; ++i)
+			for (UINT32 i = 0; i < m_Size; ++i)
 			{
 				struct AppxPackageDriverConstraint& element{ m_Array[i] };
 				bool result{};
@@ -118,6 +132,7 @@ namespace ABI::AppxUtils
 					return S_OK;
 				}
 			}
+			*index = 0;
 			*found = false;
 			return S_OK;
 		}
@@ -129,7 +144,24 @@ namespace ABI::AppxUtils
 	{
 		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, nullptr))
 		{
-			return E_NOTIMPL;
+			if (startIndex <= m_Size)
+			{
+				UINT32 itemsGot{ 0 };
+				for (UINT32 i{ startIndex }; itemsGot < capacity && i < m_Size; ++i, ++itemsGot)
+				{
+					HRESULT hr{ StructLifetimeFunctions<struct AppxPackageDriverConstraint>::DeepCopyStruct(m_Array[i], value[itemsGot]) };
+					if (FAILED(hr))
+					{
+						for (UINT32 j{ 0 }; j < itemsGot; ++j)
+						{ StructLifetimeFunctions<struct AppxPackageDriverConstraint>::ReleaseStruct(value[j]); }
+						return hr;
+					}
+				}
+				*actual = itemsGot;
+				return S_OK;
+			}
+			else
+			{ return E_BOUNDS; }
 		}
 		else
 		{ return HRESULT_FROM_WIN32(GetLastError()); }
@@ -140,7 +172,7 @@ namespace ABI::AppxUtils
 	{
 		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, nullptr))
 		{
-			auto* instance{ new AppxPackageDriverDependencyIterator(this, m_Array, m_Count) };
+			auto* instance{ new AppxPackageDriverDependencyIterator(this, m_Array, m_Size) };
 			if (instance)
 			{
 				*first = instance;
@@ -176,7 +208,7 @@ namespace ABI::AppxUtils
 		m_DriverDependency->Release();
 		if (m_Array)
 		{
-			for (UINT32 i{ 0 }; i < m_Count; ++i)
+			for (UINT32 i{ 0 }; i < m_Size; ++i)
 			{ StructLifetimeFunctions<struct AppxPackageDriverConstraint>::ReleaseStruct(m_Array[i]); }
 			delete[] m_Array;
 		}
@@ -266,7 +298,7 @@ namespace ABI::AppxUtils
 					if (SUCCEEDED(hr))
 					{
 						externalThis->m_Array = constraints;
-						externalThis->m_Count = count;
+						externalThis->m_Size = count;
 					}
 				}
 				else
