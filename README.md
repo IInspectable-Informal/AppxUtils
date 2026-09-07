@@ -16,6 +16,7 @@
 * ✅ 解析 Win8 AppX 包遗留属性（由 AppxUtils.IAppxPackageLegacy 接口提供，除非需要解析为 Win8/8.1 开发的 Metro/Modern 应用程序安装包，否则不推荐使用）
 * ✅ 通过 IAppxPackageInterop/IAppxBundleInterop/IAppxPackageApplicationInterop 等低级别 COM 接口获取底层的接口实例（⚠️这是低级别操作，除非必要，否则不建议在生产环境下使用）
 * 🚧 获取 AppX/MSIX 包里的载荷文件（由 AppxUtils.IAppxPackagePayloadFilesReader 接口提供）
+* ❌ 获取包内块映射（尚未公开相应的getter）
 
 ## 示例
 
