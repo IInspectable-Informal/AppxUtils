@@ -327,17 +327,10 @@ namespace AppxUtils
 		String ResourceId{ get; };
 
 		Windows.Storage.Streams.IInputStream GetManifestStream();
-	};
-
-	[version(4.0)]
-	[exclusiveto(AppxBundle)]
-	interface IAppxBundle4
-	{
-		void DummyFunc();
-	};
+	};
 
 	[version(0.63)]
-	runtimeclass AppxBundle : [default] IAppxBundleCore, Windows.Foundation.Collections.IVectorView<AppxPackage>, IAppxBundle4
+	runtimeclass AppxBundle : [default] IAppxBundleCore, Windows.Foundation.Collections.IVectorView<AppxPackage>
 	{
 		
 	}
