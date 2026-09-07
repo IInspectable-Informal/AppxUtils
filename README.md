@@ -1,11 +1,12 @@
 # AppxUtils
 
-**[实验性，尚未完成]** 一个用于解析 AppX/MSIX 的轻量级进程内 Windows 运行时组件。  
+**[🧪实验性，尚未完成]** 一个用于解析 AppX/MSIX 的轻量级进程内 Windows 运行时组件。  
 它封装了复杂的 COM 接口，为 .NET 和 C++ 开发者提供了一套简洁的、类型安全的 API。
 
 ## 功能
 
 * ✅ 解析应用包最基本信息（由 AppxUtils.IAppxPackageCore 接口提供）
+* ✅ 解析 AppX 捆绑包（需 Win8.1/Win10+）
 * ✅ 解析 Win10 MSIX 包/MSIX 捆绑包（需 Win10 1709+（build 16299+））
 * ✅ 解析 Win10 AppX/MSIX 包基本属性（由 AppxUtils.IAppxPackage 接口提供，需 Win10+）
 * ✅ 解析 Win10 AppX/MSIX 包的可选包属性（由 AppxUtils.IAppxPackage3 接口提供，需 Win10 1607+（build 14393+））
@@ -15,7 +16,6 @@
 * ✅ 解析 Win8 AppX 包遗留属性（由 AppxUtils.IAppxPackageLegacy 接口提供，除非需要解析为 Win8/8.1 开发的 Metro/Modern 应用程序安装包，否则不推荐使用）
 * ✅ 通过 IAppxPackageInterop/IAppxBundleInterop/IAppxPackageApplicationInterop 等低级别 COM 接口获取底层的接口实例（⚠️这是低级别操作，除非必要，否则不建议在生产环境下使用）
 * 🚧 获取 AppX/MSIX 包里的载荷文件（由 AppxUtils.IAppxPackagePayloadFilesReader 接口提供）
-* 🚧 解析 AppX 捆绑包（需 Win8.1/Win10+）
 
 ## 示例
 
