@@ -92,7 +92,7 @@ namespace ABI::AppxUtils
 		if (appxBundleStream)
 		{
 			HRESULT hr{ S_OK };
-			if (InitOnceExecuteOnce(&m_AppxBundleFactoryInitOnce, StaticAppxFactoryInit, &m_AppxBundleFactory, reinterpret_cast<void**>(&hr)))
+			if (InitOnceExecuteOnce(&m_AppxBundleFactoryInitOnce, StaticAppxBundleFactoryInit, &m_AppxBundleFactory, reinterpret_cast<void**>(&hr)))
 			{
 				CRITICAL_SECTION* section{ new CRITICAL_SECTION{} };
 				if (section)
