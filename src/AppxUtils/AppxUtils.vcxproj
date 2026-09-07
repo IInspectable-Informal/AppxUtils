@@ -199,6 +199,7 @@
     </Midl>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AppxBlockMapFile.h" />
     <ClInclude Include="AppxBundle.h" />
     <ClInclude Include="AppxPackage.h" />
     <ClInclude Include="AppxPackageApplication.h" />
@@ -221,6 +222,7 @@
     <ClInclude Include="VectorView.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AppxBlockMapFile.cpp" />
     <ClCompile Include="AppxBundle.cpp" />
     <ClCompile Include="AppxPackage.cpp" />
     <ClCompile Include="AppxPackageApplication.cpp" />

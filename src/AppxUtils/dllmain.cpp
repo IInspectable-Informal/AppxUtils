@@ -20,18 +20,43 @@ BOOL APIENTRY DllMain(HMODULE /* hModule */, DWORD ul_reason_for_call, LPVOID /*
 static UINT64 g_DllRefCount{ 0 };
 
 void __fastcall DllAddRef()
-{
-    InterlockedIncrement(&g_DllRefCount);
-}
+{ InterlockedIncrement(&g_DllRefCount); }
 
 void __fastcall DllRelease()
+{ InterlockedDecrement(&g_DllRefCount); }
+
+constexpr bool __stdcall IsEqualWStr(const wchar_t* left, const wchar_t* right, const UINT32 maxLength)
 {
-    InterlockedDecrement(&g_DllRefCount);
+    if (left == right)
+    { return true; }
+    else if (left && right)
+    {
+        for (UINT32 i{ 0 }; i < maxLength; ++i)
+        {
+            const auto& elementA{ left[i] };
+            const auto& elementB{ right[i] };
+            if (elementA == elementB)
+            {
+                if (!elementA)
+                { return true; }
+            }
+            else
+            { return false; }
+        }
+        return true;
+    }
+    else
+    { return false; }
 }
+
+constexpr inline UINT32 max(const UINT32 a, const UINT32 b)
+{ return a > b ? a : b; }
 
 STDAPI DllGetActivationFactory(HSTRING className, IActivationFactory** factory)
 {
-    if (wcsncmp(L"AppxUtils.AppxPackageFactory", WindowsGetStringRawBuffer(className, nullptr), 28) == 0)
+    UINT32 count{ 255 };
+    auto* classNameRaw{ WindowsGetStringRawBuffer(className, &count) };
+    if (IsEqualWStr(L"AppxUtils.AppxPackageFactory", classNameRaw, max(count, 28)))
     {
         ABI::AppxUtils::AppxPackageFactory* instance{ new ABI::AppxUtils::AppxPackageFactory{} };
         if (instance)
@@ -40,17 +65,11 @@ STDAPI DllGetActivationFactory(HSTRING className, IActivationFactory** factory)
             return S_OK;
         }
         else
-        {
-            return E_OUTOFMEMORY;
-        }
+        { return E_OUTOFMEMORY; }
     }
     else
-    {
-        return E_NOINTERFACE;
-    }
+    { return E_NOINTERFACE; }
 }
 
 STDAPI DllCanUnloadNow()
-{
-    return g_DllRefCount ? S_FALSE : S_OK;
-}
+{ return InterlockedCompareExchange(&g_DllRefCount, 0, 0) ? S_FALSE : S_OK; }

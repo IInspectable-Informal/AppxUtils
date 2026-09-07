@@ -19,7 +19,7 @@ namespace ABI::AppxUtils::Internal
 		IAgileObject>
 	{
 	public:
-		AppxPackageDriverDependencyIterator(AppxPackageDriverDependency* container, struct AppxPackageDriverConstraint* list, UINT32 count) noexcept : m_Container(container), m_Array(list), m_Size(count)
+		AppxPackageDriverDependencyIterator(const struct AppxPackageDriverConstraint*& list, UINT32 count, AppxPackageDriverDependency* const container) noexcept : m_Container(container), m_Array(list), m_Size(count)
 		{
 			container->AddRef();
 		}
@@ -77,10 +77,10 @@ namespace ABI::AppxUtils::Internal
 		}
 
 	private:
-		struct AppxPackageDriverConstraint* m_Array{ nullptr };
-		UINT32 m_Size{ 0 };
+		const struct AppxPackageDriverConstraint* const m_Array{ nullptr };
+		const UINT32 m_Size{ 0 };
 		UINT32 m_Current{ 0 };
-		AppxPackageDriverDependency* m_Container{ nullptr };
+		AppxPackageDriverDependency* const m_Container{ nullptr };
 	};
 }
 
@@ -122,9 +122,8 @@ namespace ABI::AppxUtils
 		{
 			for (UINT32 i = 0; i < m_Size; ++i)
 			{
-				struct AppxPackageDriverConstraint& element{ m_Array[i] };
 				bool result{};
-				StructLifetimeFunctions<struct AppxPackageDriverConstraint>::IsEqualStruct(element, value, result);
+				StructLifetimeFunctions<struct AppxPackageDriverConstraint>::IsEqualStruct(m_Array[i], value, result);
 				if (result)
 				{
 					*index = i;
@@ -172,7 +171,7 @@ namespace ABI::AppxUtils
 	{
 		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, nullptr))
 		{
-			auto* instance{ new AppxPackageDriverDependencyIterator(this, m_Array, m_Size) };
+			auto* instance{ new AppxPackageDriverDependencyIterator{ m_Array, m_Size, this } };
 			if (instance)
 			{
 				*first = instance;
@@ -193,10 +192,8 @@ namespace ABI::AppxUtils
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE AppxPackageDriverDependency::get_DriverConstraints(IAppxManifestDriverConstraintsEnumerator** value)
-	{
-		return m_DriverDependency->GetDriverConstraints(value);
-	}
+	HRESULT STDMETHODCALLTYPE AppxPackageDriverDependency::GetDriverConstraints(IAppxManifestDriverConstraintsEnumerator** value)
+	{ return m_DriverDependency->GetDriverConstraints(value); }
 
 	//IInspectable
 	HRESULT STDMETHODCALLTYPE AppxPackageDriverDependency::GetRuntimeClassName(HSTRING* className)

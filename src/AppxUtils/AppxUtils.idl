@@ -284,32 +284,48 @@ namespace AppxUtils
 		Windows.Foundation.Collections.IMapView<String, AppxPackagePayloadFile> GetPayloadFiles();
 	};
 
-	struct AppxBlockMapBlock
+	[exclusiveto(AppxBlockMapBlock)]
+	interface IAppxBlockMapBlockRuntimeClass
 	{
-		String Hash;
-		UInt32 CompressedSize;
+		UInt8[] Hash{ get; };
+		UInt32 CompressedSize{ get; };
 	};
 
-	[default_interface]
-	runtimeclass AppxBlockMapFile
+	runtimeclass AppxBlockMapBlock : [default] IAppxBlockMapBlockRuntimeClass
 	{
-		UInt32 LocalFileHreaderSize{ get; };
+
+	};
+
+	[exclusiveto(AppxBlockMapFile)]
+	interface IAppxBlockMapFileRuntimeClass
+	{
+		UInt32 LocalFileHeaderSize{ get; };
 		UInt64 UncompressedSizeSize{ get; };
 		Windows.Foundation.Collections.IVectorView<AppxBlockMapBlock> Blocks{ get; };
 
 		Boolean ValidateFileHash(Windows.Storage.Streams.IInputStream fileStream);
-	}
-
-	[exclusiveto(AppxPackage)]
-	interface IAppxPackageBlockMap
-	{
-		Windows.Foundation.Uri HashMethod{ get; };
-		Windows.Foundation.Collections.IMapView<String, AppxBlockMapFile> Files{ get; };
-
-		Windows.Data.Xml.Dom.XmlDocument GetBlockMapXml();
 	};
 
-	runtimeclass AppxPackage : [default] IAppxPackageCore, IAppxPackagePayloadFilesReader, IAppxPackageBlockMap, IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10, IAppxPackageLegacy
+	runtimeclass AppxBlockMapFile : [default] IAppxBlockMapFileRuntimeClass
+	{
+
+	}
+
+	[exclusiveto(AppxBlockMap)]
+	interface IAppxBlockMap
+	{
+		String HashMethod{ get; };
+		Windows.Foundation.Collections.IMapView<String, AppxBlockMapFile> Files{ get; };
+
+		Windows.Storage.Streams.IInputStream GetBlockMapStream();
+	};
+
+	runtimeclass AppxBlockMap : [default] IAppxBlockMap
+	{
+
+	}
+
+	runtimeclass AppxPackage : [default] IAppxPackageCore, IAppxPackagePayloadFilesReader, IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10, IAppxPackageLegacy
 	{
 
 	}
@@ -327,7 +343,7 @@ namespace AppxUtils
 		String ResourceId{ get; };
 
 		Windows.Storage.Streams.IInputStream GetManifestStream();
-	};
+	};
 
 	[version(0.63)]
 	runtimeclass AppxBundle : [default] IAppxBundleCore, Windows.Foundation.Collections.IVectorView<AppxPackage>

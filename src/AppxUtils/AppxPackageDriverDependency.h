@@ -26,7 +26,8 @@ namespace ABI::AppxUtils
 
 		//IAppxPackageDriverDependencyInterop
 		HRESULT STDMETHODCALLTYPE get_DriverDependency(IAppxManifestDriverDependency** value);
-		HRESULT STDMETHODCALLTYPE get_DriverConstraints(IAppxManifestDriverConstraintsEnumerator** value);
+
+		HRESULT STDMETHODCALLTYPE GetDriverConstraints(IAppxManifestDriverConstraintsEnumerator** value);
 
 		//IInspectable
 		HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className);
@@ -37,7 +38,7 @@ namespace ABI::AppxUtils
 		IAppxManifestDriverDependency* m_DriverDependency{ nullptr };
 
 		INIT_ONCE m_InitOnce{ INIT_ONCE_STATIC_INIT };
-		struct AppxPackageDriverConstraint* m_Array{ nullptr };
+		const struct AppxPackageDriverConstraint* m_Array{ nullptr };
 		UINT32 m_Size{ 0 };
 
 		static BOOL WINAPI InitListStatic(INIT_ONCE* InitOnce, void* Parameter, void** Context);

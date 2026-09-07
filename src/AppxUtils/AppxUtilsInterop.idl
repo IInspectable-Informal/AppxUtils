@@ -48,5 +48,5 @@ interface IAppxPackagePayloadFileInterop : IUnknown
 interface IAppxPackageDriverDependencyInterop : IUnknown
 {
 	[propget] HRESULT DriverDependency([out, retval] IAppxManifestDriverDependency** value);
-	[propget] HRESULT DriverConstraints([out, retval] IAppxManifestDriverConstraintsEnumerator** value);
+	HRESULT GetDriverConstraints([out, retval] IAppxManifestDriverConstraintsEnumerator** value);
 };

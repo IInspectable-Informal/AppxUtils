@@ -1552,7 +1552,7 @@ namespace ABI::AppxUtils
     }
 #pragma endregion
 
-    #pragma region IAppxPackage10
+#pragma region IAppxPackage10
     HRESULT STDMETHODCALLTYPE AppxPackageBase::get_DriverDependencies(ABI::IVectorView<AppxPackageDriverDependency*>** value)
     {
         auto local{ reinterpret_cast<IVectorView<AppxPackageDriverDependency*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_DriverDependencies), nullptr, nullptr)) };

@@ -20,7 +20,7 @@ namespace ABI::AppxUtils
 {
 #pragma region Free members
 	static INIT_ONCE g_InitOnce{ INIT_ONCE_STATIC_INIT };
-	static UINT32 g_FactoryRefCount{ 0 };
+	static UINT64 g_FactoryRefCount{ 0 };
 	static IAppxFactory* g_AppxPackageFactory{ nullptr };
 
 	BOOL WINAPI InitAppxPackageFactory(INIT_ONCE* InitOnce, void* Parameter, void** Context)
@@ -37,14 +37,14 @@ namespace ABI::AppxUtils
 	>
 	{
 	public:
-		AppxPackagesIterator(AppxPackageElement* list, UINT32 size, AppxBundle* bundle) noexcept : m_Size(size), m_Array(list), m_Bundle(bundle)
+		AppxPackagesIterator(AppxPackageElement* list, const UINT32 size, AppxBundle* bundle) noexcept : m_Size(size), m_Array(list), m_Bundle(bundle)
 		{ bundle->AddRef(); }
 
 		HRESULT STDMETHODCALLTYPE get_Current(IAppxPackageCore** current)
 		{
 			if (m_Current < m_Size)
 			{
-				auto* element{ m_Array + m_Current };
+				auto* const element{ m_Array + m_Current };
 				element->AddRef();
 				*current = element;
 				return S_OK;
@@ -76,7 +76,7 @@ namespace ABI::AppxUtils
 			UINT32 itemsGot{ 0 };
 			for (; itemsGot < capacity && m_Current < m_Size; ++m_Current, ++itemsGot)
 			{
-				AppxPackageElement* element{ m_Array + m_Current };
+				AppxPackageElement* const element{ m_Array + m_Current };
 				element->AddRef();
 				value[itemsGot] = element;
 			}
@@ -92,10 +92,10 @@ namespace ABI::AppxUtils
 		{ m_Bundle->Release(); }
 
 	private:
-		UINT32 m_Size{ 0 };
+		const UINT32 m_Size{ 0 };
 		UINT32 m_Current{ 0 };
-		AppxPackageElement* m_Array{ nullptr };
-		AppxBundle* m_Bundle{ nullptr };
+		AppxPackageElement* const m_Array{ nullptr };
+		AppxBundle* const m_Bundle{ nullptr };
 	};
 
 #pragma region AppxBundle

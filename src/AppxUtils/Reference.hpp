@@ -59,7 +59,13 @@ namespace ABI::AppxUtils::Internal
                 if (SUCCEEDED(hr))
                 {
                     result = new Reference<T>(structCopy);
-                    return result ? S_OK : E_OUTOFMEMORY;
+                    if (result)
+                    { return S_OK; }
+                    else
+                    {
+                        StructLifetimeFunctions<T_ABI>::ReleaseStruct(structCopy);
+                        return E_OUTOFMEMORY;
+                    }
                 }
                 else
                 { return hr; }
@@ -463,7 +469,7 @@ namespace ABI::AppxUtils::Internal
         }
 
         private:
-            T_ABI m_Value{};
+            const T_ABI m_Value{};
 
             static inline INIT_ONCE s_InitOnce{ INIT_ONCE_STATIC_INIT };
             static inline const wchar_t* s_ClassName{ nullptr };

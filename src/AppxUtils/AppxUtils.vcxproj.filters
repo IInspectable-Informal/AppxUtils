@@ -17,6 +17,7 @@
     <ClCompile Include="HeapManagement.cpp" />
     <ClCompile Include="AppxPackageApplication.cpp" />
     <ClCompile Include="AppxBundle.cpp" />
+    <ClCompile Include="AppxBlockMapFile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppxUtils.h" />
@@ -39,6 +40,7 @@
     <ClInclude Include="HeapManagement.h" />
     <ClInclude Include="AppxPackageApplication.h" />
     <ClInclude Include="AppxBundle.h" />
+    <ClInclude Include="AppxBlockMapFile.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="AppxUtils.idl" />
