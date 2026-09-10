@@ -287,7 +287,7 @@ namespace ABI::AppxUtils
 						if (FAILED(hr))
 						{
 							for (UINT32 i{ 0 }; i < completed; ++i)
-							{ StructLifetimeFunctions<struct AppxPackageDriverConstraint>::ReleaseStruct(externalThis->m_Array[i]); }
+							{ StructLifetimeFunctions<struct AppxPackageDriverConstraint>::ReleaseStruct(constraints[i]); }
 							delete[] constraints;
 							break;
 						}

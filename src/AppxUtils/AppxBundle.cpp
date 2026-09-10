@@ -20,86 +20,6 @@ namespace ABI
 
 namespace ABI::AppxUtils
 {
-#pragma region Free members
-	static INIT_ONCE g_InitOnce{ INIT_ONCE_STATIC_INIT };
-	static UINT64 g_FactoryRefCount{ 0 };
-	static IAppxFactory* g_AppxPackageFactory{ nullptr };
-
-	BOOL WINAPI InitAppxPackageFactory(INIT_ONCE* InitOnce, void* Parameter, void** Context)
-	{
-		auto& hr{ *reinterpret_cast<HRESULT*>(Context) };
-		hr = CoCreateInstance(CLSID_AppxFactory, nullptr, CLSCTX_INPROC_SERVER, __uuidof(g_AppxPackageFactory), to_void_pp(g_AppxPackageFactory));
-		return SUCCEEDED(hr);
-	}
-#pragma endregion
-
-	class AppxPackagesIterator final : public InspectableBase<BaseTrust,
-		ABI::IIterator<AppxPackage*>,
-		IAgileObject
-	>
-	{
-	public:
-		AppxPackagesIterator(AppxPackageElement* list, const UINT32 size, AppxBundle* bundle) noexcept : m_Size(size), m_Array(list), m_Bundle(bundle)
-		{ bundle->AddRef(); }
-
-		HRESULT STDMETHODCALLTYPE get_Current(IAppxPackageCore** current)
-		{
-			if (m_Current < m_Size)
-			{
-				auto* const element{ m_Array + m_Current };
-				element->AddRef();
-				*current = element;
-				return S_OK;
-			}
-			else
-			{ return E_BOUNDS; }
-		}
-
-		HRESULT STDMETHODCALLTYPE get_HasCurrent(boolean* hasCurrent)
-		{
-			*hasCurrent = m_Current < m_Size;
-			return S_OK;
-		}
-
-		HRESULT STDMETHODCALLTYPE MoveNext(boolean* hasCurrent)
-		{
-			if (m_Current <= m_Size)
-			{
-				++m_Current;
-				*hasCurrent = m_Current < m_Size;
-				return S_OK;
-			}
-			else
-			{ return E_BOUNDS; }
-		}
-
-		HRESULT STDMETHODCALLTYPE GetMany(UINT32 capacity, IAppxPackageCore** value, UINT32* actual)
-		{
-			UINT32 itemsGot{ 0 };
-			for (; itemsGot < capacity && m_Current < m_Size; ++m_Current, ++itemsGot)
-			{
-				AppxPackageElement* const element{ m_Array + m_Current };
-				element->AddRef();
-				value[itemsGot] = element;
-			}
-			*actual = itemsGot;
-			return S_OK;
-		}
-
-		//IInspectable
-		HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className)
-		{ return WindowsCreateString(L"Windows.Foundation.Collections.IIterator`1<AppxUtils.AppxPackage>", 65, className); }
-
-		~AppxPackagesIterator()
-		{ m_Bundle->Release(); }
-
-	private:
-		const UINT32 m_Size{ 0 };
-		UINT32 m_Current{ 0 };
-		AppxPackageElement* const m_Array{ nullptr };
-		AppxBundle* const m_Bundle{ nullptr };
-	};
-
 #pragma region AppxBundle
 	AppxBundle::AppxBundle(IAppxBundleReader*& reader, CRITICAL_SECTION* criticalSection) noexcept :
 		m_BundleReader(reader), m_CriticalSection(criticalSection)
@@ -361,23 +281,17 @@ namespace ABI::AppxUtils
 						{
 							hr = instance->LaunchAsyncTask();
 							if (SUCCEEDED(hr))
-							{
-								m_GetPackagesAsyncOp = instance;
-							}
+							{ m_GetPackagesAsyncOp = instance; }
 							else
-							{
-								instance->Release();
-							}
+							{ instance->Release(); }
 						}
 						else
-						{
-							hr = E_OUTOFMEMORY;
-						}
+						{ hr = E_OUTOFMEMORY; }
+						if (FAILED(hr))
+						{ pGIT->RevokeInterfaceFromGlobal(cookie); }
 					}
 					else
-					{
-						printf("regFailed\n");
-					}
+					{ printf("regFailed\n"); }
 					pGIT->Release();
 				}
 			}
@@ -426,104 +340,6 @@ namespace ABI::AppxUtils
 			clonedStream->Release();
 		}
 		return hr;
-	}
-#pragma endregion
-
-#pragma region Windows.Foundation.Collections.IVectorView<AppxPackage>
-	HRESULT STDMETHODCALLTYPE AppxBundle::GetAt(UINT32 index, IAppxPackageCore** item)
-	{
-		HRESULT hr{ S_OK };
-		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, reinterpret_cast<void**>(&hr)))
-		{
-			if (index < m_Size)
-			{
-				auto* element{ m_AppxPackages + index };
-				element->AddRef();
-				*item = element;
-				return S_OK;
-			}
-			else
-			{ return E_BOUNDS; }
-		}
-		else
-		{ return hr; }
-	}
-
-	HRESULT STDMETHODCALLTYPE AppxBundle::get_Size(UINT32* size)
-	{
-		HRESULT hr{ S_OK };
-		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, reinterpret_cast<void**>(&hr)))
-		{
-			*size = m_Size;
-			return S_OK;
-		}
-		else
-		{ return hr; }
-	}
-
-	HRESULT STDMETHODCALLTYPE AppxBundle::IndexOf(IAppxPackageCore* value, UINT32* index, boolean* found)
-	{
-		HRESULT hr{ S_OK };
-		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, reinterpret_cast<void**>(&hr)))
-		{
-			for (UINT32 i{ 0 }; i < m_Size; ++i)
-			{
-				if (static_cast<IAppxPackageCore*>(m_AppxPackages + i) == value)
-				{
-					*index = i;
-					return S_OK;
-				}
-			}
-			*index = 0;
-			*found = false;
-			return S_OK;
-		}
-		else
-		{ return hr; }
-	}
-
-	HRESULT STDMETHODCALLTYPE AppxBundle::GetMany(UINT32 startIndex, UINT32 capacity, IAppxPackageCore** value, UINT32* actual)
-	{
-		HRESULT hr{ S_OK };
-		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, reinterpret_cast<void**>(&hr)))
-		{
-			if (startIndex <= m_Size)
-			{
-				UINT32 itemsGot{ 0 };
-				for (UINT32 i{ startIndex }; itemsGot < capacity && i < m_Size; ++i, ++itemsGot)
-				{
-					auto* element{ m_AppxPackages + i };
-					element->AddRef();
-					value[itemsGot] = element;
-				}
-				*actual = itemsGot;
-				return S_OK;
-			}
-			else
-			{ return E_BOUNDS; }
-		}
-		else
-		{ return hr; }
-	}
-#pragma endregion
-
-#pragma region Windows.Foundation.Collections.IIterable<AppxPackage>
-	HRESULT STDMETHODCALLTYPE AppxBundle::First(ABI::IIterator<AppxPackage*>** first)
-	{
-		HRESULT hr{ S_OK };
-		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, reinterpret_cast<void**>(&hr)))
-		{
-			auto* instance{ new AppxPackagesIterator{ m_AppxPackages, m_Size, this } };
-			if (instance)
-			{
-				*first = instance;
-				return S_OK;
-			}
-			else
-			{ return E_OUTOFMEMORY; }
-		}
-		else
-		{ return hr; }
 	}
 #pragma endregion
 
@@ -603,140 +419,7 @@ namespace ABI::AppxUtils
 		}
 		DeleteCriticalSection(m_CriticalSection);
 		delete m_CriticalSection;
-		if (m_AppxPackages)
-		{
-			for (UINT32 i{ 0 }; i < m_Size; ++i)
-			{ m_AppxPackages[i].Release(); }
-			delete[] m_CriticalSections;
-			delete[] m_AppxPackages;
-		}
-		auto* factoryRefCopy = reinterpret_cast<IAppxFactory*>(InterlockedCompareExchangePointer(to_void_pp(g_AppxPackageFactory), nullptr, nullptr));
-		if (InterlockedCompareExchange(&g_FactoryRefCount, 0, 0) && !InterlockedDecrement(&g_FactoryRefCount))
-		{
-			void* oldValue;
-			do
-			{
-				oldValue = InterlockedCompareExchangePointer(&g_InitOnce.Ptr, nullptr, nullptr);
-			} while (InterlockedCompareExchangePointer(&g_InitOnce.Ptr, INIT_ONCE_STATIC_INIT, g_InitOnce.Ptr) != oldValue);
-			factoryRefCopy->Release();
-		}
 	}
 
-	void TestFunc()
-	{
-		TrySubmitThreadpoolCallback(nullptr, nullptr, nullptr);
-	}
-
-#pragma region Static members
-	void CALLBACK AppxBundle::InitPackagesCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
-	{
-
-	}
-
-	BOOL WINAPI AppxBundle::InitListStatic(INIT_ONCE* InitOnce, void* Parameter, void** Context)
-	{
-		auto& external{ *reinterpret_cast<AppxBundle*>(Parameter) };
-		auto& hr{ *reinterpret_cast<HRESULT*>(Context) };
-		if (InitOnceExecuteOnce(&g_InitOnce, InitAppxPackageFactory, nullptr, reinterpret_cast<void**>(&hr)))
-		{
-			InterlockedIncrement(&g_FactoryRefCount);
-			IAppxFilesEnumerator* enumerator{ nullptr };
-			hr = external.m_BundleReader->GetPayloadPackages(&enumerator);
-			if (SUCCEEDED(hr))
-			{
-				UINT32 count{ 0 };
-				BOOL hasNext{ false };
-				enumerator->GetHasCurrent(&hasNext);
-				while (hasNext)
-				{
-					++count;
-					enumerator->MoveNext(&hasNext);
-				}
-				enumerator->Release();
-				hr = external.m_BundleReader->GetPayloadPackages(&enumerator);
-				if (SUCCEEDED(hr))
-				{
-					auto* packages{ reinterpret_cast<AppxPackageElement*>(new byte[__aligned_size_of<AppxPackageElement> *count]) };
-					if (packages)
-					{
-						auto* criticalSections{ new CRITICAL_SECTION[count] };
-						if (criticalSections)
-						{
-							enumerator->GetHasCurrent(&hasNext);
-							UINT32 completed{ 0 };
-							while (hasNext)
-							{
-								IAppxFile* element{ nullptr };
-								hr = enumerator->GetCurrent(&element);
-								if (SUCCEEDED(hr))
-								{
-									IStream* stream{ nullptr };
-									hr = element->GetStream(&stream);
-									if (SUCCEEDED(hr))
-									{
-										IAppxPackageReader* reader{ nullptr };
-										hr = g_AppxPackageFactory->CreatePackageReader(stream, &reader);
-										if (SUCCEEDED(hr))
-										{
-											if (InitializeCriticalSectionEx(criticalSections + completed, 0, CRITICAL_SECTION_NO_DEBUG_INFO))
-											{
-												new (packages + completed) AppxPackageElement{ reader, criticalSections + completed };
-												++completed;
-												enumerator->MoveNext(&hasNext);
-											}
-											else
-											{
-												hr = HRESULT_FROM_WIN32(GetLastError());
-												reader->Release();
-											}
-										}
-										stream->Release();
-									}
-									element->Release();
-								}
-								if (FAILED(hr))
-								{
-									for (UINT32 i{ 0 }; i < completed; ++i)
-									{ packages[i].Release(); }
-									delete[] criticalSections;
-									delete[] packages;
-									break;
-								}
-							}
-							if (SUCCEEDED(hr))
-							{
-								external.m_Size = count;
-								external.m_AppxPackages = packages;
-								external.m_CriticalSections = criticalSections;
-							}
-						}
-						else
-						{
-							hr = E_OUTOFMEMORY;
-							delete[] packages;
-						}
-					}
-					else
-					{ hr = E_OUTOFMEMORY; }
-					enumerator->Release();
-				}
-			}
-			if (FAILED(hr))
-			{
-				auto* factoryRefCopy = reinterpret_cast<IAppxFactory*>(InterlockedCompareExchangePointer(to_void_pp(g_AppxPackageFactory), nullptr, nullptr));
-				if (InterlockedCompareExchange(&g_FactoryRefCount, 0, 0) && !InterlockedDecrement(&g_FactoryRefCount))
-				{
-					void* oldValue;
-					do
-					{
-						oldValue = InterlockedCompareExchangePointer(&g_InitOnce.Ptr, nullptr, nullptr);
-					} while (InterlockedCompareExchangePointer(&g_InitOnce.Ptr, INIT_ONCE_STATIC_INIT, g_InitOnce.Ptr) != oldValue);
-					factoryRefCopy->Release();
-				}
-			}
-		}
-		return SUCCEEDED(hr);
-	}
-#pragma endregion
 #pragma endregion;
 }

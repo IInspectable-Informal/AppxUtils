@@ -488,7 +488,7 @@ namespace ABI::AppxUtils
                         hr = reader->GetApplications(&enumerator);
                         if (SUCCEEDED(hr))
                         {
-                            auto* applications{ reinterpret_cast<AppxPackageApplication*>(new byte[__aligned_size_of<AppxPackageApplication> * count]) };
+                            auto* applications{ static_cast<AppxPackageApplication*>(::operator new[](__aligned_size_of<AppxPackageApplication> * count)) };
                             if (applications)
                             {
                                 auto* criticalSections{ new CRITICAL_SECTION[count] };
@@ -516,10 +516,10 @@ namespace ABI::AppxUtils
                                         }
                                         if (FAILED(hr))
                                         {
-                                            for (UINT32 i{ 0 }; i < completed; ++i)
-                                            { applications[i].Release(); }
+                                            for (UINT32 i{ completed }; i > 0;)
+                                            { applications[--i].Release(); }
                                             delete[] criticalSections;
-                                            delete[] applications;
+                                            ::operator delete[](applications);
                                             break;
                                         }
                                     }
@@ -529,17 +529,17 @@ namespace ABI::AppxUtils
                                         if (!m_Applications)
                                         {
                                             hr = E_OUTOFMEMORY;
-                                            for (UINT32 i{ 0 }; i < completed; ++i)
-                                            { applications[i].Release(); }
+                                            for (UINT32 i{ completed }; i > 0;)
+                                            { applications[--i].Release(); }
                                             delete[] criticalSections;
-                                            delete[] applications;
+                                            ::operator delete[](applications);
                                         }
                                     }
                                 }
                                 else
                                 {
                                     hr = E_OUTOFMEMORY;
-                                    delete[] applications;
+                                    ::operator delete[](applications);
                                 }
                             }
                             else
@@ -1503,7 +1503,7 @@ namespace ABI::AppxUtils
             }
             LeaveCriticalSection(m_CriticalSection);
             if (FAILED(hr))
-            { return S_OK; }
+            { return hr; }
             local = reinterpret_cast<IVectorView<struct AppxPackageMainPackageDependency>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_MainPackageDependencies), nullptr, nullptr));
         }
 
@@ -1586,7 +1586,7 @@ namespace ABI::AppxUtils
                             hr = reader7->GetDriverDependencies(&enumerator);
                             if (SUCCEEDED(hr))
                             {
-                                auto* dependencies{ reinterpret_cast<AppxPackageDriverDependency*>(new byte[__aligned_size_of<AppxPackageDriverDependency> * count]) };
+                                auto* dependencies{ static_cast<AppxPackageDriverDependency*>(::operator new[](__aligned_size_of<AppxPackageDriverDependency> * count)) };
                                 if (dependencies)
                                 {
                                     enumerator->GetHasCurrent(&hasNext);
@@ -1603,9 +1603,9 @@ namespace ABI::AppxUtils
                                         }
                                         else
                                         {
-                                            for (UINT32 i{ 0 }; i < completed; ++i)
-                                            { dependencies[i].Release(); }
-                                            delete[] dependencies;
+                                            for (UINT32 i{ completed }; i > 0;)
+                                            { dependencies[--i].Release(); }
+                                            ::operator delete[](dependencies);
                                             break;
                                         }
                                     }
@@ -1615,9 +1615,9 @@ namespace ABI::AppxUtils
                                         if (!m_DriverDependencies)
                                         {
                                             hr = E_OUTOFMEMORY;
-                                            for (UINT32 i{ 0 }; i < completed; ++i)
-                                            { dependencies[i].Release(); }
-                                            delete[] dependencies;
+                                            for (UINT32 i{ completed }; i > 0;)
+                                            { dependencies[--i].Release(); }
+                                            ::operator delete[](dependencies);
                                         }
                                     }
                                 }
@@ -2086,8 +2086,6 @@ namespace ABI::AppxUtils
         { m_OSPackageDependencies->Release(); }
         if (m_HostRuntimeDependencies)
         { m_HostRuntimeDependencies->Release(); }
-
-        DeleteCriticalSection(m_CriticalSection);
     }
 #pragma endregion
 
@@ -2104,7 +2102,10 @@ namespace ABI::AppxUtils
 
     //Destructor
     AppxPackage::~AppxPackage() noexcept
-    { delete m_CriticalSection; }
+    {
+        DeleteCriticalSection(m_CriticalSection);
+        delete m_CriticalSection;
+    }
 #pragma endregion
 
 #pragma region AppxPackageElement
@@ -2117,5 +2118,9 @@ namespace ABI::AppxUtils
         return cRef;
     }
 #pragma endregion
+
+    //Destructor
+    AppxPackageElement::~AppxPackageElement() noexcept
+    { DeleteCriticalSection(m_CriticalSection); }
 #pragma endregion
 }

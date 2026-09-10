@@ -6,21 +6,76 @@
 namespace ABI::AppxUtils::Internal
 {
 	template<typename T>
-	class VectorView : public InspectableBase<BaseTrust,
+	class VectorViewBase abstract : public InspectableBase<BaseTrust,
 		ABI::Windows::Foundation::Collections::IVectorView<T>,
 		ABI::Windows::Foundation::Collections::IIterable<T>,
 		IAgileObject
 	>
 	{
-	private:
+	protected:
 		using T_Complex = typename ABI::Windows::Foundation::Collections::IVectorView<T>::T_complex;
 		using T_ABI = typename ABI::Windows::Foundation::Internal::GetAbiType<T_Complex>::type;
 		using T_Logical = typename ABI::Windows::Foundation::Internal::GetLogicalType<T_Complex>::type;
 
-		class InternalIterator final : public InspectableBase<BaseTrust, ABI::Windows::Foundation::Collections::IIterator<T>, IAgileObject>
+		class InternalIteratorBase abstract : public InspectableBase<BaseTrust,
+			ABI::Windows::Foundation::Collections::IIterator<T>,
+			IAgileObject
+		>
 		{
 		public:
-			InternalIterator(T* const& list, const UINT32 size, VectorView<T>* const container) noexcept : m_Array(list), m_Size(size), m_Container(container)
+			InternalIteratorBase(const UINT32 size) noexcept : m_Size(size)
+			{
+
+			}
+
+			HRESULT STDMETHODCALLTYPE get_HasCurrent(boolean* hasCurrent)
+			{
+				*hasCurrent = m_Current < m_Size;
+				return S_OK;
+			}
+
+			HRESULT STDMETHODCALLTYPE MoveNext(boolean* hasCurrent)
+			{
+				if (m_Current <= m_Size)
+				{
+					++m_Current;
+					*hasCurrent = m_Current < m_Size;
+					return S_OK;
+				}
+				else
+				{ return E_BOUNDS; }
+			}
+
+		protected:
+			const UINT32 m_Size{ 0 };
+			UINT32 m_Current{ 0 };
+		};
+
+	public:
+		VectorViewBase(const UINT32 size) noexcept : m_Size(size)
+		{
+
+		}
+
+		HRESULT STDMETHODCALLTYPE get_Size(UINT32* size)
+		{
+			*size = m_Size;
+			return S_OK;
+		}
+
+	protected:
+		const UINT32 m_Size{ 0 };
+	};
+
+	template<typename T>
+	class VectorView : public VectorViewBase<T>
+	{
+	private:
+		class InternalIterator final : public InternalIteratorBase
+		{
+		public:
+			InternalIterator(T* const& list, const UINT32 size, VectorView<T>* const container) noexcept :
+				InternalIteratorBase(size), m_Array(list), m_Container(container)
 			{
 				container->AddRef();
 			}
@@ -42,24 +97,6 @@ namespace ABI::AppxUtils::Internal
 					}
 					else
 					{ *current = element; }
-					return S_OK;
-				}
-				else
-				{ return E_BOUNDS; }
-			}
-
-			HRESULT STDMETHODCALLTYPE get_HasCurrent(boolean* hasCurrent)
-			{
-				*hasCurrent = m_Current < m_Size;
-				return S_OK;
-			}
-
-			HRESULT STDMETHODCALLTYPE MoveNext(boolean* hasCurrent)
-			{
-				if (m_Current <= m_Size)
-				{
-					++m_Current;
-					*hasCurrent = m_Current < m_Size;
 					return S_OK;
 				}
 				else
@@ -109,8 +146,6 @@ namespace ABI::AppxUtils::Internal
 
 		private:
 			T* const m_Array{ nullptr };
-			const UINT32 m_Size{ 0 };
-			UINT32 m_Current{ 0 };
 			VectorView<T>* const m_Container{ nullptr };
 
 			static inline INIT_ONCE s_InitOnce{ INIT_ONCE_STATIC_INIT };
@@ -148,12 +183,6 @@ namespace ABI::AppxUtils::Internal
 			}
 			else
 			{ return E_BOUNDS; }
-		}
-
-		HRESULT STDMETHODCALLTYPE get_Size(UINT32* size)
-		{
-			*size = m_Size;
-			return S_OK;
 		}
 
 		HRESULT STDMETHODCALLTYPE IndexOf(T_ABI value, UINT32* index, boolean* found)
@@ -291,14 +320,13 @@ namespace ABI::AppxUtils::Internal
 			{ return E_OUTOFMEMORY; }
 		}
 		
-		VectorView(T*& list, const UINT32 size) noexcept : m_Array(list), m_Size(size)
+		VectorView(T*& list, const UINT32 size) noexcept : m_Array(list), VectorViewBase(size)
 		{
 
 		}
 
         private:
 		T* const m_Array{ nullptr };
-		const UINT32 m_Size{ 0 };
 
 		static inline INIT_ONCE s_InitOnce{ INIT_ONCE_STATIC_INIT };
 		static inline const wchar_t* s_ClassName{ nullptr };
@@ -314,21 +342,18 @@ namespace ABI::AppxUtils::Internal
 	};
 
 	template<typename T>
-	class VectorView<T*> : public InspectableBase<BaseTrust,
-		ABI::Windows::Foundation::Collections::IVectorView<T*>,
-		ABI::Windows::Foundation::Collections::IIterable<T*>,
-		IAgileObject
-	>
+	class VectorView<T*> : public VectorViewBase<T*>
 	{
 	private:
 		using T_Complex = typename ABI::Windows::Foundation::Collections::IVectorView<T*>::T_complex;
 		using T_ABI = typename ABI::Windows::Foundation::Internal::GetAbiType<T_Complex>::type;
 		using T_Logical = typename ABI::Windows::Foundation::Internal::GetLogicalType<T_Complex>::type;
 
-		class InternalIterator final : public InspectableBase<BaseTrust, ABI::Windows::Foundation::Collections::IIterator<T*>, IAgileObject>
+		class InternalIterator final : public InternalIteratorBase
 		{
 		public:
-			InternalIterator(T* const& list, const UINT32 size, VectorView<T*>* container) noexcept : m_Array(list), m_Size(size), m_Container(container)
+			InternalIterator(T* const& list, const UINT32 size, VectorView<T*>* container) noexcept :
+				InternalIteratorBase(size), m_Array(list), m_Container(container)
 			{
 				container->AddRef();
 			}
@@ -347,24 +372,6 @@ namespace ABI::AppxUtils::Internal
 					{
 						*current = element;
 					}
-					return S_OK;
-				}
-				else
-				{ return E_BOUNDS; }
-			}
-
-			HRESULT STDMETHODCALLTYPE get_HasCurrent(boolean* hasCurrent)
-			{
-				*hasCurrent = m_Current < m_Size;
-				return S_OK;
-			}
-
-			HRESULT STDMETHODCALLTYPE MoveNext(boolean* hasCurrent)
-			{
-				if (m_Current <= m_Size)
-				{
-					++m_Current;
-					*hasCurrent = m_Current < m_Size;
 					return S_OK;
 				}
 				else
@@ -403,8 +410,6 @@ namespace ABI::AppxUtils::Internal
 
 		private:
 			T* const m_Array{ nullptr };
-			const UINT32 m_Size{ 0 };
-			UINT32 m_Current{ 0 };
 			VectorView<T*>* const m_Container{ nullptr };
 
 			static inline INIT_ONCE s_InitOnce{ INIT_ONCE_STATIC_INIT };
@@ -439,12 +444,6 @@ namespace ABI::AppxUtils::Internal
 			}
 			else
 			{ return E_BOUNDS; }
-		}
-
-		HRESULT STDMETHODCALLTYPE get_Size(UINT32* size)
-		{
-			*size = m_Size;
-			return S_OK;
 		}
 
 		HRESULT STDMETHODCALLTYPE IndexOf(T_ABI value, UINT32* index, boolean* found)
@@ -521,15 +520,15 @@ namespace ABI::AppxUtils::Internal
 
 		virtual ~VectorView() noexcept
 		{
-			for (UINT32 i = 0; i < m_Size; ++i)
+			for (UINT32 i{ m_Size }; i > 0;)
 			{
-				T* const element{ m_Array + i };
+				T* const element{ m_Array + --i };
 				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
 				{
 					element->Release();
 				}
 			}
-			delete[] m_Array;
+			::operator delete[](m_Array);
 			if (m_CriticalSections)
 			{ delete[] m_CriticalSections; }
 		}
@@ -546,7 +545,8 @@ namespace ABI::AppxUtils::Internal
 			{ return E_OUTOFMEMORY; }
 		}
 
-		VectorView(T*& list, const UINT32 size, const CRITICAL_SECTION* const& criticalSections = nullptr) noexcept : m_Array(list), m_Size(size), m_CriticalSections(criticalSections)
+		VectorView(T*& list, const UINT32 size, const CRITICAL_SECTION* const& criticalSections = nullptr) noexcept :
+			VectorViewBase(size), m_Array(list), m_CriticalSections(criticalSections)
 		{
 
 		}
@@ -554,7 +554,6 @@ namespace ABI::AppxUtils::Internal
 	private:
 		T* const m_Array{ nullptr };
 		const CRITICAL_SECTION* const m_CriticalSections{ nullptr };
-		const UINT32 m_Size{ 0 };
 
 		static inline INIT_ONCE s_InitOnce{ INIT_ONCE_STATIC_INIT };
 		static inline const wchar_t* s_ClassName{ nullptr };
@@ -570,17 +569,14 @@ namespace ABI::AppxUtils::Internal
 	};
 
 	template<>
-	class VectorView<HSTRING> : public InspectableBase<BaseTrust,
-		ABI::Windows::Foundation::Collections::IVectorView<HSTRING>,
-		ABI::Windows::Foundation::Collections::IIterable<HSTRING>,
-		IAgileObject
-	>
+	class VectorView<HSTRING> : public VectorViewBase<HSTRING>
 	{
 	private:
-		class InternalIterator final : public InspectableBase<BaseTrust, ABI::Windows::Foundation::Collections::IIterator<HSTRING>, IAgileObject>
+		class InternalIterator final : public InternalIteratorBase
 		{
 		public:
-			InternalIterator(const HSTRING* const& list, const UINT32 size, VectorView<HSTRING>* const container) noexcept : m_Array(list), m_Size(size), m_Container(container)
+			InternalIterator(const HSTRING* const& list, const UINT32 size, VectorView<HSTRING>* const container) noexcept :
+				InternalIteratorBase(size), m_Array(list), m_Container(container)
 			{
 				container->AddRef();
 			}
@@ -589,24 +585,6 @@ namespace ABI::AppxUtils::Internal
 			{
 				if (m_Current < m_Size)
 				{ return WindowsDuplicateString(m_Array[m_Current], current); }
-				else
-				{ return E_BOUNDS; }
-			}
-
-			HRESULT STDMETHODCALLTYPE get_HasCurrent(boolean* hasCurrent)
-			{
-				*hasCurrent = m_Current < m_Size;
-				return S_OK;
-			}
-
-			HRESULT STDMETHODCALLTYPE MoveNext(boolean* hasCurrent)
-			{
-				if (m_Current <= m_Size)
-				{
-					++m_Current;
-					*hasCurrent = m_Current < m_Size;
-					return S_OK;
-				}
 				else
 				{ return E_BOUNDS; }
 			}
@@ -639,8 +617,6 @@ namespace ABI::AppxUtils::Internal
 
 		private:
 			const HSTRING* const m_Array{ nullptr };
-			const UINT32 m_Size{ 0 };
-			UINT32 m_Current{ 0 };
 			VectorView<HSTRING>* const m_Container{ nullptr };
 		};
 
@@ -651,12 +627,6 @@ namespace ABI::AppxUtils::Internal
 			{ return WindowsDuplicateString(m_Array[index], item); }
 			else
 			{ return E_BOUNDS; }
-		}
-
-		HRESULT STDMETHODCALLTYPE get_Size(UINT32* size)
-		{
-			*size = m_Size;
-			return S_OK;
 		}
 
 		HRESULT STDMETHODCALLTYPE IndexOf(HSTRING value, UINT32* index, boolean* found)
@@ -745,13 +715,12 @@ namespace ABI::AppxUtils::Internal
 			{ return E_OUTOFMEMORY; }
 		}
 
-		VectorView(HSTRING*& list, const UINT32 size) noexcept : m_Array(list), m_Size(size)
+		VectorView(HSTRING*& list, const UINT32 size) noexcept : m_Array(list), VectorViewBase(size)
 		{
 
 		}
 
 	private:
 		const HSTRING* const m_Array{ nullptr };
-		const UINT32 m_Size{ 0 };
 	};
 }

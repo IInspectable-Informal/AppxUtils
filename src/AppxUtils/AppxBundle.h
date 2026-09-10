@@ -6,8 +6,6 @@ namespace ABI::AppxUtils
 {
 	class AppxBundle final : public InspectableBase<BaseTrust,
 		IAppxBundleCore,
-		ABI::Windows::Foundation::Collections::IVectorView<AppxPackage*>,
-        ABI::Windows::Foundation::Collections::IIterable<AppxPackage*>,
         IAppxBundleInterop,
 		IAgileObject
 	>
@@ -25,15 +23,6 @@ namespace ABI::AppxUtils
 
         HRESULT STDMETHODCALLTYPE GetPackagesAsync(ABI::Windows::Foundation::IAsyncOperation<ABI::Windows::Foundation::Collections::IVectorView<AppxPackage*>*>** operation);
         HRESULT STDMETHODCALLTYPE GetManifestStream(ABI::Windows::Storage::Streams::IInputStream** result);
-
-		//Windows.Foundation.Collections.IVectorView<AppxPackage>
-        HRESULT STDMETHODCALLTYPE GetAt(UINT32 index, IAppxPackageCore** item);
-        HRESULT STDMETHODCALLTYPE get_Size(UINT32* size);
-        HRESULT STDMETHODCALLTYPE IndexOf(IAppxPackageCore* value, UINT32* index, boolean* found);
-        HRESULT STDMETHODCALLTYPE GetMany(UINT32 startIndex, UINT32 capacity, IAppxPackageCore** value, UINT32* actual);
-
-        //Windows.Foundation.Collections.IIterable<AppxPackage>
-        HRESULT STDMETHODCALLTYPE First(ABI::Windows::Foundation::Collections::IIterator<AppxPackage*>** first);
 
         //IAppxBundleInterop
         HRESULT STDMETHODCALLTYPE get_BundleReader(IAppxBundleReader** value);
@@ -56,11 +45,6 @@ namespace ABI::AppxUtils
         ABI::Windows::Foundation::IAsyncOperation<ABI::Windows::Foundation::Collections::IVectorView<AppxPackage*>*>* m_GetPackagesAsyncOp{ nullptr };
         ABI::Windows::Storage::Streams::IRandomAccessStream* m_ManifestStream{ nullptr };
 
-        INIT_ONCE m_InitOnce{ INIT_ONCE_STATIC_INIT };
-        UINT32 m_Size{ 0 };
-        AppxPackageElement* m_AppxPackages{ nullptr };
-        CRITICAL_SECTION* m_CriticalSections{ nullptr };
-
         IAppxBundleReader* m_BundleReader{ nullptr };
         CRITICAL_SECTION* m_CriticalSection{ nullptr };
         IAppxBundleManifestReader* m_ManifestReader{ nullptr };
@@ -68,8 +52,5 @@ namespace ABI::AppxUtils
 
         HRESULT STDMETHODCALLTYPE GetManifestReader(IAppxBundleManifestReader*& reader);
         HRESULT STDMETHODCALLTYPE GetBundleId(IAppxManifestPackageId*& bundleId);
-
-        static void CALLBACK InitPackagesCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context);
-        static BOOL WINAPI InitListStatic(INIT_ONCE* InitOnce, void* Parameter, void** Context);
     };
 }

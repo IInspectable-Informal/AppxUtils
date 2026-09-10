@@ -42,6 +42,7 @@ namespace ABI::AppxUtils::Internal
         TCompletedHandler m_Completed{ nullptr };
         TResult_ABI m_Result{ nullptr };
 
+        const UINT32 m_Id{ 0 };
         LONG m_Status{ static_cast<LONG>(ABI::Windows::Foundation::AsyncStatus::Started) };
         HRESULT m_ErrorCode{ S_OK };
         short m_CanContinue{ true };

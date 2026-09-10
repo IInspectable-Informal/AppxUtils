@@ -19,24 +19,19 @@ namespace ABI
 
 namespace ABI::AppxUtils::Internal
 {
-	class AppxPackageVectorView final : public InspectableBase<BaseTrust,
-		ABI::IVectorView<ABI::AppxPackage*>, ABI::IIterable<ABI::AppxPackage*>,
-		IAgileObject
-	>
+	class AppxPackageVectorView final : public VectorViewBase<ABI::AppxPackage*>
 	{
 	private:
-		class InternalIterator final : public InspectableBase<BaseTrust,
-			ABI::IIterator<AppxPackage*>,
-			IAgileObject
-		>
+		class InternalIterator final : public InternalIteratorBase
 		{
 		public:
-			InternalIterator(AppxPackageElement* const list, const UINT32 size, AppxPackageVectorView* const vectorView) noexcept : m_Size(size), m_Array(list), m_VectorView(vectorView)
+			InternalIterator(AppxPackageElement* const list, const UINT32 size, AppxPackageVectorView* const vectorView) noexcept :
+				InternalIteratorBase(size), m_Array(list), m_VectorView(vectorView)
 			{
 				vectorView->AddRef();
 			}
 
-			HRESULT STDMETHODCALLTYPE get_Current(IAppxPackageCore** current)
+			HRESULT STDMETHODCALLTYPE get_Current(T_ABI* current)
 			{
 				if (m_Current < m_Size)
 				{
@@ -49,25 +44,7 @@ namespace ABI::AppxUtils::Internal
 				{ return E_BOUNDS; }
 			}
 
-			HRESULT STDMETHODCALLTYPE get_HasCurrent(boolean* hasCurrent)
-			{
-				*hasCurrent = m_Current < m_Size;
-				return S_OK;
-			}
-
-			HRESULT STDMETHODCALLTYPE MoveNext(boolean* hasCurrent)
-			{
-				if (m_Current <= m_Size)
-				{
-					++m_Current;
-					*hasCurrent = m_Current < m_Size;
-					return S_OK;
-				}
-				else
-				{ return E_BOUNDS; }
-			}
-
-			HRESULT STDMETHODCALLTYPE GetMany(UINT32 capacity, IAppxPackageCore** value, UINT32* actual)
+			HRESULT STDMETHODCALLTYPE GetMany(UINT32 capacity, T_ABI* value, UINT32* actual)
 			{
 				UINT32 itemsGot{ 0 };
 				for (; itemsGot < capacity && m_Current < m_Size; ++m_Current, ++itemsGot)
@@ -90,20 +67,18 @@ namespace ABI::AppxUtils::Internal
 			}
 
 		private:
-			const UINT32 m_Size{ 0 };
-			UINT32 m_Current{ 0 };
 			AppxPackageElement* const m_Array{ nullptr };
 			AppxPackageVectorView* const m_VectorView{ nullptr };
 		};
 
 	public:
 		AppxPackageVectorView(AppxPackageElement* const list, const UINT32 size, CRITICAL_SECTION* const criticalSections) noexcept :
-			m_Array(list), m_Size(size), m_CriticalSections(criticalSections)
+			m_Array(list), VectorViewBase(size), m_CriticalSections(criticalSections)
 		{
 
 		}
 
-		HRESULT STDMETHODCALLTYPE GetAt(UINT32 index, IAppxPackageCore** item)
+		HRESULT STDMETHODCALLTYPE GetAt(UINT32 index, T_ABI* item)
 		{
 			if (index < m_Size)
 			{
@@ -116,13 +91,7 @@ namespace ABI::AppxUtils::Internal
 			{ return E_BOUNDS; }
 		}
 
-		HRESULT STDMETHODCALLTYPE get_Size(UINT32* size)
-		{
-			*size = m_Size;
-			return S_OK;
-		}
-
-		HRESULT STDMETHODCALLTYPE IndexOf(IAppxPackageCore* value, UINT32* index, boolean* found)
+		HRESULT STDMETHODCALLTYPE IndexOf(T_ABI value, UINT32* index, boolean* found)
 		{
 			for (UINT32 i{ 0 }; i < m_Size; ++i)
 			{
@@ -137,7 +106,7 @@ namespace ABI::AppxUtils::Internal
 			return S_OK;
 		}
 
-		HRESULT STDMETHODCALLTYPE GetMany(UINT32 startIndex, UINT32 capacity, IAppxPackageCore** value, UINT32* actual)
+		HRESULT STDMETHODCALLTYPE GetMany(UINT32 startIndex, UINT32 capacity, T_ABI* value, UINT32* actual)
 		{
 			if (startIndex <= m_Size)
 			{
@@ -156,7 +125,7 @@ namespace ABI::AppxUtils::Internal
 		}
 
 		//IIterable<AppxPackage>
-		HRESULT STDMETHODCALLTYPE First(ABI::Windows::Foundation::Collections::IIterator<AppxPackage*>** first)
+		HRESULT STDMETHODCALLTYPE First(ABI::Windows::Foundation::Collections::IIterator<T_Logical>** first)
 		{
 			auto* const instance{ new InternalIterator{ m_Array, m_Size, this } };
 			if (instance)
@@ -174,21 +143,22 @@ namespace ABI::AppxUtils::Internal
 
 		~AppxPackageVectorView() noexcept
 		{
-			for (UINT32 i{ 0 }; i < m_Size; ++i)
-			{ m_Array[i].Release(); }
+			for (UINT32 i{ m_Size }; i > 0;)
+			{ m_Array[--i].Release(); }
 			delete[] m_CriticalSections;
-			delete[] m_Array;
+			::operator delete[](m_Array);
 		}
 
 	private:
-		const UINT32 m_Size{ 0 };
 		AppxPackageElement* const m_Array{ nullptr };
 		const CRITICAL_SECTION* const m_CriticalSections{ nullptr };
 	};
 
+	static UINT32 g_AsyncOpNextId{ 0 };
+
 #pragma region AppxBundleGetPackagesAsyncOp
 	AppxBundleGetPackagesAsyncOp::AppxBundleGetPackagesAsyncOp(DWORD& bundleReader) noexcept :
-		m_BundleReader(bundleReader)
+		m_BundleReader(bundleReader), m_Id(InterlockedIncrement(&g_AsyncOpNextId))
 	{
 		//bundleReader->AddRef();
 	}
@@ -210,36 +180,21 @@ namespace ABI::AppxUtils::Internal
 #pragma region IAsyncOperation<IVectorView<AppxPackage>>
 	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::put_Completed(TCompletedHandler handler)
 	{
-		printf("put_Completed\n");
-		auto* const oldValue{ reinterpret_cast<TCompletedHandler>(InterlockedCompareExchangePointer(to_void_pp(m_Completed), nullptr, nullptr)) };
-		if (InterlockedCompareExchangePointer(to_void_pp(m_Completed), handler, m_Completed) == oldValue)
+		auto* const oldValue{ reinterpret_cast<TCompletedHandler>(InterlockedExchangePointer(to_void_pp(m_Completed), handler)) };
+		if (handler)
 		{
-			if (oldValue)
-			{ oldValue->Release(); }
-			if (handler)
-			{
-				handler->AddRef();
-				const auto status{ static_cast<ABI::AsyncStatus>(InterlockedCompareExchange(&m_Status, 0, 0)) };
-				if (status != ABI::AsyncStatus::Started)
-				{ handler->Invoke(this, status); }
-			}
-			return S_OK;
+			handler->AddRef();
+			const auto status{ static_cast<ABI::AsyncStatus>(InterlockedCompareExchange(&m_Status, 0, 0)) };
+			if (status != ABI::AsyncStatus::Started)
+			{ handler->Invoke(this, status); }
 		}
-		else
-		{
-			if (oldValue)
-			{
-				const auto status{ static_cast<ABI::AsyncStatus>(InterlockedCompareExchange(&m_Status, 0, 0)) };
-				if (status != ABI::AsyncStatus::Started)
-				{ oldValue->Invoke(this, status); }
-			}
-			return S_FALSE;
-		}
+		if (oldValue)
+		{ oldValue->Release(); }
+		return S_OK;
 	}
 
 	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::get_Completed(TCompletedHandler* handler)
 	{
-		printf("get_Completed\n");
 		auto* local{ reinterpret_cast<TCompletedHandler>(InterlockedCompareExchangePointer(to_void_pp(m_Completed), nullptr, nullptr)) };
 		if (local)
 		{ local->AddRef(); }
@@ -249,7 +204,6 @@ namespace ABI::AppxUtils::Internal
 
 	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::GetResults(TResult_ABI* results)
 	{
-		printf("GetResults\n");
 		switch (static_cast<ABI::AsyncStatus>(InterlockedCompareExchange(&m_Status, 0, 0)))
 		{
 			case ABI::AsyncStatus::Completed:
@@ -276,34 +230,31 @@ namespace ABI::AppxUtils::Internal
 #pragma region IAsyncInfo
 	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::get_Id(UINT32* id)
 	{
-		printf("get_Id\n");
-		return E_NOTIMPL;
+		*id = m_Id;
+		return S_OK;
 	}
 
 	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::get_Status(ABI::AsyncStatus* status)
 	{
-		printf("get_Status\n");
 		*status = static_cast<ABI::AsyncStatus>(InterlockedCompareExchange(&m_Status, static_cast<LONG>(ABI::AsyncStatus::Started), static_cast<LONG>(ABI::AsyncStatus::Started)));
 		return S_OK;
 	}
 
 	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::get_ErrorCode(HRESULT* errorCode)
 	{
-		printf("get_ErrorCode\n");
 		*errorCode = InterlockedCompareExchange(&m_ErrorCode, S_OK, S_OK);
 		return S_OK;
 	}
 
 	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::Cancel()
 	{
-		printf("Cancel\n");
 		InterlockedCompareExchange16(&m_CanContinue, false, m_CanContinue);
 		return S_OK;
 	}
 
 	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::Close()
 	{
-		printf("Close\n");
+		InterlockedCompareExchange16(&m_CanContinue, false, m_CanContinue);
 		return S_OK;
 	}
 #pragma endregion
@@ -365,7 +316,7 @@ namespace ABI::AppxUtils::Internal
 									{
 										if (InterlockedCompareExchange16(&external.m_CanContinue, false, false))
 										{
-											auto* const packages{ reinterpret_cast<AppxPackageElement*>(new byte[__aligned_size_of<AppxPackageElement> *count]) };
+											auto* const packages{ static_cast<AppxPackageElement*>(::operator new[](__aligned_size_of<AppxPackageElement> * count)) };
 											if (packages)
 											{
 												auto* const criticalSections{ new CRITICAL_SECTION[count] };
@@ -410,11 +361,11 @@ namespace ABI::AppxUtils::Internal
 														{ hr = HRESULT_FROM_WIN32(ERROR_CANCELLED); }
 														if (FAILED(hr))
 														{
-															for (UINT32 i{ 0 }; i < completed; ++i)
-															{ packages[i].Release(); }
+															for (UINT32 i{ completed }; i > 0;)
+															{ packages[--i].Release(); }
 															printf("failed\n");
 															delete[] criticalSections;
-															delete[] packages;
+															::operator delete[](packages);
 															break;
 														}
 													}
@@ -434,17 +385,17 @@ namespace ABI::AppxUtils::Internal
 														else
 														{
 															hr = E_OUTOFMEMORY;
-															for (UINT32 i{ 0 }; i < completed; ++i)
-															{ packages[i].Release(); }
+															for (UINT32 i{ completed }; i > 0;)
+															{ packages[--i].Release(); }
 															delete[] criticalSections;
-															delete[] packages;
+															::operator delete[](packages);
 														}
 													}
 												}
 												else
 												{
 													hr = E_OUTOFMEMORY;
-													delete[] packages;
+													::operator delete[](packages);
 												}
 											}
 											else

@@ -9,21 +9,27 @@ namespace ABI
 	using namespace Windows::Foundation;
 	using namespace Windows::Foundation::Collections;
 	using namespace Windows::Storage;
+	using namespace Windows::Storage::FileProperties;
 	using namespace Windows::Storage::Streams;
 }
 
 namespace ABI::AppxUtils
 {
-	class BasicPropertiesDummyClass final : InspectableBase<BaseTrust, ABI::FileProperties::IBasicProperties>
+	class BasicPropertiesDummyClass final : InspectableBase<BaseTrust,
+		ABI::IBasicProperties, ABI::IStorageItemExtraProperties,
+		IAgileObject
+	>
 	{
 
 	};
 
+#pragma region AppxPackagePayloadFile
 	AppxPackagePayloadFile::AppxPackagePayloadFile(IAppxFile*& internalFile, CRITICAL_SECTION*& criticalSection) noexcept : m_AppxPayloadFile(internalFile), m_CriticalSection(criticalSection)
 	{
 
 	}
 
+#pragma region IAppxPackagePayloadFile
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::get_CompressionOption(AppxPackagePayloadFileCompressionOption* value)
 	{
 		long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasCompressionOption), false, false) };
@@ -78,8 +84,9 @@ namespace ABI::AppxUtils
 
 		return WindowsDuplicateString(local, value);
 	}
+#pragma endregion
 
-	//Windows.Storage.IStorageFile
+#pragma region Windows.Storage.IStorageFile
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::get_FileType(HSTRING* value)
 	{
 		HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_FileType), nullptr, nullptr)) };
@@ -211,8 +218,9 @@ namespace ABI::AppxUtils
 	{
 		return HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
 	}
+#pragma endregion
 
-	//Windows.Storage.IStorageFile2
+#pragma region Windows.Storage.IStorageFile2
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::OpenWithOptionsAsync(ABI::FileAccessMode accessMode, ABI::StorageOpenOptions options, ABI::IAsyncOperation<ABI::IRandomAccessStream*>** operation)
 	{
 		if (accessMode == ABI::FileAccessMode_Read && options != ABI::StorageOpenOptions_AllowReadersAndWriters)
@@ -229,8 +237,9 @@ namespace ABI::AppxUtils
 	{
 		return HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
 	}
+#pragma endregion
 
-	//Windows.Storage.IStorageItem
+#pragma region Windows.Storage.IStorageItem
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::RenameAsyncOverloadDefaultOptions(HSTRING desiredName, ABI::IAsyncAction** operation)
 	{
 		return HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
@@ -301,6 +310,7 @@ namespace ABI::AppxUtils
 
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::get_Path(HSTRING* value)
 	{
+		// AppX payload files has no absolute file system path, this property will return null.
 		*value = nullptr;
 		return S_OK;
 	}
@@ -313,7 +323,8 @@ namespace ABI::AppxUtils
 
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::get_DateCreated(ABI::DateTime* value)
 	{
-		value->UniversalTime = 116,444,736,000,000,000; // Jan 1, 1970 00:00:00
+		// IAppxFile interface has no DateCreated property, so return a placeholder timestamp.
+		value->UniversalTime = 116444736000000000LL; // Jan 1, 1970 00:00:00
 		return S_OK;
 	}
 
@@ -322,37 +333,43 @@ namespace ABI::AppxUtils
 		*value = type == ABI::StorageItemTypes_File;
 		return S_OK;
 	}
+#pragma endregion
 
-	//Windows.Storage.IStorageFilePropertiesWithAvalibility
+#pragma region Windows.Storage.IStorageFilePropertiesWithAvalibility
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::get_IsAvailable(boolean* value)
 	{
 		*value = true;
 		return S_OK;
 	}
+#pragma endregion
 
-	//Windows.Storage.Streams.IInputStreamReference
+#pragma region Windows.Storage.Streams.IInputStreamReference
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::OpenSequentialReadAsync(ABI::IAsyncOperation<ABI::IInputStream*>** operation)
 	{
 		return E_NOTIMPL;
 	}
+#pragma endregion
 
-	//Windows.Storage.Streams.IRandomAccessStreamReference
+#pragma region Windows.Storage.Streams.IRandomAccessStreamReference
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::OpenReadAsync(ABI::IAsyncOperation<ABI::IRandomAccessStreamWithContentType*>** operation)
 	{
 		return E_NOTIMPL;
 	}
+#pragma endregion
 
-	//IAppxPackagePayloadFileInterop
+#pragma region IAppxPackagePayloadFileInterop
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::get_AppxPayloadFile(IAppxFile** value)
 	{
 		m_AppxPayloadFile->AddRef();
 		*value = m_AppxPayloadFile;
 		return S_OK;
 	}
+#pragma endregion
 
-	//IInspectable
+#pragma region IInspectable
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::GetRuntimeClassName(HSTRING* className)
 	{ return WindowsCreateString(L"AppxUtils.AppxPackagePayloadFile", 32, className); }
+#pragma endregion
 
 	//Destructor
 	AppxPackagePayloadFile::~AppxPackagePayloadFile() noexcept
@@ -372,4 +389,5 @@ namespace ABI::AppxUtils
 
 		DeleteCriticalSection(m_CriticalSection);
 	}
+#pragma endregion
 }

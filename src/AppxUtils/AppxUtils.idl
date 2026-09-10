@@ -347,7 +347,7 @@ namespace AppxUtils
 	};
 
 	[version(0.63)]
-	runtimeclass AppxBundle : [default] IAppxBundleCore, Windows.Foundation.Collections.IVectorView<AppxPackage>
+	runtimeclass AppxBundle : [default] IAppxBundleCore
 	{
 		
 	}

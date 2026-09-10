@@ -151,5 +151,7 @@ namespace ABI::AppxUtils
 
         //IUnknown
         ULONG STDMETHODCALLTYPE Release() override;
+
+        ~AppxPackageElement() noexcept;
     };
 }

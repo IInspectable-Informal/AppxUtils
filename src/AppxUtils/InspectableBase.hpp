@@ -98,6 +98,8 @@ public:
         { delete this; }
         return cRef;
     }
+
+    virtual ~InspectableBase() noexcept = default;
 };
 
 template<TrustLevel level, typename... I>
@@ -112,4 +114,6 @@ public:
         { this->~InspectableElementBase(); }
         return cRef;
     }
+
+    virtual ~InspectableElementBase() noexcept = default;
 };
