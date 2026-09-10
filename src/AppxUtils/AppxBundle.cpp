@@ -3,7 +3,9 @@
 #include "pch.h"
 #include "AppxPackage.h"
 #include "AppxBundle.h"
+#include "AppxBundleUtils.h"
 #include "helpers.hpp"
+#include <stdio.h>
 
 namespace ABI
 {
@@ -337,6 +339,58 @@ namespace ABI::AppxUtils
 		return WindowsDuplicateString(local, value);
 	}
 
+	HRESULT STDMETHODCALLTYPE AppxBundle::GetPackagesAsync(ABI::IAsyncOperation<ABI::IVectorView<AppxPackage*>*>** operation)
+	{
+		auto local{ reinterpret_cast<ABI::IAsyncOperation<ABI::IVectorView<AppxPackage*>*>*>(InterlockedCompareExchangePointer(to_void_pp(m_GetPackagesAsyncOp), nullptr, nullptr)) };
+		if (local == nullptr)
+		{
+			EnterCriticalSection(m_CriticalSection);
+			HRESULT hr{ S_OK };
+			if (!m_GetPackagesAsyncOp)
+			{
+				IGlobalInterfaceTable* pGIT{ nullptr };
+				hr = CoCreateInstance(CLSID_StdGlobalInterfaceTable, nullptr, CLSCTX_INPROC_SERVER, __uuidof(pGIT), to_void_pp(pGIT));
+				if (SUCCEEDED(hr))
+				{
+					DWORD cookie{ 0 };
+					hr = pGIT->RegisterInterfaceInGlobal(m_BundleReader, __uuidof(m_BundleReader), &cookie);
+					if (SUCCEEDED(hr))
+					{
+						auto* const instance{ new AppxBundleGetPackagesAsyncOp{ cookie } };
+						if (instance)
+						{
+							hr = instance->LaunchAsyncTask();
+							if (SUCCEEDED(hr))
+							{
+								m_GetPackagesAsyncOp = instance;
+							}
+							else
+							{
+								instance->Release();
+							}
+						}
+						else
+						{
+							hr = E_OUTOFMEMORY;
+						}
+					}
+					else
+					{
+						printf("regFailed\n");
+					}
+					pGIT->Release();
+				}
+			}
+			local = m_GetPackagesAsyncOp;
+			LeaveCriticalSection(m_CriticalSection);
+			if (FAILED(hr))
+			{ return hr; }
+		}
+		local->AddRef();
+		*operation = local;
+		return S_OK;
+	}
+
 	HRESULT STDMETHODCALLTYPE AppxBundle::GetManifestStream(ABI::IInputStream** result)
 	{
 		HRESULT hr{ S_OK };
@@ -537,6 +591,8 @@ namespace ABI::AppxUtils
 		{ WindowsDeleteString(m_Publisher); }
 		if (m_ResourceId)
 		{ WindowsDeleteString(m_ResourceId); }
+		if (m_GetPackagesAsyncOp)
+		{ m_GetPackagesAsyncOp->Release(); }
 		if (m_ManifestStream)
 		{
 			ABI::IClosable* closable{ nullptr };
@@ -554,15 +610,29 @@ namespace ABI::AppxUtils
 			delete[] m_CriticalSections;
 			delete[] m_AppxPackages;
 		}
-		auto* factoryRefCopy = reinterpret_cast<IAppxFactory*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&g_AppxPackageFactory), nullptr, nullptr));
+		auto* factoryRefCopy = reinterpret_cast<IAppxFactory*>(InterlockedCompareExchangePointer(to_void_pp(g_AppxPackageFactory), nullptr, nullptr));
 		if (InterlockedCompareExchange(&g_FactoryRefCount, 0, 0) && !InterlockedDecrement(&g_FactoryRefCount))
 		{
-			InterlockedCompareExchangePointer(&g_InitOnce.Ptr, nullptr, g_InitOnce.Ptr);
+			void* oldValue;
+			do
+			{
+				oldValue = InterlockedCompareExchangePointer(&g_InitOnce.Ptr, nullptr, nullptr);
+			} while (InterlockedCompareExchangePointer(&g_InitOnce.Ptr, INIT_ONCE_STATIC_INIT, g_InitOnce.Ptr) != oldValue);
 			factoryRefCopy->Release();
 		}
 	}
 
+	void TestFunc()
+	{
+		TrySubmitThreadpoolCallback(nullptr, nullptr, nullptr);
+	}
+
 #pragma region Static members
+	void CALLBACK AppxBundle::InitPackagesCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
+	{
+
+	}
+
 	BOOL WINAPI AppxBundle::InitListStatic(INIT_ONCE* InitOnce, void* Parameter, void** Context)
 	{
 		auto& external{ *reinterpret_cast<AppxBundle*>(Parameter) };
@@ -652,7 +722,18 @@ namespace ABI::AppxUtils
 				}
 			}
 			if (FAILED(hr))
-			{ InterlockedDecrement(&g_FactoryRefCount); }
+			{
+				auto* factoryRefCopy = reinterpret_cast<IAppxFactory*>(InterlockedCompareExchangePointer(to_void_pp(g_AppxPackageFactory), nullptr, nullptr));
+				if (InterlockedCompareExchange(&g_FactoryRefCount, 0, 0) && !InterlockedDecrement(&g_FactoryRefCount))
+				{
+					void* oldValue;
+					do
+					{
+						oldValue = InterlockedCompareExchangePointer(&g_InitOnce.Ptr, nullptr, nullptr);
+					} while (InterlockedCompareExchangePointer(&g_InitOnce.Ptr, INIT_ONCE_STATIC_INIT, g_InitOnce.Ptr) != oldValue);
+					factoryRefCopy->Release();
+				}
+			}
 		}
 		return SUCCEEDED(hr);
 	}

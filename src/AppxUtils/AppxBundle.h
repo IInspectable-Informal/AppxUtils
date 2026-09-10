@@ -23,6 +23,7 @@ namespace ABI::AppxUtils
         HRESULT STDMETHODCALLTYPE get_Architecture(ABI::Windows::System::ProcessorArchitecture* value);
         HRESULT STDMETHODCALLTYPE get_ResourceId(HSTRING* value);
 
+        HRESULT STDMETHODCALLTYPE GetPackagesAsync(ABI::Windows::Foundation::IAsyncOperation<ABI::Windows::Foundation::Collections::IVectorView<AppxPackage*>*>** operation);
         HRESULT STDMETHODCALLTYPE GetManifestStream(ABI::Windows::Storage::Streams::IInputStream** result);
 
 		//Windows.Foundation.Collections.IVectorView<AppxPackage>
@@ -52,6 +53,7 @@ namespace ABI::AppxUtils
         struct ABI::Windows::ApplicationModel::PackageVersion m_Version{ 0, 0, 0, 0 };
         ABI::Windows::System::ProcessorArchitecture m_Architecture{ ABI::Windows::System::ProcessorArchitecture_Unknown };
         HSTRING m_ResourceId{ nullptr };
+        ABI::Windows::Foundation::IAsyncOperation<ABI::Windows::Foundation::Collections::IVectorView<AppxPackage*>*>* m_GetPackagesAsyncOp{ nullptr };
         ABI::Windows::Storage::Streams::IRandomAccessStream* m_ManifestStream{ nullptr };
 
         INIT_ONCE m_InitOnce{ INIT_ONCE_STATIC_INIT };
@@ -67,6 +69,7 @@ namespace ABI::AppxUtils
         HRESULT STDMETHODCALLTYPE GetManifestReader(IAppxBundleManifestReader*& reader);
         HRESULT STDMETHODCALLTYPE GetBundleId(IAppxManifestPackageId*& bundleId);
 
+        static void CALLBACK InitPackagesCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context);
         static BOOL WINAPI InitListStatic(INIT_ONCE* InitOnce, void* Parameter, void** Context);
     };
 }

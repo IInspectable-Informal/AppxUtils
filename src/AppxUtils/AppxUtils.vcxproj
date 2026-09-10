@@ -201,6 +201,7 @@
   <ItemGroup>
     <ClInclude Include="AppxBlockMapFile.h" />
     <ClInclude Include="AppxBundle.h" />
+    <ClInclude Include="AppxBundleUtils.h" />
     <ClInclude Include="AppxPackage.h" />
     <ClInclude Include="AppxPackageApplication.h" />
     <ClInclude Include="AppxPackageDriverDependency.h" />
@@ -224,6 +225,7 @@
   <ItemGroup>
     <ClCompile Include="AppxBlockMapFile.cpp" />
     <ClCompile Include="AppxBundle.cpp" />
+    <ClCompile Include="AppxBundleUtils.cpp" />
     <ClCompile Include="AppxPackage.cpp" />
     <ClCompile Include="AppxPackageApplication.cpp" />
     <ClCompile Include="AppxPackageDriverDependency.cpp" />

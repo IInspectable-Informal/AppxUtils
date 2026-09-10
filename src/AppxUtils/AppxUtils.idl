@@ -342,6 +342,7 @@ namespace AppxUtils
 		Windows.System.ProcessorArchitecture Architecture{ get; };
 		String ResourceId{ get; };
 
+		Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<AppxPackage> >  GetPackagesAsync();
 		Windows.Storage.Streams.IInputStream GetManifestStream();
 	};
 
