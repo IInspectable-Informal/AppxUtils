@@ -166,6 +166,10 @@ PackageDependencies( 3 ):
 本项目最终依赖 Windows [AppX Packaging API](https://learn.microsoft.com/windows/win32/appxpkg/interfaces) 实现功能，因此**仅支持 Windows 8+ 环境**，暂不支持 Wine 或其它非 Windows 环境。  
 如有需要在不受支持的环境下解析 AppX/MSIX，请自行解析文件流。  
 
+## 已知问题
+
+* ⚠️ AppxBundle.GetPackagesAsync 方法返回的异步对象**无法稳定取消**，易出现 UB（未定义行为）  
+
 ## 许可证
 
 [Apache License 2.0](LICENSE)
