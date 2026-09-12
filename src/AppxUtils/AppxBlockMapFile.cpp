@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "pch.h"
 #include "AppxBlockMapFile.h"
+#include "helpers.hpp"
 
 namespace ABI
 {
@@ -60,7 +61,7 @@ namespace ABI::AppxUtils
 		return E_NOTIMPL;
 	}
 
-	HRESULT STDMETHODCALLTYPE AppxBlockMapFile::get_UncompressedSizeSize(UINT64* value)
+	HRESULT STDMETHODCALLTYPE AppxBlockMapFile::get_UncompressedSize(UINT64* value)
 	{
 		return E_NOTIMPL;
 	}
@@ -72,7 +73,17 @@ namespace ABI::AppxUtils
 
 	HRESULT STDMETHODCALLTYPE AppxBlockMapFile::ValidateFileHash(ABI::IInputStream* fileStream, boolean* result)
 	{
-		return E_NOTIMPL;
+		IStream* stream{ nullptr };
+		HRESULT hr{ CreateStreamOverRandomAccessStream(fileStream, __uuidof(stream), to_void_pp(stream)) };
+		if (SUCCEEDED(hr))
+		{
+			BOOL result0{ false };
+			hr = m_BlockMapFile->ValidateFileHash(stream, &result0);
+			if (SUCCEEDED(hr))
+			{ *result = result0; }
+			stream->Release();
+		}
+		return hr;
 	}
 #pragma endregion
 
@@ -80,5 +91,13 @@ namespace ABI::AppxUtils
 	HRESULT STDMETHODCALLTYPE AppxBlockMapFile::GetRuntimeClassName(HSTRING* className)
 	{ return WindowsCreateString(L"AppxUtils.AppxBlockMapFile", 26, className); }
 #pragma endregion
+
+	//Destructor
+	AppxBlockMapFile::~AppxBlockMapFile() noexcept
+	{
+		if (m_Blocks)
+		{ m_Blocks->Release(); }
+		m_BlockMapFile->Release();
+	}
 #pragma endregion
 }

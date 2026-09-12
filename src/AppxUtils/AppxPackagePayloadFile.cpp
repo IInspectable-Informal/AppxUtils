@@ -9,20 +9,11 @@ namespace ABI
 	using namespace Windows::Foundation;
 	using namespace Windows::Foundation::Collections;
 	using namespace Windows::Storage;
-	using namespace Windows::Storage::FileProperties;
 	using namespace Windows::Storage::Streams;
 }
 
 namespace ABI::AppxUtils
 {
-	class BasicPropertiesDummyClass final : InspectableBase<BaseTrust,
-		ABI::IBasicProperties, ABI::IStorageItemExtraProperties,
-		IAgileObject
-	>
-	{
-
-	};
-
 #pragma region AppxPackagePayloadFile
 	AppxPackagePayloadFile::AppxPackagePayloadFile(IAppxFile*& internalFile, CRITICAL_SECTION*& criticalSection) noexcept : m_AppxPayloadFile(internalFile), m_CriticalSection(criticalSection)
 	{
@@ -32,7 +23,7 @@ namespace ABI::AppxUtils
 #pragma region IAppxPackagePayloadFile
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::get_CompressionOption(AppxPackagePayloadFileCompressionOption* value)
 	{
-		long local{ InterlockedCompareExchange(reinterpret_cast<long*>(&m_HasCompressionOption), false, false) };
+		short local{ InterlockedCompareExchange16(&m_HasCompressionOption, false, false) };
 		if (local == false)
 		{
 			EnterCriticalSection(m_CriticalSection);
@@ -83,6 +74,28 @@ namespace ABI::AppxUtils
 		}
 
 		return WindowsDuplicateString(local, value);
+	}
+
+	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::get_UncompressedSize(UINT64* value)
+	{
+		short local{ InterlockedCompareExchange16(&m_HasUncompressedSize, false, false) };
+		if (local == false)
+		{
+			EnterCriticalSection(m_CriticalSection);
+			HRESULT hr{ S_OK };
+			if (!m_HasUncompressedSize)
+			{
+				hr = m_AppxPayloadFile->GetSize(&m_UncompressedSize);
+				if (SUCCEEDED(hr))
+				{ m_HasUncompressedSize = true; }
+			}
+			LeaveCriticalSection(m_CriticalSection);
+			if (FAILED(hr))
+			{ return hr; }
+		}
+
+		*value = m_UncompressedSize;
+		return S_OK;
 	}
 #pragma endregion
 
@@ -262,7 +275,8 @@ namespace ABI::AppxUtils
 
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::GetBasicPropertiesAsync(ABI::IAsyncOperation<ABI::FileProperties::BasicProperties*>** operation)
 	{
-		return E_NOTIMPL;
+		// Cannot construct BasicProperties, this method is unsupported.
+		return CO_E_NOT_SUPPORTED;
 	}
 
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::get_Name(HSTRING* value)

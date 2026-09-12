@@ -42,7 +42,7 @@ namespace AppxUtils
 		AppxPackageCapabilitiesLegacy CapabilitiesLegacy{ get; };
 	};
 
-	[version(1.0)]
+	[contract(Windows.Foundation.UniversalApiContract, 1.0)]
 	struct AppxPackageTargetDeviceFamily
 	{
 		String Name;
@@ -50,7 +50,7 @@ namespace AppxUtils
 		Windows.ApplicationModel.PackageVersion MaxVersionTested;
 	};
 
-	[version(1.0)]
+	[contract(Windows.Foundation.UniversalApiContract, 1.0)]
 	enum AppxPackageCapabilityClassType
 	{
 		Default = 0,
@@ -58,10 +58,10 @@ namespace AppxUtils
 		Restricted = 2,
 		Windows = 4,
 		All = 7,
-		[version(4.0)] Custom = 8,
+		[contract(Windows.Foundation.UniversalApiContract, 4.0)] Custom = 8,
 	};
 
-	[version(1.0)]
+	[contract(Windows.Foundation.UniversalApiContract, 1.0)]
 	[exclusiveto(AppxPackage)]
 	interface IAppxPackage
 	{
@@ -72,7 +72,7 @@ namespace AppxUtils
 		Windows.Foundation.Collections.IVectorView<String> GetCapabilitiesByCapabilityClass(AppxPackageCapabilityClassType classType);
 	};
 
-	[version(3.0)]
+	[contract(Windows.Foundation.UniversalApiContract, 3.0)]
 	[exclusiveto(AppxPackage)]
 	interface IAppxPackage3
 	{
@@ -80,7 +80,7 @@ namespace AppxUtils
 		String MainPackageName{ get; };
 	};
 
-	[version(4.0)]
+	[contract(Windows.Foundation.UniversalApiContract, 4.0)]
 	struct AppxPackageMainPackageDependency
 	{
 		String Name;
@@ -88,21 +88,21 @@ namespace AppxUtils
 		String FamilyName;
 	};
 
-	[version(4.0)]
+	[contract(Windows.Foundation.UniversalApiContract, 4.0)]
 	[exclusiveto(AppxPackage)]
 	interface IAppxPackage4
 	{
 		Windows.Foundation.Collections.IVectorView<AppxPackageMainPackageDependency> MainPackageDependencies{ get; };
 	};
 
-	[version(6.0)]
+	[contract(Windows.Foundation.UniversalApiContract, 6.0)]
 	[exclusiveto(AppxPackage)]
 	interface IAppxPackage6
 	{
 		Boolean IsNonQualifiedResourcePackage{ get; };
 	};
 
-	[version(10.0)]
+	[contract(Windows.Foundation.UniversalApiContract, 10.0)]
 	struct AppxPackageDriverConstraint
 	{
 		String Name;
@@ -110,21 +110,21 @@ namespace AppxUtils
 		String MinDate;
 	};
 
-	[version(10.0)]
+	[contract(Windows.Foundation.UniversalApiContract, 10.0)]
 	[default_interface]
 	runtimeclass AppxPackageDriverDependency : Windows.Foundation.Collections.IVectorView<AppxPackageDriverConstraint>
 	{
 
 	};
 
-	[version(10.0)]
+	[contract(Windows.Foundation.UniversalApiContract, 10.0)]
 	struct AppxPackageOSPackageDependency
 	{
 		String Name;
 		Windows.ApplicationModel.PackageVersion Version;
 	};
 
-	[version(10.0)]
+	[contract(Windows.Foundation.UniversalApiContract, 10.0)]
 	struct AppxPackageHostRuntimeDependency
 	{
 		String Name;
@@ -132,7 +132,7 @@ namespace AppxUtils
 		Windows.ApplicationModel.PackageVersion MinVersion;
 	};
 
-	[version(10.0)]
+	[contract(Windows.Foundation.UniversalApiContract, 10.0)]
 	[exclusiveto(AppxPackage)]
 	interface IAppxPackage10
 	{
@@ -271,6 +271,7 @@ namespace AppxUtils
 	{
 		AppxPackagePayloadFileCompressionOption CompressionOption{ get; };
 		String RelativePath{ get; };
+		UInt64 UncompressedSize{ get; };
 	};
 
 	runtimeclass AppxPackagePayloadFile : [default] IAppxPackagePayloadFile, Windows.Storage.IStorageFile, Windows.Storage.IStorageFile2, Windows.Storage.IStorageFilePropertiesWithAvailability
@@ -279,7 +280,7 @@ namespace AppxUtils
 	}
 
 	[exclusiveto(AppxPackage)]
-	interface IAppxPackagePayloadFilesReader
+	interface IAppxPackagePayloadFilesProvider
 	{
 		Windows.Foundation.Collections.IMapView<String, AppxPackagePayloadFile> GetPayloadFiles();
 	};
@@ -300,7 +301,7 @@ namespace AppxUtils
 	interface IAppxBlockMapFileRuntimeClass
 	{
 		UInt32 LocalFileHeaderSize{ get; };
-		UInt64 UncompressedSizeSize{ get; };
+		UInt64 UncompressedSize{ get; };
 		Windows.Foundation.Collections.IVectorView<AppxBlockMapBlock> Blocks{ get; };
 
 		Boolean ValidateFileHash(Windows.Storage.Streams.IInputStream fileStream);
@@ -325,7 +326,8 @@ namespace AppxUtils
 
 	}
 
-	runtimeclass AppxPackage : [default] IAppxPackageCore, IAppxPackagePayloadFilesReader, IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10, IAppxPackageLegacy
+	[contract(Windows.Foundation.UniversalApiContract, 1.0)]
+	runtimeclass AppxPackage : [default] IAppxPackageCore, IAppxPackagePayloadFilesProvider, IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10, IAppxPackageLegacy
 	{
 
 	}
@@ -346,7 +348,6 @@ namespace AppxUtils
 		Windows.Storage.Streams.IInputStream GetManifestStream();
 	};
 
-	[version(0.63)]
 	runtimeclass AppxBundle : [default] IAppxBundleCore
 	{
 		

@@ -21,6 +21,7 @@ namespace ABI::AppxUtils
 
 		HRESULT STDMETHODCALLTYPE get_CompressionOption(ABI::AppxUtils::AppxPackagePayloadFileCompressionOption* value);
 		HRESULT STDMETHODCALLTYPE get_RelativePath(HSTRING* value);
+        HRESULT STDMETHODCALLTYPE get_UncompressedSize(UINT64* value);
 
 		//Windows.Storage.IStorageFile
         HRESULT STDMETHODCALLTYPE get_FileType(HSTRING* value);
@@ -70,17 +71,18 @@ namespace ABI::AppxUtils
         ~AppxPackagePayloadFile() noexcept;
 
     private:
-        IAppxFile* m_AppxPayloadFile{ nullptr };
-
-        BOOL m_HasCompressionOption{ false };
+        short m_HasCompressionOption{ false };
+        short m_HasUncompressedSize{ false };
         AppxPackagePayloadFileCompressionOption m_CompressionOption{};
         HSTRING m_RelativePath{ nullptr };
+        UINT64 m_UncompressedSize{ 0 };
 
         HSTRING m_FileType{ nullptr };
         HSTRING m_ContentType{ nullptr };
 
         HSTRING m_Name{ nullptr };
 
-        CRITICAL_SECTION* m_CriticalSection{ nullptr };
+        IAppxFile* const m_AppxPayloadFile{ nullptr };
+        CRITICAL_SECTION* const m_CriticalSection{ nullptr };
 	};
 }

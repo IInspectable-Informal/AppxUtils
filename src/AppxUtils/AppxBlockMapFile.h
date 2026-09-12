@@ -26,19 +26,28 @@ namespace ABI::AppxUtils
 		byte* m_HashArray{ nullptr };
 	};
 
-	class AppxBlockMapFile final : public InspectableElementBase<BaseTrust,
+	class AppxBlockMapFile final : public InspectableBase<BaseTrust,
 		IAppxBlockMapFileRuntimeClass,
 		IAgileObject
 	>
 	{
 	public:
 		HRESULT STDMETHODCALLTYPE get_LocalFileHeaderSize(UINT32* value);
-		HRESULT STDMETHODCALLTYPE get_UncompressedSizeSize(UINT64* value);
+		HRESULT STDMETHODCALLTYPE get_UncompressedSize(UINT64* value);
 		HRESULT STDMETHODCALLTYPE get_Blocks(ABI::Windows::Foundation::Collections::IVectorView<AppxBlockMapBlock*>** value);
 
 		HRESULT STDMETHODCALLTYPE ValidateFileHash(ABI::Windows::Storage::Streams::IInputStream* fileStream, boolean* result);
 
 		//IInspectable
 		HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className);
+
+		~AppxBlockMapFile() noexcept;
+
+	private:
+		UINT32 m_LocalFileHeaderSize{};
+		UINT64 m_UncompressedSize{};
+		ABI::Windows::Foundation::Collections::IVectorView<AppxBlockMapBlock*>* m_Blocks{ nullptr };
+
+		IAppxBlockMapFile* const m_BlockMapFile{ nullptr };
 	};
 }

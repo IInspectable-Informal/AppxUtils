@@ -5,7 +5,7 @@
 namespace ABI::AppxUtils
 {
     class AppxPackageBase abstract : public InspectableCommonBase<BaseTrust,
-        IAppxPackageCore, IAppxPackagePayloadFilesReader,
+        IAppxPackageCore, IAppxPackagePayloadFilesProvider,
         IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10,
         IAppxPackageLegacy,
         IAppxPackageInterop,

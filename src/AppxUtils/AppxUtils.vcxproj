@@ -199,6 +199,7 @@
     </Midl>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AppxBlockMap.h" />
     <ClInclude Include="AppxBlockMapFile.h" />
     <ClInclude Include="AppxBundle.h" />
     <ClInclude Include="AppxBundleUtils.h" />
@@ -207,6 +208,7 @@
     <ClInclude Include="AppxPackageDriverDependency.h" />
     <ClInclude Include="AppxPackagePayloadFile.h" />
     <ClInclude Include="AppxUtils.h" />
+    <ClInclude Include="AsyncOperationBase.hpp" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="FoundationStructComparer.hpp" />
     <ClInclude Include="GuidHelpers.hpp" />
@@ -223,6 +225,7 @@
     <ClInclude Include="VectorView.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AppxBlockMap.cpp" />
     <ClCompile Include="AppxBlockMapFile.cpp" />
     <ClCompile Include="AppxBundle.cpp" />
     <ClCompile Include="AppxBundleUtils.cpp" />

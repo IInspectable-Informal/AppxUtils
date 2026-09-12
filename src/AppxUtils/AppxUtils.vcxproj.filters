@@ -19,6 +19,7 @@
     <ClCompile Include="AppxBundle.cpp" />
     <ClCompile Include="AppxBlockMapFile.cpp" />
     <ClCompile Include="AppxBundleUtils.cpp" />
+    <ClCompile Include="AppxBlockMap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppxUtils.h" />
@@ -43,6 +44,8 @@
     <ClInclude Include="AppxBundle.h" />
     <ClInclude Include="AppxBlockMapFile.h" />
     <ClInclude Include="AppxBundleUtils.h" />
+    <ClInclude Include="AppxBlockMap.h" />
+    <ClInclude Include="AsyncOperationBase.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="AppxUtils.idl" />
