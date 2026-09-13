@@ -623,6 +623,8 @@ namespace ABI::AppxUtils
                                                             ++completed;
                                                             enumerator->MoveNext(&hasNext);
                                                         }
+                                                        else
+                                                        { WindowsDeleteString(dep.Name); }
                                                     }
                                                 }
                                                 CoTaskMemFree(publisher);
