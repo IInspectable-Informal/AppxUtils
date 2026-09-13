@@ -46,6 +46,7 @@
     <ClInclude Include="AppxBundleUtils.h" />
     <ClInclude Include="AppxBlockMap.h" />
     <ClInclude Include="AsyncOperationBase.hpp" />
+    <ClInclude Include="AsyncInfoBase.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="AppxUtils.idl" />

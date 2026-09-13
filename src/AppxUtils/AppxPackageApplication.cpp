@@ -43,8 +43,8 @@ namespace ABI::AppxUtils
 		L"Wide310x150Logo"
 	};
 
-	AppxPackageApplication::AppxPackageApplication(IAppxManifestApplication*& application, CRITICAL_SECTION* criticalSection) noexcept :
-		m_Application(application), m_CriticalSection(criticalSection)
+	AppxPackageApplication::AppxPackageApplication(IAppxManifestApplication*& application) noexcept :
+		m_Application(application)
 	{
 
 	}
@@ -55,7 +55,7 @@ namespace ABI::AppxUtils
 		HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_AppUserModelId), nullptr, nullptr)) };
 		if (local == nullptr)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_AppUserModelId)
 			{
@@ -68,7 +68,7 @@ namespace ABI::AppxUtils
 				}
 			}
 			local = m_AppUserModelId;
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 		}
@@ -95,7 +95,7 @@ namespace ABI::AppxUtils
 			HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(m_PropValues + propOrder), nullptr, nullptr)) };
 			if (local == nullptr)
 			{
-				EnterCriticalSection(m_CriticalSection);
+				AcquireSRWLockExclusive(&m_Lock);
 				HRESULT hr{ S_OK };
 				if (!m_PropValues[propOrder])
 				{
@@ -108,7 +108,7 @@ namespace ABI::AppxUtils
 					}
 				}
 				local = m_PropValues[propOrder];
-				LeaveCriticalSection(m_CriticalSection);
+				ReleaseSRWLockExclusive(&m_Lock);
 				if (FAILED(hr))
 				{ return hr; }
 			}
@@ -151,6 +151,5 @@ namespace ABI::AppxUtils
 			if (element)
 			{ WindowsDeleteString(element); }
 		}
-		DeleteCriticalSection(m_CriticalSection);
 	}
 }

@@ -21,8 +21,7 @@ namespace ABI
 namespace ABI::AppxUtils
 {
 #pragma region AppxBundle
-	AppxBundle::AppxBundle(IAppxBundleReader*& reader, CRITICAL_SECTION* criticalSection) noexcept :
-		m_BundleReader(reader), m_CriticalSection(criticalSection)
+	AppxBundle::AppxBundle(IAppxBundleReader*& reader) noexcept : m_BundleReader(reader)
 	{
 
 	}
@@ -33,7 +32,7 @@ namespace ABI::AppxUtils
 		HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Name), nullptr, nullptr)) };
 		if (local == nullptr)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_Name)
 			{
@@ -51,7 +50,7 @@ namespace ABI::AppxUtils
 				}
 			}
 			local = m_Name;
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 		}
@@ -63,7 +62,7 @@ namespace ABI::AppxUtils
 		HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_FamilyName), nullptr, nullptr)) };
 		if (local == nullptr)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_FamilyName)
 			{
@@ -81,7 +80,7 @@ namespace ABI::AppxUtils
 				}
 			}
 			local = m_FamilyName;
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 		}
@@ -93,7 +92,7 @@ namespace ABI::AppxUtils
 		HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_FullName), nullptr, nullptr)) };
 		if (local == nullptr)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_FullName)
 			{
@@ -111,7 +110,7 @@ namespace ABI::AppxUtils
 				}
 			}
 			local = m_FullName;
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 		}
@@ -123,7 +122,7 @@ namespace ABI::AppxUtils
 		HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Publisher), nullptr, nullptr)) };
 		if (local == nullptr)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_Publisher)
 			{
@@ -141,7 +140,7 @@ namespace ABI::AppxUtils
 				}
 			}
 			local = m_Publisher;
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 		}
@@ -153,7 +152,7 @@ namespace ABI::AppxUtils
 		short local{ InterlockedCompareExchange16(&m_HasVersion, false, false) };
 		if (local == false)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_HasVersion)
 			{
@@ -170,7 +169,7 @@ namespace ABI::AppxUtils
 					}
 				}
 			}
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 		}
@@ -183,7 +182,7 @@ namespace ABI::AppxUtils
 		short local{ InterlockedCompareExchange16(&m_HasArchitecture, false, false) };
 		if (local == false)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_HasArchitecture)
 			{
@@ -216,7 +215,7 @@ namespace ABI::AppxUtils
 					}
 				}
 			}
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 		}
@@ -229,7 +228,7 @@ namespace ABI::AppxUtils
 		HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ResourceId), nullptr, nullptr)) };
 		if (local == nullptr)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_ResourceId)
 			{
@@ -252,7 +251,7 @@ namespace ABI::AppxUtils
 				}
 			}
 			local = m_ResourceId;
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 		}
@@ -264,7 +263,7 @@ namespace ABI::AppxUtils
 		auto local{ reinterpret_cast<ABI::IAsyncOperation<ABI::IVectorView<AppxPackage*>*>*>(InterlockedCompareExchangePointer(to_void_pp(m_GetPackagesAsyncOp), nullptr, nullptr)) };
 		if (local == nullptr)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_GetPackagesAsyncOp)
 			{
@@ -296,7 +295,7 @@ namespace ABI::AppxUtils
 				}
 			}
 			local = m_GetPackagesAsyncOp;
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 		}
@@ -311,7 +310,7 @@ namespace ABI::AppxUtils
 		auto local{ reinterpret_cast<ABI::IRandomAccessStream*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ManifestStream), nullptr, nullptr)) };
 		if (local == nullptr)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			if (!m_ManifestStream)
 			{
 				IAppxBundleManifestReader* reader{ nullptr };
@@ -328,7 +327,7 @@ namespace ABI::AppxUtils
 				}
 			}
 			local = m_ManifestStream;
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 		}
@@ -417,8 +416,6 @@ namespace ABI::AppxUtils
 			closable->Release();
 			m_ManifestStream->Release();
 		}
-		DeleteCriticalSection(m_CriticalSection);
-		delete m_CriticalSection;
 	}
 
 #pragma endregion;

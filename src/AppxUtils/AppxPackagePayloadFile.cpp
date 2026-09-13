@@ -15,7 +15,7 @@ namespace ABI
 namespace ABI::AppxUtils
 {
 #pragma region AppxPackagePayloadFile
-	AppxPackagePayloadFile::AppxPackagePayloadFile(IAppxFile*& internalFile, CRITICAL_SECTION*& criticalSection) noexcept : m_AppxPayloadFile(internalFile), m_CriticalSection(criticalSection)
+	AppxPackagePayloadFile::AppxPackagePayloadFile(IAppxFile*& internalFile) noexcept : m_AppxPayloadFile(internalFile)
 	{
 
 	}
@@ -26,7 +26,7 @@ namespace ABI::AppxUtils
 		short local{ InterlockedCompareExchange16(&m_HasCompressionOption, false, false) };
 		if (local == false)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_HasCompressionOption)
 			{
@@ -34,7 +34,7 @@ namespace ABI::AppxUtils
 				if (SUCCEEDED(hr))
 				{ m_HasCompressionOption = true; }
 			}
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 		}
@@ -48,7 +48,7 @@ namespace ABI::AppxUtils
 		HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_RelativePath), nullptr, nullptr)) };
 		if (local == nullptr)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_RelativePath)
 			{
@@ -67,7 +67,7 @@ namespace ABI::AppxUtils
 					CoTaskMemFree(relativePath);
 				}
 			}
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 			local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_RelativePath), nullptr, nullptr));
@@ -81,7 +81,7 @@ namespace ABI::AppxUtils
 		short local{ InterlockedCompareExchange16(&m_HasUncompressedSize, false, false) };
 		if (local == false)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_HasUncompressedSize)
 			{
@@ -89,7 +89,7 @@ namespace ABI::AppxUtils
 				if (SUCCEEDED(hr))
 				{ m_HasUncompressedSize = true; }
 			}
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 		}
@@ -105,7 +105,7 @@ namespace ABI::AppxUtils
 		HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_FileType), nullptr, nullptr)) };
 		if (local == nullptr)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_FileType)
 			{
@@ -142,7 +142,7 @@ namespace ABI::AppxUtils
 					CoTaskMemFree(relativePath);
 				}
 			}
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 			local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_FileType), nullptr, nullptr));
@@ -156,7 +156,7 @@ namespace ABI::AppxUtils
 		HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ContentType), nullptr, nullptr)) };
 		if (local == nullptr)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_ContentType)
 			{
@@ -168,7 +168,7 @@ namespace ABI::AppxUtils
 					CoTaskMemFree(contentType);
 				}
 			}
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 			local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ContentType), nullptr, nullptr));
@@ -284,7 +284,7 @@ namespace ABI::AppxUtils
 		HSTRING local{ reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Name), nullptr, nullptr)) };
 		if (local == nullptr)
 		{
-			EnterCriticalSection(m_CriticalSection);
+			AcquireSRWLockExclusive(&m_Lock);
 			HRESULT hr{ S_OK };
 			if (!m_Name)
 			{
@@ -313,7 +313,7 @@ namespace ABI::AppxUtils
 					CoTaskMemFree(relativePath);
 				}
 			}
-			LeaveCriticalSection(m_CriticalSection);
+			ReleaseSRWLockExclusive(&m_Lock);
 			if (FAILED(hr))
 			{ return hr; }
 			local = reinterpret_cast<HSTRING>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Name), nullptr, nullptr));
@@ -400,8 +400,6 @@ namespace ABI::AppxUtils
 
 		if (m_Name)
 		{ WindowsDeleteString(m_Name); }
-
-		DeleteCriticalSection(m_CriticalSection);
 	}
 #pragma endregion
 }

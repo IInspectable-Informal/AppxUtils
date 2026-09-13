@@ -15,6 +15,8 @@
 #include <appxpackaging.h>
 #include <shcore.h>
 #include <heapapi.h>
+#include <synchapi.h>
+#define E_CANCELED HRESULT_FROM_WIN32(ERROR_CANCELLED)
 
 //WinRT
 #include <hstring.h>
@@ -44,3 +46,5 @@
 #include "StructLifetimeFunctionsSpecialized.h"
 #include "Reference.hpp"
 #include "VectorView.hpp"
+#include "AsyncInfoBase.hpp"
+#include "AsyncOperationBase.hpp"

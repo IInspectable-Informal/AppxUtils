@@ -17,7 +17,7 @@ namespace ABI::AppxUtils
     >
 	{
 	public:
-		AppxPackagePayloadFile(IAppxFile*& internalFile, CRITICAL_SECTION*& criticalSection) noexcept;
+		AppxPackagePayloadFile(IAppxFile*& internalFile) noexcept;
 
 		HRESULT STDMETHODCALLTYPE get_CompressionOption(ABI::AppxUtils::AppxPackagePayloadFileCompressionOption* value);
 		HRESULT STDMETHODCALLTYPE get_RelativePath(HSTRING* value);
@@ -83,6 +83,6 @@ namespace ABI::AppxUtils
         HSTRING m_Name{ nullptr };
 
         IAppxFile* const m_AppxPayloadFile{ nullptr };
-        CRITICAL_SECTION* const m_CriticalSection{ nullptr };
+        SRWLOCK m_Lock{ SRWLOCK_INIT };
 	};
 }

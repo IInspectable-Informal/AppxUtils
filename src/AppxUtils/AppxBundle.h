@@ -11,7 +11,7 @@ namespace ABI::AppxUtils
 	>
 	{
 	public:
-        AppxBundle(IAppxBundleReader*& reader, CRITICAL_SECTION* criticalSection) noexcept;
+        AppxBundle(IAppxBundleReader*& reader) noexcept;
 
         HRESULT STDMETHODCALLTYPE get_Name(HSTRING* value);
         HRESULT STDMETHODCALLTYPE get_FamilyName(HSTRING* value);
@@ -45,8 +45,8 @@ namespace ABI::AppxUtils
         ABI::Windows::Foundation::IAsyncOperation<ABI::Windows::Foundation::Collections::IVectorView<AppxPackage*>*>* m_GetPackagesAsyncOp{ nullptr };
         ABI::Windows::Storage::Streams::IRandomAccessStream* m_ManifestStream{ nullptr };
 
-        IAppxBundleReader* m_BundleReader{ nullptr };
-        CRITICAL_SECTION* m_CriticalSection{ nullptr };
+        IAppxBundleReader* const m_BundleReader{ nullptr };
+        SRWLOCK m_Lock{ SRWLOCK_INIT };
         IAppxBundleManifestReader* m_ManifestReader{ nullptr };
         IAppxManifestPackageId* m_BundleId{ nullptr };
 

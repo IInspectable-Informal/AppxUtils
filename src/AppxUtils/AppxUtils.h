@@ -14,6 +14,7 @@ namespace ABI::AppxUtils
         AppxPackageFactory();
 
         HRESULT STDMETHODCALLTYPE GetAppxPackageFromStream(ABI::Windows::Storage::Streams::IRandomAccessStream* appxPackageStream, IAppxPackageCore** result);
+        HRESULT STDMETHODCALLTYPE GetAppxPackageFromStreamAsync(ABI::Windows::Storage::Streams::IRandomAccessStream* appxPackageStream, ABI::Windows::Foundation::IAsyncOperation<AppxPackage*>** operation);
         HRESULT STDMETHODCALLTYPE GetAppxBundleFromStream(ABI::Windows::Storage::Streams::IRandomAccessStream* appxBundleStream, IAppxBundleCore** result);
 
         //IActivationFactory

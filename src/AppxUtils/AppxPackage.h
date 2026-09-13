@@ -13,7 +13,7 @@ namespace ABI::AppxUtils
     >
     {
     public:
-        AppxPackageBase(IAppxPackageReader*& reader, CRITICAL_SECTION* criticalSection) noexcept;
+        AppxPackageBase(IAppxPackageReader*& reader) noexcept;
 
         HRESULT STDMETHODCALLTYPE get_Name(HSTRING* value);
         HRESULT STDMETHODCALLTYPE get_FamilyName(HSTRING* value);
@@ -122,10 +122,8 @@ namespace ABI::AppxUtils
         struct ABI::Windows::ApplicationModel::PackageVersion m_MaxVersionTestedLegacy { 0, 0, 0, 0 };
         AppxPackageCapabilitiesLegacy m_CapabilitiesLegacy{ AppxPackageCapabilitiesLegacy::NoCapability };
 
-        IAppxPackageReader* m_AppxPackageReader{ nullptr };
-    protected:
-        CRITICAL_SECTION* m_CriticalSection{};
-    private:
+        IAppxPackageReader* const m_AppxPackageReader{ nullptr };
+        SRWLOCK m_Lock{ SRWLOCK_INIT };
         IAppxManifestReader* m_ManifestReader{ nullptr };
         IAppxManifestPackageId* m_PackageId{ nullptr };
 

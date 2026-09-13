@@ -10,7 +10,7 @@ namespace ABI::AppxUtils
 		IAgileObject>
 	{
 	public:
-		AppxPackageApplication(IAppxManifestApplication*& application, CRITICAL_SECTION* criticalSection) noexcept;
+		AppxPackageApplication(IAppxManifestApplication*& application) noexcept;
 
 		HRESULT STDMETHODCALLTYPE get_AppUserModelId(HSTRING* value);
 		HRESULT STDMETHODCALLTYPE get_Id(HSTRING* value);
@@ -34,7 +34,7 @@ namespace ABI::AppxUtils
 
 		HSTRING m_PropValues[26]{ nullptr };
 
-		IAppxManifestApplication* m_Application{ nullptr };
-		CRITICAL_SECTION* m_CriticalSection{ nullptr };
+		IAppxManifestApplication* const m_Application{ nullptr };
+		SRWLOCK m_Lock{ SRWLOCK_INIT };
 	};
 }

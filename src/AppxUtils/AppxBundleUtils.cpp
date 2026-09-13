@@ -72,8 +72,8 @@ namespace ABI::AppxUtils::Internal
 		};
 
 	public:
-		AppxPackageVectorView(AppxPackageElement* const list, const UINT32 size, CRITICAL_SECTION* const criticalSections) noexcept :
-			m_Array(list), VectorViewBase(size), m_CriticalSections(criticalSections)
+		AppxPackageVectorView(AppxPackageElement* const list, const UINT32 size) noexcept :
+			m_Array(list), VectorViewBase(size)
 		{
 
 		}
@@ -145,13 +145,11 @@ namespace ABI::AppxUtils::Internal
 		{
 			for (UINT32 i{ m_Size }; i > 0;)
 			{ m_Array[--i].Release(); }
-			delete[] m_CriticalSections;
 			::operator delete[](m_Array);
 		}
 
 	private:
 		AppxPackageElement* const m_Array{ nullptr };
-		const CRITICAL_SECTION* const m_CriticalSections{ nullptr };
 	};
 
 	static UINT32 g_AsyncOpNextId{ 0 };
@@ -208,7 +206,7 @@ namespace ABI::AppxUtils::Internal
 		{
 			case ABI::AsyncStatus::Completed:
 			{
-				auto* const result{ reinterpret_cast<TResult_ABI>(InterlockedCompareExchangePointer(to_void_pp(m_Result), nullptr, nullptr)) };
+				auto* const result{ static_cast<TResult_ABI>(InterlockedCompareExchangePointer(to_void_pp(m_Result), nullptr, nullptr)) };
 				if (result)
 				{ result->AddRef(); }
 				*results = result;
@@ -275,8 +273,6 @@ namespace ABI::AppxUtils::Internal
 	}
 
 #pragma region Static members
-	constexpr HRESULT E_CANCELED{ HRESULT_FROM_WIN32(ERROR_CANCELLED) };
-
 	void CALLBACK AppxBundleGetPackagesAsyncOp::InitPackagesCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
 	{
 		auto& external{ *static_cast<AppxBundleGetPackagesAsyncOp*>(Context) };
@@ -291,7 +287,7 @@ namespace ABI::AppxUtils::Internal
 				if (SUCCEEDED(hr))
 				{
 					IAppxBundleReader* bundleReader{ nullptr };
-					hr = pGIT->GetInterfaceFromGlobal(external.m_BundleReader, __uuidof(bundleReader), to_void_pp(bundleReader));;
+					hr = pGIT->GetInterfaceFromGlobal(external.m_BundleReader, __uuidof(bundleReader), to_void_pp(bundleReader));
 					if (SUCCEEDED(hr))
 					{
 						IAppxFactory* factory{ nullptr };
@@ -321,80 +317,61 @@ namespace ABI::AppxUtils::Internal
 											auto* const packages{ static_cast<AppxPackageElement*>(::operator new[](__aligned_size_of<AppxPackageElement> * count)) };
 											if (packages)
 											{
-												auto* const criticalSections{ new CRITICAL_SECTION[count] };
-												if (criticalSections)
+												enumerator->GetHasCurrent(&hasNext);
+												UINT32 completed{ 0 };
+												while (hasNext)
 												{
-													enumerator->GetHasCurrent(&hasNext);
-													UINT32 completed{ 0 };
-													while (hasNext)
+													if (InterlockedCompareExchange16(&external.m_CanContinue, false, false))
 													{
-														if (InterlockedCompareExchange16(&external.m_CanContinue, false, false))
+														IAppxFile* element{ nullptr };
+														hr = enumerator->GetCurrent(&element);
+														if (SUCCEEDED(hr))
 														{
-															IAppxFile* element{ nullptr };
-															hr = enumerator->GetCurrent(&element);
+															IStream* stream{ nullptr };
+															hr = element->GetStream(&stream);
 															if (SUCCEEDED(hr))
 															{
-																IStream* stream{ nullptr };
-																hr = element->GetStream(&stream);
+																IAppxPackageReader* reader{ nullptr };
+																hr = factory->CreatePackageReader(stream, &reader);
 																if (SUCCEEDED(hr))
 																{
-																	IAppxPackageReader* reader{ nullptr };
-																	hr = factory->CreatePackageReader(stream, &reader);
-																	if (SUCCEEDED(hr))
-																	{
-																		if (InitializeCriticalSectionEx(criticalSections + completed, 0, CRITICAL_SECTION_NO_DEBUG_INFO))
-																		{
-																			new (packages + completed) AppxPackageElement{ reader, criticalSections + completed };
-																			++completed;
-																			enumerator->MoveNext(&hasNext);
-																		}
-																		else
-																		{
-																			hr = HRESULT_FROM_WIN32(GetLastError());
-																			reader->Release();
-																		}
-																	}
-																	stream->Release();
+																	new (packages + completed) AppxPackageElement{ reader };
+																	++completed;
+																	enumerator->MoveNext(&hasNext);
 																}
-																element->Release();
+																stream->Release();
 															}
-														}
-														else
-														{ hr = E_CANCELED; }
-														if (FAILED(hr))
-														{
-															for (UINT32 i{ completed }; i > 0;)
-															{ packages[--i].Release(); }
-															printf("failed\n");
-															delete[] criticalSections;
-															::operator delete[](packages);
-															break;
+															element->Release();
 														}
 													}
-													printf("test\n");
-													if (SUCCEEDED(hr))
+													else
+													{ hr = E_CANCELED; }
+													if (FAILED(hr))
 													{
-														const bool canContinue{ InterlockedCompareExchange16(&external.m_CanContinue, false, false) != 0 };
-														auto* const instance{ canContinue ? new AppxPackageVectorView{ packages, count, criticalSections } : nullptr };
-														if (instance)
-														{
-															InterlockedExchangePointer(to_void_pp(external.m_Result), instance);
-															createdVectorView = true;
-														}
-														else
-														{
-															hr = canContinue ? E_OUTOFMEMORY : E_CANCELED;
-															for (UINT32 i{ completed }; i > 0;)
-															{ packages[--i].Release(); }
-															delete[] criticalSections;
-															::operator delete[](packages);
-														}
+														for (UINT32 i{ completed }; i > 0;)
+														{ packages[--i].Release(); }
+														printf("failed\n");
+														::operator delete[](packages);
+														break;
 													}
 												}
-												else
+												printf("test\n");
+												if (SUCCEEDED(hr))
 												{
-													hr = E_OUTOFMEMORY;
-													::operator delete[](packages);
+													const bool canContinue{ InterlockedCompareExchange16(&external.m_CanContinue, false, false) != 0 };
+													auto* const instance{ canContinue ? new AppxPackageVectorView{ packages, count } : nullptr };
+													if (instance)
+													{
+														InterlockedExchangePointer(to_void_pp(external.m_Result), instance);
+														createdVectorView = true;
+													}
+													else
+													{
+														hr = canContinue ? E_OUTOFMEMORY : E_CANCELED;
+														for (UINT32 i{ completed }; i > 0;)
+														{ packages[--i].Release(); }
+														::operator delete[](packages);
+													}
 												}
 											}
 											else
