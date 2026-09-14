@@ -165,11 +165,14 @@ namespace ABI::AppxUtils
 
 	HRESULT STDMETHODCALLTYPE AppxPackageFactory::GetAppxPackageFromStream(ABI::IRandomAccessStream* appxPackageStream, IAppxPackageCore** result)
 	{
+		printf("test\n");
 		if (appxPackageStream)
 		{
 			HRESULT hr{ S_OK };
+			printf("test\n");
 			if (InitOnceExecuteOnce(&m_AppxFactoryInitOnce, StaticAppxFactoryInit, &m_AppxFactory, reinterpret_cast<void**>(&hr)))
 			{
+				printf("test\n");
 				IStream* stream{ nullptr };
 				LARGE_INTEGER qpc1{};
 				LARGE_INTEGER qpc2{};

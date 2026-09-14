@@ -704,7 +704,6 @@ namespace ABI::AppxUtils
                             }
                             enumerator->Release();
                             hr = reader2->GetQualifiedResources(&enumerator);
-                            reader2->Release();
                             if (SUCCEEDED(hr))
                             {
                                 resources = new struct AppxPackageResource[count]{};
@@ -756,8 +755,7 @@ namespace ABI::AppxUtils
                                 enumerator->Release();
                             }
                         }
-                        else
-                        { reader2->Release(); }
+                        reader2->Release();
                     }
                     else
                     {

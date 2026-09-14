@@ -152,11 +152,9 @@ namespace ABI::AppxUtils::Internal
 		AppxPackageElement* const m_Array{ nullptr };
 	};
 
-	static UINT32 g_AsyncOpNextId{ 0 };
-
 #pragma region AppxBundleGetPackagesAsyncOp
 	AppxBundleGetPackagesAsyncOp::AppxBundleGetPackagesAsyncOp(DWORD& bundleReader) noexcept :
-		m_BundleReader(bundleReader), m_Id(InterlockedIncrement(&g_AsyncOpNextId))
+		m_BundleReader(bundleReader)
 	{
 		//bundleReader->AddRef();
 	}
@@ -175,100 +173,19 @@ namespace ABI::AppxUtils::Internal
 	}
 #pragma endregion
 
-#pragma region IAsyncOperation<IVectorView<AppxPackage>>
-	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::put_Completed(TCompletedHandler handler)
-	{
-		auto* const oldValue{ static_cast<TCompletedHandler>(InterlockedExchangePointer(to_void_pp(m_Completed), handler)) };
-		if (handler)
-		{
-			handler->AddRef();
-			const auto status{ static_cast<ABI::AsyncStatus>(InterlockedCompareExchange(&m_Status, 0, 0)) };
-			if (status != ABI::AsyncStatus::Started)
-			{ handler->Invoke(this, status); }
-		}
-		if (oldValue)
-		{ oldValue->Release(); }
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::get_Completed(TCompletedHandler* handler)
-	{
-		auto* const local{ static_cast<TCompletedHandler>(InterlockedCompareExchangePointer(to_void_pp(m_Completed), nullptr, nullptr)) };
-		if (local)
-		{ local->AddRef(); }
-		*handler = local;
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::GetResults(TResult_ABI* results)
-	{
-		switch (static_cast<ABI::AsyncStatus>(InterlockedCompareExchange(&m_Status, 0, 0)))
-		{
-			case ABI::AsyncStatus::Completed:
-			{
-				auto* const result{ static_cast<TResult_ABI>(InterlockedCompareExchangePointer(to_void_pp(m_Result), nullptr, nullptr)) };
-				if (result)
-				{ result->AddRef(); }
-				*results = result;
-				return S_OK;
-			} break;
-
-			case ABI::AsyncStatus::Error:
-				return InterlockedCompareExchange(&m_ErrorCode, S_OK, S_OK);
-
-			case ABI::AsyncStatus::Canceled:
-				return HRESULT_FROM_WIN32(ERROR_CANCELLED);
-
-			default:
-				return E_ILLEGAL_METHOD_CALL;
-		}
-	}
-#pragma endregion
-
 #pragma region IAsyncInfo
-	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::get_Id(UINT32* id)
-	{
-		*id = m_Id;
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::get_Status(ABI::AsyncStatus* status)
-	{
-		*status = static_cast<ABI::AsyncStatus>(InterlockedCompareExchange(&m_Status, static_cast<LONG>(ABI::AsyncStatus::Started), static_cast<LONG>(ABI::AsyncStatus::Started)));
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::get_ErrorCode(HRESULT* errorCode)
-	{
-		*errorCode = InterlockedCompareExchange(&m_ErrorCode, S_OK, S_OK);
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::Cancel()
-	{
-		InterlockedCompareExchange16(&m_CanContinue, false, m_CanContinue);
-		return S_OK;
-	}
-
 	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::Close()
 	{
-		InterlockedCompareExchange16(&m_CanContinue, false, m_CanContinue);
+		AcquireSRWLockExclusive(&m_Lock);
+		m_CanContinue = false;
+		ReleaseSRWLockExclusive(&m_Lock);
 		return S_OK;
 	}
-#pragma endregion
-
-#pragma region IInspectable
-	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::GetRuntimeClassName(HSTRING* className)
-	{ return WindowsCreateString(L"Windows.Foundation.IAsyncOperation`1<Windows.Foundation.Collections.IVectorView`1<AppxUtils.AppxPackage>>", 105, className); }
 #pragma endregion
 
 	//Destructor
 	AppxBundleGetPackagesAsyncOp::~AppxBundleGetPackagesAsyncOp() noexcept
 	{
-		if (m_Completed)
-		{ m_Completed->Release(); }
-		if (m_Result)
-		{ m_Result->Release(); }
 		//m_BundleReader->Release();
 	}
 
@@ -276,11 +193,11 @@ namespace ABI::AppxUtils::Internal
 	void CALLBACK AppxBundleGetPackagesAsyncOp::InitPackagesCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
 	{
 		auto& external{ *static_cast<AppxBundleGetPackagesAsyncOp*>(Context) };
-		bool createdVectorView{ false };
+		ABI::IVectorView<ABI::AppxPackage*>* result{ nullptr };
 		HRESULT hr{ CoInitializeEx(nullptr, COINIT_MULTITHREADED) };
 		if (SUCCEEDED(hr))
 		{
-			if (InterlockedCompareExchange16(&external.m_CanContinue, false, false))
+			if (external.get_CanContinue())
 			{
 				IGlobalInterfaceTable* pGIT{ nullptr };
 				hr = CoCreateInstance(CLSID_StdGlobalInterfaceTable, nullptr, CLSCTX_INPROC_SERVER, __uuidof(pGIT), to_void_pp(pGIT));
@@ -294,7 +211,7 @@ namespace ABI::AppxUtils::Internal
 						hr = CoCreateInstance(CLSID_AppxFactory, nullptr, CLSCTX_INPROC_SERVER, __uuidof(factory), to_void_pp(factory));
 						if (SUCCEEDED(hr))
 						{
-							if (InterlockedCompareExchange16(&external.m_CanContinue, false, false))
+							if (external.get_CanContinue())
 							{
 								IAppxFilesEnumerator* enumerator{ nullptr };
 								hr = bundleReader->GetPayloadPackages(&enumerator);
@@ -312,7 +229,7 @@ namespace ABI::AppxUtils::Internal
 									hr = bundleReader->GetPayloadPackages(&enumerator);
 									if (SUCCEEDED(hr))
 									{
-										if (InterlockedCompareExchange16(&external.m_CanContinue, false, false))
+										if (external.get_CanContinue())
 										{
 											auto* const packages{ static_cast<AppxPackageElement*>(::operator new[](__aligned_size_of<AppxPackageElement> * count)) };
 											if (packages)
@@ -321,7 +238,7 @@ namespace ABI::AppxUtils::Internal
 												UINT32 completed{ 0 };
 												while (hasNext)
 												{
-													if (InterlockedCompareExchange16(&external.m_CanContinue, false, false))
+													if (external.get_CanContinue())
 													{
 														IAppxFile* element{ nullptr };
 														hr = enumerator->GetCurrent(&element);
@@ -358,13 +275,10 @@ namespace ABI::AppxUtils::Internal
 												printf("test\n");
 												if (SUCCEEDED(hr))
 												{
-													const bool canContinue{ InterlockedCompareExchange16(&external.m_CanContinue, false, false) != 0 };
+													const bool canContinue{ external.get_CanContinue() };
 													auto* const instance{ canContinue ? new AppxPackageVectorView{ packages, count } : nullptr };
 													if (instance)
-													{
-														InterlockedExchangePointer(to_void_pp(external.m_Result), instance);
-														createdVectorView = true;
-													}
+													{ result = instance; }
 													else
 													{
 														hr = canContinue ? E_OUTOFMEMORY : E_CANCELED;
@@ -398,16 +312,26 @@ namespace ABI::AppxUtils::Internal
 			CoUninitialize();
 		}
 		LONG newStatus{};
-		if (createdVectorView)
+		AcquireSRWLockShared(&external.m_Lock);
+		if (result)
 		{
-			hr = S_OK;
+			external.m_Result = result;
+			external.m_ErrorCode = S_OK;
 			newStatus = static_cast<LONG>(ABI::AsyncStatus::Completed);
 		}
+		else if (external.m_CanContinue)
+		{
+			external.m_ErrorCode = hr;
+			newStatus = static_cast<LONG>(ABI::AsyncStatus::Error);
+		}
 		else
-		{ newStatus = static_cast<LONG>(hr != E_CANCELED ? ABI::AsyncStatus::Error : ABI::AsyncStatus::Canceled); }
-		InterlockedExchange(&external.m_ErrorCode, hr);
-		InterlockedExchange(&external.m_Status, newStatus);
-		auto* const local{ static_cast<TCompletedHandler>(InterlockedCompareExchangePointer(to_void_pp(external.m_Completed), nullptr, nullptr)) };
+		{
+			external.m_ErrorCode = E_CANCELED;
+			newStatus = static_cast<LONG>(ABI::AsyncStatus::Canceled);
+		}
+		external.m_Status = newStatus;
+		auto* const local{ external.m_Completed };
+		ReleaseSRWLockShared(&external.m_Lock);
 		if (local)
 		{ local->Invoke(&external, static_cast<ABI::AsyncStatus>(newStatus)); }
 		external.Release();

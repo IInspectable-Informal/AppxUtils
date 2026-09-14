@@ -3,6 +3,7 @@
 #include "pch.h"
 #include "dllmain.h"
 #include "AppxUtils.h"
+#include <stdio.h>
 
 BOOL APIENTRY DllMain(HMODULE /* hModule */, DWORD ul_reason_for_call, LPVOID /* lpReserved */)
 {
@@ -54,6 +55,7 @@ constexpr inline UINT32 max(const UINT32 a, const UINT32 b)
 
 STDAPI DllGetActivationFactory(HSTRING className, IActivationFactory** factory)
 {
+    printf("test\n");
     UINT32 count{ 255 };
     auto* classNameRaw{ WindowsGetStringRawBuffer(className, &count) };
     if (IsEqualWStr(L"AppxUtils.AppxPackageFactory", classNameRaw, max(count, 28)))

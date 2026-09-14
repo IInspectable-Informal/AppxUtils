@@ -214,7 +214,7 @@ namespace ABI::AppxUtils
 	//Static members
 	BOOL WINAPI AppxPackageDriverDependency::InitListStatic(INIT_ONCE* InitOnce, void* Parameter, void** Context)
 	{
-		auto* externalThis{ reinterpret_cast<AppxPackageDriverDependency*>(Parameter) };
+		auto* const externalThis{ static_cast<AppxPackageDriverDependency*>(Parameter) };
 		HRESULT hr{ S_OK };
 		IAppxManifestDriverConstraintsEnumerator* enumerator{ nullptr };
 		hr = externalThis->m_DriverDependency->GetDriverConstraints(&enumerator);
