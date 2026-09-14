@@ -222,6 +222,8 @@ namespace ABI::AppxUtils
 					hr = instance->LaunchAsyncTask();
 					if (SUCCEEDED(hr))
 					{ *operation = instance; }
+					else
+					{ instance->Release(); }
 				}
 				else
 				{ hr = E_OUTOFMEMORY; }
