@@ -168,7 +168,7 @@ PackageDependencies( 3 ):
 
 ## 已知问题
 
-* ⚠️ AppxPackageFactory.GetAppxPackageFromStreamAsync 静态异步方法返回的异步对象可能会有内存泄漏的问题（其同步版本 AppxPackageFactory.GetAppxPackageFromStream 暂未发现此类问题）  
+* ⚠️ AppxPackageFactory.GetAppxPackageFromStreamAsync 静态异步方法和 AppxBundle.GetPackagesAsync 异步方法返回的异步对象在被 await 后会出现内存泄漏问题（但轮询异步对象的 Status 属性并不会导致内存泄漏，泄漏原因未知）  
 
 ## 许可证
 
