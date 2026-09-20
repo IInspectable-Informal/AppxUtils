@@ -145,7 +145,7 @@ namespace ABI::AppxUtils::Internal
 
 		virtual ~AsyncOperation() noexcept
 		{
-			if constexpr (!IsFundamentalType<T_ABI> && !__is_enum(T_ABI) && !ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value && __is_trivial(TResult_ABI) && __is_standard_layout(TResult_ABI))
+			if constexpr (!IsFundamentalType<TResult_ABI> && !__is_enum(TResult_ABI) && !ABI::Windows::Foundation::Collections::is_foundation_struct<TResult_ABI>::value && __is_trivial(TResult_ABI) && __is_standard_layout(TResult_ABI))
 			{ StructLifetimeFunctions<TResult_ABI>::ReleaseStruct(m_Result); }
 		}
 
