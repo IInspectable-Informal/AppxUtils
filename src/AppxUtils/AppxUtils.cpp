@@ -148,7 +148,13 @@ namespace ABI::AppxUtils::Internal
 			auto* const handler{ external.m_Completed };
 			ReleaseSRWLockExclusive(&external.m_Lock);
 			if (handler)
-			{ handler->Invoke(&external, static_cast<ABI::AsyncStatus>(status)); }
+			{
+				handler->Invoke(&external, static_cast<ABI::AsyncStatus>(status));
+				handler->Release();
+				AcquireSRWLockExclusive(&external.m_Lock);
+				external.m_Completed = nullptr;
+				ReleaseSRWLockExclusive(&external.m_Lock);
+			}
 			external.Release();
 		}
 	};

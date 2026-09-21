@@ -1,6 +1,7 @@
 // Copyright 2026 IInspectable-Informal
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
+#include <stdio.h>
 
 namespace ABI::AppxUtils::Internal
 {
@@ -26,9 +27,10 @@ namespace ABI::AppxUtils::Internal
 			return local;
 		}
 
-		//IAsyncInfo
+#pragma region IAsyncInfo
 		HRESULT STDMETHODCALLTYPE get_Id(UINT32* id)
 		{
+			printf("get_Id\n");
 			HRESULT hr{ S_OK };
 			AcquireSRWLockShared(&m_Lock);
 			if (m_IsOpening)
@@ -41,6 +43,7 @@ namespace ABI::AppxUtils::Internal
 
 		HRESULT STDMETHODCALLTYPE get_Status(ABI::Windows::Foundation::AsyncStatus* status)
 		{
+			printf("get_Status\n");
 			HRESULT hr{ S_OK };
 			AcquireSRWLockShared(&m_Lock);
 			if (m_IsOpening)
@@ -53,6 +56,7 @@ namespace ABI::AppxUtils::Internal
 
 		HRESULT STDMETHODCALLTYPE get_ErrorCode(HRESULT* errorCode)
 		{
+			printf("get_ErrorCode\n");
 			HRESULT hr{ S_OK };
 			AcquireSRWLockShared(&m_Lock);
 			if (m_IsOpening)
@@ -65,10 +69,28 @@ namespace ABI::AppxUtils::Internal
 
 		HRESULT STDMETHODCALLTYPE Cancel()
 		{
+			printf("Cancel\n");
 			AcquireSRWLockExclusive(&m_Lock);
 			m_CanContinue = false;
 			ReleaseSRWLockExclusive(&m_Lock);
 			return S_OK;
+		}
+#pragma endregion
+
+		ULONG AddRef() override
+		{
+			const ULONG cRef{ InterlockedIncrement(&m_RefCount) };
+			printf("++ Async Operation Ref Count: %d\n", cRef);
+			return cRef;
+		}
+
+		ULONG Release() override
+		{
+			const ULONG cRef{ InterlockedDecrement(&m_RefCount) };
+			printf("-- Async Operation Ref Count: %d\n", cRef);
+			if (!cRef)
+			{ delete this; }
+			return cRef;
 		}
 
 		virtual ~AsyncInfoBase() noexcept = default;

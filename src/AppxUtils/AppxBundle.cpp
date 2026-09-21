@@ -6,6 +6,7 @@
 #include "AppxBundleUtils.h"
 #include "helpers.hpp"
 #include <stdio.h>
+#include <wrl/async.h>
 
 namespace ABI
 {
@@ -16,6 +17,12 @@ namespace ABI
 	using namespace Windows::Storage::Streams;
 	using namespace Windows::System;
 	using namespace AppxUtils::Internal;
+}
+
+void test()
+{
+	Microsoft::WRL::AsyncBase<ABI::IAsyncOperationCompletedHandler<HSTRING>>* test000;
+	test000->PutOnComplete(nullptr);
 }
 
 namespace ABI::AppxUtils

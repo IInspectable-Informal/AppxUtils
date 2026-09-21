@@ -1,6 +1,7 @@
 // Copyright 2026 IInspectable-Informal
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
+#include <stdio.h>
 
 namespace ABI::AppxUtils::Internal
 {
@@ -20,31 +21,38 @@ namespace ABI::AppxUtils::Internal
 
 		}
 
-		//IAsyncOperation<T>
+#pragma region IAsyncOperation<T>
 		HRESULT STDMETHODCALLTYPE put_Completed(ICompletedHandler handler)
 		{
+			printf("put_Completed\n");
 			if (handler)
 			{ handler->AddRef(); }
-			ICompletedHandler oldHandler{ nullptr };
 			ABI::Windows::Foundation::AsyncStatus status{};
 			HRESULT hr{ S_OK };
 			AcquireSRWLockExclusive(&m_Lock);
 			if (m_IsOpening)
 			{
-				oldHandler = m_Completed;
-				m_Completed = handler;
-				status = static_cast<ABI::Windows::Foundation::AsyncStatus>(m_Status);
-				hr = S_OK;
+				if (m_Completed)
+				{ hr = E_ILLEGAL_DELEGATE_ASSIGNMENT; }
+				else
+				{
+					m_Completed = handler;
+					status = static_cast<ABI::Windows::Foundation::AsyncStatus>(m_Status);
+				}
 			}
 			else
 			{ hr = E_ILLEGAL_METHOD_CALL; }
 			ReleaseSRWLockExclusive(&m_Lock);
 			if (SUCCEEDED(hr))
 			{
-				if (oldHandler)
-				{ oldHandler->Release(); }
 				if (status != ABI::Windows::Foundation::AsyncStatus::Started && handler)
-				{ handler->Invoke(this, status); }
+				{
+					handler->Invoke(this, status);
+					handler->Release();
+					AcquireSRWLockExclusive(&m_Lock);
+					m_Completed = nullptr;
+					ReleaseSRWLockExclusive(&m_Lock);
+				}
 			}
 			else if (handler)
 			{ handler->Release(); }
@@ -53,6 +61,7 @@ namespace ABI::AppxUtils::Internal
 
 		HRESULT STDMETHODCALLTYPE get_Completed(ICompletedHandler* handler)
 		{
+			printf("get_Completed\n");
 			HRESULT hr{ S_OK };
 			AcquireSRWLockShared(&m_Lock);
 			if (m_IsOpening)
@@ -67,8 +76,9 @@ namespace ABI::AppxUtils::Internal
 			ReleaseSRWLockShared(&m_Lock);
 			return hr;
 		}
+#pragma endregion
 
-		//IInspectable
+#pragma region IInspectable
 		HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className)
 		{
 			if (InitOnceExecuteOnce(&s_InitOnce, InitStringStatic, nullptr, nullptr))
@@ -76,6 +86,7 @@ namespace ABI::AppxUtils::Internal
 			else
 			{ return E_OUTOFMEMORY; }
 		}
+#pragma endregion
 
 		virtual ~AsyncOperationBase() noexcept
 		{
@@ -106,6 +117,7 @@ namespace ABI::AppxUtils::Internal
 	public:
 		HRESULT STDMETHODCALLTYPE GetResults(TResult_ABI* results)
 		{
+			printf("GetResults\n");
 			HRESULT hr{ S_OK };
 			AcquireSRWLockShared(&m_Lock);
 			if (m_IsOpening)
@@ -165,6 +177,7 @@ namespace ABI::AppxUtils::Internal
 	public:
 		HRESULT STDMETHODCALLTYPE GetResults(TResult_ABI* results)
 		{
+			printf("GetResults\n");
 			HRESULT hr{ S_OK };
 			AcquireSRWLockShared(&m_Lock);
 			if (m_IsOpening)
@@ -213,6 +226,7 @@ namespace ABI::AppxUtils::Internal
 	public:
 		HRESULT STDMETHODCALLTYPE GetResults(HSTRING* results)
 		{
+			printf("GetResults\n");
 			HRESULT hr{ S_OK };
 			AcquireSRWLockShared(&m_Lock);
 			if (m_IsOpening)

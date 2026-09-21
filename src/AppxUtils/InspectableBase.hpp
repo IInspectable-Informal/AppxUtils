@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 #include "dllmain.h"
+#include <stdio.h>
 
 template<TrustLevel level, typename... I>
 class InspectableCommonBase abstract : public I...
@@ -70,7 +71,11 @@ public:
     }
 
     ULONG STDMETHODCALLTYPE AddRef() override
-    { return InterlockedIncrement(&m_RefCount); }
+    {
+        const ULONG cRef{ InterlockedIncrement(&m_RefCount) };
+        printf("++ COM Object (0x%016p) Ref Count: %d\n", this, cRef);
+        return cRef;
+    }
 
     virtual ~InspectableCommonBase()
     {
@@ -93,9 +98,12 @@ public:
     //IUnknown
     ULONG STDMETHODCALLTYPE Release() override
     {
-        ULONG cRef{ InterlockedDecrement(&m_RefCount) };
+        const ULONG cRef{ InterlockedDecrement(&m_RefCount) };
+        printf("-- COM Object (0x%016p) Ref Count: %d\n", this, cRef);
         if (!cRef)
-        { delete this; }
+        {
+            delete this;
+        }
         return cRef;
     }
 
@@ -109,9 +117,12 @@ public:
     //IUnknown
     ULONG STDMETHODCALLTYPE Release() override
     {
-        ULONG cRef{ InterlockedDecrement(&m_RefCount) };
+        const ULONG cRef{ InterlockedDecrement(&m_RefCount) };
+        printf("-- COM Object (0x%016p) Ref Count: %d\n", this, cRef);
         if (!cRef)
-        { this->~InspectableElementBase(); }
+        {
+            delete this;
+        }
         return cRef;
     }
 

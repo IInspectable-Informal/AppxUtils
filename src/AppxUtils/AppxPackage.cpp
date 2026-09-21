@@ -2074,7 +2074,7 @@ namespace ABI::AppxUtils
 #pragma region IUnknown
     ULONG STDMETHODCALLTYPE AppxPackage::Release()
     {
-        ULONG cRef{ InterlockedDecrement(&m_RefCount) };
+        const ULONG cRef{ InterlockedDecrement(&m_RefCount) };
         if (!cRef)
         { delete this; }
         return cRef;
@@ -2090,7 +2090,7 @@ namespace ABI::AppxUtils
 #pragma region IUnknown
     ULONG STDMETHODCALLTYPE AppxPackageElement::Release()
     {
-        ULONG cRef{ InterlockedDecrement(&m_RefCount) };
+        const ULONG cRef{ InterlockedDecrement(&m_RefCount) };
         if (!cRef)
         { this->~AppxPackageElement(); }
         return cRef;
