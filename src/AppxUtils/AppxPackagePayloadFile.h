@@ -7,7 +7,6 @@ namespace ABI::AppxUtils
 	class AppxPackagePayloadFile final : public InspectableElementBase<BaseTrust,
         IAppxPackagePayloadFile,
         ABI::Windows::Storage::IStorageFile,
-        ABI::Windows::Storage::IStorageFile2,
         ABI::Windows::Storage::IStorageItem,
         ABI::Windows::Storage::IStorageFilePropertiesWithAvailability,
         ABI::Windows::Storage::Streams::IInputStreamReference,
@@ -36,10 +35,6 @@ namespace ABI::AppxUtils
         HRESULT STDMETHODCALLTYPE MoveOverloadDefaultOptions(ABI::Windows::Storage::IStorageFolder* destinationFolder, HSTRING desiredNewName, ABI::Windows::Foundation::IAsyncAction** operation);
         HRESULT STDMETHODCALLTYPE MoveOverload(ABI::Windows::Storage::IStorageFolder* destinationFolder, HSTRING desiredNewName, ABI::Windows::Storage::NameCollisionOption option, ABI::Windows::Foundation::IAsyncAction** operation);
         HRESULT STDMETHODCALLTYPE MoveAndReplaceAsync(ABI::Windows::Storage::IStorageFile* fileToReplace, ABI::Windows::Foundation::IAsyncAction** operation);
-
-        //Windows.Storage.IStorageFile2
-        HRESULT STDMETHODCALLTYPE OpenWithOptionsAsync(ABI::Windows::Storage::FileAccessMode accessMode, ABI::Windows::Storage::StorageOpenOptions options, ABI::Windows::Foundation::IAsyncOperation<ABI::Windows::Storage::Streams::IRandomAccessStream*>** operation);
-        HRESULT STDMETHODCALLTYPE OpenTransactedWriteWithOptionsAsync(ABI::Windows::Storage::StorageOpenOptions options, ABI::Windows::Foundation::IAsyncOperation<ABI::Windows::Storage::StorageStreamTransaction*>** operation);
 
         //Windows.Storage.IStorageItem
         HRESULT STDMETHODCALLTYPE RenameAsyncOverloadDefaultOptions(HSTRING desiredName, ABI::Windows::Foundation::IAsyncAction** operation);

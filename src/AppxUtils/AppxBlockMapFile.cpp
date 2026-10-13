@@ -24,7 +24,7 @@ namespace ABI::AppxUtils
 #pragma region IAppxBlockMapBlockRuntimeClass
 	HRESULT STDMETHODCALLTYPE AppxBlockMapBlock::get_Hash(UINT32* valueLength, byte** value)
 	{
-		auto* arrayCopy{ reinterpret_cast<byte*>(CoTaskMemAlloc(__aligned_size_of<byte> * m_HashArraySize)) };
+		auto* arrayCopy{ static_cast<byte*>(CoTaskMemAlloc(__aligned_size_of<byte> * m_HashArraySize)) };
 		if (arrayCopy)
 		{
 			for (UINT32 i{ 0 }; i < m_HashArraySize; ++i)

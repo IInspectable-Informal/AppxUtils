@@ -5,8 +5,8 @@
 namespace ABI::AppxUtils
 {
     class AppxPackageBase abstract : public InspectableCommonBase<BaseTrust,
-        IAppxPackageCore, IAppxPackagePayloadFilesProvider,
-        IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10,
+        IAppxPackageCore, IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10,
+        IAppxPackageFootprintFilesProvider, IAppxPackagePayloadFilesProvider,
         IAppxPackageLegacy,
         IAppxPackageInterop,
         IAgileObject
@@ -34,9 +34,6 @@ namespace ABI::AppxUtils
 
         HRESULT STDMETHODCALLTYPE GetManifestStream(ABI::Windows::Storage::Streams::IInputStream** result);
 
-        //IAppxPackagePayloadFilesReader
-        HRESULT STDMETHODCALLTYPE GetPayloadFiles(ABI::Windows::Foundation::Collections::IMapView<HSTRING, AppxPackagePayloadFile*>** result);
-
         //IAppxPackage
         HRESULT STDMETHODCALLTYPE get_TargetDeviceFamilies(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageTargetDeviceFamily>** value);
         HRESULT STDMETHODCALLTYPE get_Capabilities(ABI::Windows::Foundation::Collections::IVectorView<HSTRING>** value);
@@ -56,6 +53,13 @@ namespace ABI::AppxUtils
         HRESULT STDMETHODCALLTYPE get_DriverDependencies(ABI::Windows::Foundation::Collections::IVectorView<AppxPackageDriverDependency*>** value);
         HRESULT STDMETHODCALLTYPE get_OSPackageDependencies(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageOSPackageDependency>** value);
         HRESULT STDMETHODCALLTYPE get_HostRuntimeDependencies(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageHostRuntimeDependency>** value);
+
+        //IAppxPackageFootprintFilesProvider
+        HRESULT STDMETHODCALLTYPE GetFootprintFile(AppxPackageFootprintFileType type, IAppxPackagePayloadFile** result);
+        HRESULT STDMETHODCALLTYPE TryGetFootprintFile(AppxPackageFootprintFileType type, IAppxPackagePayloadFile** file, boolean* result);
+
+        //IAppxPackagePayloadFilesProvider
+        HRESULT STDMETHODCALLTYPE GetPayloadFiles(ABI::Windows::Foundation::Collections::IMapView<HSTRING, AppxPackagePayloadFile*>** result);
 
         //IAppxPackageLegacy
         HRESULT STDMETHODCALLTYPE get_MinVersionLegacy(struct ABI::Windows::ApplicationModel::PackageVersion* value);
@@ -92,8 +96,6 @@ namespace ABI::AppxUtils
         ABI::Windows::Foundation::Collections::IVectorView<HSTRING>* m_DeviceCapabilities{ nullptr };
         ABI::Windows::Storage::Streams::IRandomAccessStream* m_ManifestStream{ nullptr };
 
-        ABI::Windows::Foundation::Collections::IMapView<HSTRING, AppxPackagePayloadFile*>* m_PayloadFiles{ nullptr };
-
         ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageTargetDeviceFamily>* m_TargetDeviceFamilies{ nullptr };
         ABI::Windows::Foundation::Collections::IVectorView<HSTRING>* m_Capabilities{ nullptr };
         ABI::Windows::Foundation::Collections::IVectorView<HSTRING>* m_GeneralCapabilities{ nullptr };
@@ -114,6 +116,10 @@ namespace ABI::AppxUtils
         ABI::Windows::Foundation::Collections::IVectorView<AppxPackageDriverDependency*>* m_DriverDependencies{ nullptr };
         ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageOSPackageDependency>* m_OSPackageDependencies{ nullptr };
         ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageHostRuntimeDependency>* m_HostRuntimeDependencies{ nullptr };
+
+        AppxPackagePayloadFile* m_FootprintFiles[5]{ nullptr };
+
+        ABI::Windows::Foundation::Collections::IMapView<HSTRING, AppxPackagePayloadFile*>* m_PayloadFiles{ nullptr };
 
         short m_HasMinVersionLegacy{ false };
         short m_HasMaxVersionTestedLegacy{ false };

@@ -19,12 +19,6 @@ namespace ABI
 	using namespace AppxUtils::Internal;
 }
 
-void test()
-{
-	Microsoft::WRL::AsyncBase<ABI::IAsyncOperationCompletedHandler<HSTRING>>* test000;
-	test000->PutOnComplete(nullptr);
-}
-
 namespace ABI::AppxUtils
 {
 #pragma region AppxBundle

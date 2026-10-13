@@ -44,7 +44,15 @@ namespace ABI::AppxUtils::Internal
 			AcquireSRWLockExclusive(&m_Lock);
 			if (static_cast<ABI::AsyncStatus>(m_Status) == ABI::AsyncStatus::Started)
 			{ hr = E_ILLEGAL_METHOD_CALL; }
+			else
+			{ m_IsOpening = false; }
+			auto* const result{ m_Result };
+			m_Result = nullptr;
 			ReleaseSRWLockExclusive(&m_Lock);
+			if (result)
+			{
+				result->Release();
+			}
 			return hr;
 		}
 

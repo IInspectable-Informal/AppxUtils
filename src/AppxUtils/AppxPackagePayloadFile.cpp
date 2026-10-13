@@ -10,6 +10,39 @@ namespace ABI
 	using namespace Windows::Foundation::Collections;
 	using namespace Windows::Storage;
 	using namespace Windows::Storage::Streams;
+	using namespace AppxUtils::Internal;
+}
+
+namespace ABI::AppxUtils::Internal
+{
+	class AppxPackagePayloadFileOpenAsyncOp final : public AsyncOperation<ABI::IRandomAccessStream*>
+	{
+	public:
+		AppxPackagePayloadFileOpenAsyncOp(ABI::IRandomAccessStream* stream) noexcept
+		{
+			m_Result = stream;
+			m_Status = static_cast<LONG>(ABI::AsyncStatus::Completed);
+		}
+
+		//IAsyncInfo
+		HRESULT STDMETHODCALLTYPE Close()
+		{
+			HRESULT hr{ S_OK };
+			AcquireSRWLockExclusive(&m_Lock);
+			if (static_cast<ABI::AsyncStatus>(m_Status) == ABI::AsyncStatus::Started)
+			{ hr = E_ILLEGAL_METHOD_CALL; }
+			else
+			{
+				m_IsOpening = false;
+			}
+			auto* const result{ m_Result };
+			m_Result = nullptr;
+			ReleaseSRWLockExclusive(&m_Lock);
+			if (result)
+			{ result->Release(); }
+			return hr;
+		}
+	};
 }
 
 namespace ABI::AppxUtils
@@ -181,7 +214,34 @@ namespace ABI::AppxUtils
 	{
 		if (accessMode == ABI::FileAccessMode_Read)
 		{
-			return E_NOTIMPL;
+			HRESULT hr{ S_OK };
+			IStream* stream{ nullptr };
+			hr = m_AppxPayloadFile->GetStream(&stream);
+			if (SUCCEEDED(hr))
+			{
+				ABI::IRandomAccessStream* rdmStream{ nullptr };
+				hr = CreateRandomAccessStreamOverStream(stream, BSOS_DEFAULT, __uuidof(rdmStream), to_void_pp(rdmStream));
+				stream->Release();
+				if (SUCCEEDED(hr))
+				{
+					auto* const instance{ new AppxPackagePayloadFileOpenAsyncOp(rdmStream) };
+					if (instance)
+					{
+						*operation = instance;
+						return S_OK;
+					}
+					else
+					{
+						hr = E_OUTOFMEMORY;
+						ABI::IClosable* closable{ nullptr };
+						rdmStream->QueryInterface(__uuidof(closable), to_void_pp(closable));
+						closable->Close();
+						closable->Release();
+						rdmStream->Release();
+					}
+				}
+			}
+			return hr;
 		}
 		else
 		{ return HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED); }
@@ -228,25 +288,6 @@ namespace ABI::AppxUtils
 	}
 
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::MoveAndReplaceAsync(ABI::IStorageFile* fileToReplace, ABI::IAsyncAction** operation)
-	{
-		return HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
-	}
-#pragma endregion
-
-#pragma region Windows.Storage.IStorageFile2
-	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::OpenWithOptionsAsync(ABI::FileAccessMode accessMode, ABI::StorageOpenOptions options, ABI::IAsyncOperation<ABI::IRandomAccessStream*>** operation)
-	{
-		if (accessMode == ABI::FileAccessMode_Read && options != ABI::StorageOpenOptions_AllowReadersAndWriters)
-		{
-			return E_NOTIMPL;
-		}
-		else
-		{
-			return HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
-		}
-	}
-
-	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::OpenTransactedWriteWithOptionsAsync(ABI::StorageOpenOptions options, ABI::IAsyncOperation<ABI::StorageStreamTransaction*>** operation)
 	{
 		return HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
 	}

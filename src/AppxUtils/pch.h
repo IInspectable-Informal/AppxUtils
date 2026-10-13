@@ -1,8 +1,6 @@
 ﻿// Copyright 2026 IInspectable-Informal
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
-#include "targetver.h"
-
 //Win32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -16,7 +14,6 @@
 #include <shcore.h>
 #include <heapapi.h>
 #include <synchapi.h>
-#define E_CANCELED HRESULT_FROM_WIN32(ERROR_CANCELLED)
 
 //WinRT
 #include <hstring.h>
@@ -28,23 +25,23 @@
 #include <Windows.Foundation.h>
 #include <Windows.Foundation.Collections.h>
 #include <Windows.ApplicationModel.h>
-#include <Windows.Data.Xml.Dom.h>
 #include <Windows.Storage.h>
 #include <Windows.Storage.Streams.h>
 #include <Windows.System.h>
 
 //Self
-#include "Generated Files\AppxUtils.g.h"
-#include "Generated Files\AppxUtilsInterop.g.h"
-#include "HeapManagement.h"
 #include "dllmain.h"
-#include "InspectableBase.hpp"
-#include "StaticHelpers.hpp"
-#include "GuidHelpers.hpp"
-#include "FoundationStructComparer.hpp"
-#include "StructLifetimeFunctions.hpp"
-#include "StructLifetimeFunctionsSpecialized.h"
-#include "Reference.hpp"
-#include "VectorView.hpp"
-#include "AsyncInfoBase.hpp"
-#include "AsyncOperationBase.hpp"
+#include "Generated Files/AppxUtils.g.h"
+#include "Generated Files/AppxUtilsInterop.g.h"
+#include "Infrastructures/GuidHelpers.hpp"
+#include "Infrastructures/HeapManagement.h"
+#include "Infrastructures/InspectableBase.hpp"
+#include "Infrastructures/StaticHelpers.hpp"
+#include "Infrastructures/FoundationStructComparer.hpp"
+#include "Infrastructures/StructLifetimeFunctions.hpp"
+#include "Infrastructures/StructLifetimeFunctionsSpecialized.h"
+#include "Infrastructures/Reference.hpp"
+#include "Infrastructures/VectorView.hpp"
+#include "Infrastructures/AsyncInfoBase.hpp"
+#include "Infrastructures/AsyncOperationBase.hpp"
+#define E_CANCELED HRESULT_FROM_WIN32(ERROR_CANCELLED)

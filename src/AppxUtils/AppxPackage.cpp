@@ -959,30 +959,6 @@ namespace ABI::AppxUtils
     }
 #pragma endregion
 
-#pragma region IAppxPackagePayloadFilesReader
-    HRESULT STDMETHODCALLTYPE AppxPackageBase::GetPayloadFiles(ABI::IMapView<HSTRING, AppxPackagePayloadFile*>** result)
-    {
-        auto local{ reinterpret_cast<ABI::IMapView<HSTRING, AppxPackagePayloadFile*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PayloadFiles), nullptr, nullptr)) };
-        if (local == nullptr)
-        {
-            AcquireSRWLockExclusive(&m_Lock);
-            HRESULT hr{ S_OK };
-            if (!m_PayloadFiles)
-            {
-                hr = E_NOTIMPL;
-            }
-            ReleaseSRWLockExclusive(&m_Lock);
-            if (FAILED(hr))
-            { return hr; }
-            local = reinterpret_cast<ABI::IMapView<HSTRING, AppxPackagePayloadFile*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PayloadFiles), nullptr, nullptr));
-        }
-
-        local->AddRef();
-        *result = local;
-        return S_OK;
-    }
-#pragma endregion
-
 #pragma region IAppxPackage
     HRESULT STDMETHODCALLTYPE AppxPackageBase::get_TargetDeviceFamilies(ABI::IVectorView<struct AppxPackageTargetDeviceFamily>** value)
     {
@@ -1852,6 +1828,75 @@ namespace ABI::AppxUtils
     }
 #pragma endregion
 
+#pragma region IAppxPackageFootprintFilesProvider
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::GetFootprintFile(AppxPackageFootprintFileType type, IAppxPackagePayloadFile** result)
+    {
+        const INT32 typeValue{ static_cast<INT32>(type) };
+        auto* local{ static_cast<AppxPackagePayloadFile*>(InterlockedCompareExchangePointer(to_void_pp(m_FootprintFiles[typeValue]), nullptr, nullptr)) };
+        if (local == nullptr)
+        {
+            AcquireSRWLockExclusive(&m_Lock);
+            HRESULT hr{ S_OK };
+            if (!m_FootprintFiles[typeValue])
+            {
+                IAppxFile* payloadFile{ nullptr };
+                hr = m_AppxPackageReader->GetFootprintFile(static_cast<APPX_FOOTPRINT_FILE_TYPE>(type), &payloadFile);
+                if (SUCCEEDED(hr))
+                {
+                    auto* const instance{ new AppxPackagePayloadFile(payloadFile) };
+                    if (instance)
+                    { m_FootprintFiles[typeValue] = instance; }
+                    else
+                    {
+                        hr = E_OUTOFMEMORY;
+                        payloadFile->Release();
+                    }
+                }
+            }
+            local = m_FootprintFiles[typeValue];
+            ReleaseSRWLockExclusive(&m_Lock);
+            if (FAILED(hr))
+            { return hr; }
+        }
+
+        local->AddRef();
+        *result = local;
+        return S_OK;
+    }
+
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::TryGetFootprintFile(AppxPackageFootprintFileType type, IAppxPackagePayloadFile** file, boolean* result)
+    {
+        *result = SUCCEEDED(GetFootprintFile(type, file));
+        return S_OK;
+    }
+#pragma endregion
+
+#pragma region IAppxPackagePayloadFilesProvider
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::GetPayloadFiles(ABI::IMapView<HSTRING, AppxPackagePayloadFile*>** result)
+    {
+        auto local{ static_cast<ABI::IMapView<HSTRING, AppxPackagePayloadFile*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PayloadFiles), nullptr, nullptr)) };
+        if (local == nullptr)
+        {
+            AcquireSRWLockExclusive(&m_Lock);
+            HRESULT hr{ S_OK };
+            if (!m_PayloadFiles)
+            {
+                hr = E_NOTIMPL;
+            }
+            ReleaseSRWLockExclusive(&m_Lock);
+            if (FAILED(hr))
+            {
+                return hr;
+            }
+            local = reinterpret_cast<ABI::IMapView<HSTRING, AppxPackagePayloadFile*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PayloadFiles), nullptr, nullptr));
+        }
+
+        local->AddRef();
+        *result = local;
+        return S_OK;
+    }
+#pragma endregion
+
 #pragma region IAppxPackageLegacy
     HRESULT STDMETHODCALLTYPE AppxPackageBase::get_MinVersionLegacy(struct ABI::PackageVersion* value)
     {
@@ -2037,9 +2082,6 @@ namespace ABI::AppxUtils
             m_ManifestStream->Release();
         }
 
-        if (m_PayloadFiles)
-        { m_PayloadFiles->Release(); }
-
         if (m_TargetDeviceFamilies)
         { m_TargetDeviceFamilies->Release(); }
         if (m_Capabilities)
@@ -2067,6 +2109,16 @@ namespace ABI::AppxUtils
         { m_OSPackageDependencies->Release(); }
         if (m_HostRuntimeDependencies)
         { m_HostRuntimeDependencies->Release(); }
+
+        for (UINT32 i{ 0 }; i < 5; ++i)
+        {
+            auto* const element{ m_FootprintFiles[i] };
+            if (element)
+            { element->Release(); }
+        }
+
+        if (m_PayloadFiles)
+        { m_PayloadFiles->Release(); }
     }
 #pragma endregion
 
