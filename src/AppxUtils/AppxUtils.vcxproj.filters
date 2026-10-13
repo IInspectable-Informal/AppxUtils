@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>b85dc606-7452-4099-87ca-4e2bfceea59e</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Infrastructures">
+      <UniqueIdentifier>{36fcf59d-7bb3-4aa7-8e0b-81297acaa59b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Infrastructures\HeapManagement.cpp">
+      <Filter>Infrastructures</Filter>
+    </ClCompile>
+    <ClCompile Include="Infrastructures\StructLifetimeFunctionsSpecialized.cpp">
+      <Filter>Infrastructures</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="AppxBlockMap.cpp" />
+    <ClCompile Include="AppxBlockMapFile.cpp" />
+    <ClCompile Include="AppxBundle.cpp" />
+    <ClCompile Include="AppxBundleUtils.cpp" />
+    <ClCompile Include="AppxPackage.cpp" />
+    <ClCompile Include="AppxPackageApplication.cpp" />
+    <ClCompile Include="AppxPackageDriverDependency.cpp" />
+    <ClCompile Include="AppxPackagePayloadFile.cpp" />
+    <ClCompile Include="AppxUtils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Infrastructures\FoundationStructComparer.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Infrastructures\HeapManagement.h">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Infrastructures\InspectableBase.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Infrastructures\Reference.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Infrastructures\StaticHelpers.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Infrastructures\StructLifetimeFunctions.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Infrastructures\StructLifetimeFunctionsSpecialized.h">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Infrastructures\VectorView.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Infrastructures\AsyncInfoBase.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Infrastructures\AsyncOperationBase.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="dllmain.h" />
+    <ClInclude Include="Infrastructures\GuidHelpers.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="AppxBlockMap.h" />
+    <ClInclude Include="AppxBlockMapFile.h" />
+    <ClInclude Include="AppxBundle.h" />
+    <ClInclude Include="AppxBundleUtils.h" />
+    <ClInclude Include="AppxPackage.h" />
+    <ClInclude Include="AppxPackageApplication.h" />
+    <ClInclude Include="AppxPackageDriverDependency.h" />
+    <ClInclude Include="AppxPackagePayloadFile.h" />
+    <ClInclude Include="AppxUtils.h" />
+    <ClInclude Include="helpers.h" />
+    <ClInclude Include="helpers.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="AppxUtils.idl" />
+    <Midl Include="AppxUtilsInterop.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Exports.def" />
+  </ItemGroup>
+</Project>
