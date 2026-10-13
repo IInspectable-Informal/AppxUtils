@@ -43,6 +43,178 @@ namespace ABI::AppxUtils::Internal
 			return hr;
 		}
 	};
+
+	class AppxPackagePayloadFileOpenSequentialReadAsyncOp final : public AsyncOperation<ABI::IInputStream*>
+	{
+	public:
+		AppxPackagePayloadFileOpenSequentialReadAsyncOp(ABI::IInputStream* stream) noexcept
+		{
+			m_Result = stream;
+			m_Status = static_cast<LONG>(ABI::AsyncStatus::Completed);
+		}
+
+		//IAsyncInfo
+		HRESULT STDMETHODCALLTYPE Close()
+		{
+			HRESULT hr{ S_OK };
+			AcquireSRWLockExclusive(&m_Lock);
+			if (static_cast<ABI::AsyncStatus>(m_Status) == ABI::AsyncStatus::Started)
+			{ hr = E_ILLEGAL_METHOD_CALL; }
+			else
+			{
+				m_IsOpening = false;
+			}
+			auto* const result{ m_Result };
+			m_Result = nullptr;
+			ReleaseSRWLockExclusive(&m_Lock);
+			if (result)
+			{ result->Release(); }
+			return hr;
+		}
+	};
+
+	class AppxPackagePayloadFileOpenReadAsyncOp final : public AsyncOperation<ABI::IRandomAccessStreamWithContentType*>
+	{
+	public:
+		AppxPackagePayloadFileOpenReadAsyncOp(ABI::IRandomAccessStreamWithContentType* stream) noexcept
+		{
+			m_Result = stream;
+			m_Status = static_cast<LONG>(ABI::AsyncStatus::Completed);
+		}
+
+		//IAsyncInfo
+		HRESULT STDMETHODCALLTYPE Close()
+		{
+			HRESULT hr{ S_OK };
+			AcquireSRWLockExclusive(&m_Lock);
+			if (static_cast<ABI::AsyncStatus>(m_Status) == ABI::AsyncStatus::Started)
+			{ hr = E_ILLEGAL_METHOD_CALL; }
+			else
+			{
+				m_IsOpening = false;
+			}
+			auto* const result{ m_Result };
+			m_Result = nullptr;
+			ReleaseSRWLockExclusive(&m_Lock);
+			if (result)
+			{ result->Release(); }
+			return hr;
+		}
+	};
+
+	class AppxPackagePayloadFileOpenReadAsyncRandomAccessStreamWithContentType final : public InspectableBase<BaseTrust,
+		ABI::IRandomAccessStreamWithContentType,
+		ABI::IRandomAccessStream,
+		ABI::IClosable,
+		ABI::IInputStream,
+		ABI::IOutputStream,
+		ABI::IContentTypeProvider,
+		IAgileObject
+	>
+	{
+	public:
+		AppxPackagePayloadFileOpenReadAsyncRandomAccessStreamWithContentType(ABI::IRandomAccessStream* stream, HSTRING contentType) noexcept :
+			m_Stream(stream), m_ContentType(contentType)
+		{
+
+		}
+
+#pragma region IRandomAccessStream
+		HRESULT STDMETHODCALLTYPE get_Size(UINT64* value)
+		{ return m_Stream->get_Size(value); }
+
+		HRESULT STDMETHODCALLTYPE put_Size(UINT64 value)
+		{ return m_Stream->put_Size(value); }
+
+		HRESULT STDMETHODCALLTYPE GetInputStreamAt(UINT64 position, ABI::IInputStream** stream)
+		{ return m_Stream->GetInputStreamAt(position, stream); }
+
+		HRESULT STDMETHODCALLTYPE GetOutputStreamAt(UINT64 position, ABI::IOutputStream** stream)
+		{ return m_Stream->GetOutputStreamAt(position, stream); }
+
+		HRESULT STDMETHODCALLTYPE get_Position(UINT64* value)
+		{ return m_Stream->get_Position(value); }
+
+		HRESULT STDMETHODCALLTYPE Seek(UINT64 position)
+		{ return m_Stream->Seek(position); }
+
+		HRESULT STDMETHODCALLTYPE CloneStream(ABI::IRandomAccessStream** stream)
+		{ return m_Stream->CloneStream(stream); }
+
+		HRESULT STDMETHODCALLTYPE get_CanRead(boolean* value)
+		{ return m_Stream->get_CanRead(value); }
+
+		HRESULT STDMETHODCALLTYPE get_CanWrite(boolean* value)
+		{ return m_Stream->get_CanWrite(value); }
+#pragma endregion
+
+#pragma region IClosable
+		HRESULT STDMETHODCALLTYPE Close()
+		{
+			if (InterlockedExchange16(&m_IsNotClosed, false))
+			{
+				ABI::IClosable* closable{ nullptr };
+				m_Stream->QueryInterface(__uuidof(closable), to_void_pp(closable));
+				closable->Close();
+				closable->Release();
+				m_Stream->Release();
+				WindowsDeleteString(m_ContentType);
+			}
+			return S_OK;
+		}
+#pragma endregion
+
+#pragma region IInputStream
+		HRESULT STDMETHODCALLTYPE ReadAsync(ABI::IBuffer* buffer, UINT32 count, ABI::InputStreamOptions options, ABI::IAsyncOperationWithProgress<ABI::IBuffer*, UINT32>** operation)
+		{
+			ABI::IInputStream* inputStream{ nullptr };
+			m_Stream->QueryInterface(__uuidof(inputStream), to_void_pp(inputStream));
+			const HRESULT hr{ inputStream->ReadAsync(buffer, count, options, operation) };
+			inputStream->Release();
+			return hr;
+		}
+#pragma endregion
+
+#pragma region IOutputStream
+		HRESULT STDMETHODCALLTYPE WriteAsync(ABI::IBuffer* buffer, ABI::IAsyncOperationWithProgress<UINT32, UINT32>** operation)
+		{
+			ABI::IOutputStream* outputStream{ nullptr };
+			m_Stream->QueryInterface(__uuidof(outputStream), to_void_pp(outputStream));
+			const HRESULT hr{ outputStream->WriteAsync(buffer, operation) };
+			outputStream->Release();
+			return hr;
+		}
+
+		HRESULT STDMETHODCALLTYPE FlushAsync(ABI::IAsyncOperation<bool>** operation)
+		{
+			ABI::IOutputStream* outputStream{ nullptr };
+			m_Stream->QueryInterface(__uuidof(outputStream), to_void_pp(outputStream));
+			const HRESULT hr{ outputStream->FlushAsync(operation) };
+			outputStream->Release();
+			return hr;
+		}
+#pragma endregion
+
+#pragma region IContentTypeProvider
+		HRESULT STDMETHODCALLTYPE get_ContentType(HSTRING* value)
+		{
+			if (InterlockedCompareExchange16(&m_IsNotClosed, false, false))
+			{ return WindowsDuplicateString(m_ContentType, value); }
+			else
+			{ return RO_E_CLOSED; }
+		}
+#pragma endregion
+
+#pragma region IInspectable
+		HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className)
+		{ return WindowsCreateString(L"Windows.Storage.Streams.IRandomAccessStreamWithContentType", 58, className); }
+#pragma endregion
+
+	private:
+		ABI::IRandomAccessStream* const m_Stream{ nullptr };
+		const HSTRING m_ContentType{ nullptr };
+		short m_IsNotClosed{ false };
+	};
 }
 
 namespace ABI::AppxUtils
@@ -401,14 +573,97 @@ namespace ABI::AppxUtils
 #pragma region Windows.Storage.Streams.IInputStreamReference
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::OpenSequentialReadAsync(ABI::IAsyncOperation<ABI::IInputStream*>** operation)
 	{
-		return E_NOTIMPL;
+		HRESULT hr{ S_OK };
+		IStream* stream{ nullptr };
+		hr = m_AppxPayloadFile->GetStream(&stream);
+		if (SUCCEEDED(hr))
+		{
+			ABI::IRandomAccessStream* rdmStream{ nullptr };
+			hr = CreateRandomAccessStreamOverStream(stream, BSOS_DEFAULT, __uuidof(rdmStream), to_void_pp(rdmStream));
+			stream->Release();
+			if (SUCCEEDED(hr))
+			{
+				ABI::IInputStream* inputStream{ nullptr };
+				hr = rdmStream->GetInputStreamAt(0, &inputStream);
+				ABI::IClosable* closable{ nullptr };
+				rdmStream->QueryInterface(__uuidof(closable), to_void_pp(closable));
+				closable->Close();
+				closable->Release();
+				rdmStream->Release();
+				if (SUCCEEDED(hr))
+				{
+					auto* const instance{ new AppxPackagePayloadFileOpenSequentialReadAsyncOp(inputStream) };
+					if (instance)
+					{
+						*operation = instance;
+						return S_OK;
+					}
+					else
+					{
+						hr = E_OUTOFMEMORY;
+						ABI::IClosable* closable{ nullptr };
+						inputStream->QueryInterface(__uuidof(closable), to_void_pp(closable));
+						closable->Close();
+						closable->Release();
+						inputStream->Release();
+					}
+				}
+			}
+		}
+		return hr;
 	}
 #pragma endregion
 
 #pragma region Windows.Storage.Streams.IRandomAccessStreamReference
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFile::OpenReadAsync(ABI::IAsyncOperation<ABI::IRandomAccessStreamWithContentType*>** operation)
 	{
-		return E_NOTIMPL;
+		HRESULT hr{ S_OK };
+		IStream* stream{ nullptr };
+		hr = m_AppxPayloadFile->GetStream(&stream);
+		if (SUCCEEDED(hr))
+		{
+			ABI::IRandomAccessStream* rdmStream{ nullptr };
+			hr = CreateRandomAccessStreamOverStream(stream, BSOS_DEFAULT, __uuidof(rdmStream), to_void_pp(rdmStream));
+			stream->Release();
+			if (SUCCEEDED(hr))
+			{
+				HSTRING contentType{ nullptr };
+				hr = get_ContentType(&contentType);
+				if (SUCCEEDED(hr))
+				{
+					auto* const instance{ new AppxPackagePayloadFileOpenReadAsyncRandomAccessStreamWithContentType{ rdmStream, contentType } };
+					if (instance)
+					{
+						auto* const operationInst{ new AppxPackagePayloadFileOpenReadAsyncOp{ instance } };
+						if (operationInst)
+						{
+							*operation = operationInst;
+							return S_OK;
+						}
+						else
+						{
+							instance->Close();
+							instance->Release();
+							return E_OUTOFMEMORY;
+						}
+					}
+					else
+					{
+						hr = E_OUTOFMEMORY;
+						WindowsDeleteString(contentType);
+					}
+				}
+				if (FAILED(hr))
+				{
+					ABI::IClosable* closable{ nullptr };
+					rdmStream->QueryInterface(__uuidof(closable), to_void_pp(closable));
+					closable->Close();
+					closable->Release();
+					rdmStream->Release();
+				}
+			}
+		}
+		return hr;
 	}
 #pragma endregion
 
