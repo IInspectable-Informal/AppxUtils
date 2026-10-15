@@ -117,7 +117,7 @@ namespace ABI::AppxUtils
         ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageOSPackageDependency>* m_OSPackageDependencies{ nullptr };
         ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageHostRuntimeDependency>* m_HostRuntimeDependencies{ nullptr };
 
-        AppxPackagePayloadFile* m_FootprintFiles[5]{ nullptr };
+        IAppxPackagePayloadFile* m_FootprintFiles[5]{ nullptr };
 
         ABI::Windows::Foundation::Collections::IMapView<HSTRING, AppxPackagePayloadFile*>* m_PayloadFiles{ nullptr };
 

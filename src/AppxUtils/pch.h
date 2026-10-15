@@ -20,6 +20,7 @@
 #include <winstring.h>
 #include <inspectable.h>
 #include <roapi.h>
+#include <robuffer.h>
 
 //WinRT ABI
 #include <Windows.Foundation.h>
@@ -30,11 +31,13 @@
 #include <Windows.System.h>
 
 //Self
+#define E_CANCELED HRESULT_FROM_WIN32(ERROR_CANCELLED)
 #include "dllmain.h"
 #include "Generated Files/AppxUtils.g.h"
 #include "Generated Files/AppxUtilsInterop.g.h"
 #include "Infrastructures/GuidHelpers.hpp"
 #include "Infrastructures/HeapManagement.h"
+#include "Infrastructures/UnknownBase.hpp"
 #include "Infrastructures/InspectableBase.hpp"
 #include "Infrastructures/StaticHelpers.hpp"
 #include "Infrastructures/FoundationStructComparer.hpp"
@@ -42,6 +45,8 @@
 #include "Infrastructures/StructLifetimeFunctionsSpecialized.h"
 #include "Infrastructures/Reference.hpp"
 #include "Infrastructures/VectorView.hpp"
+#include "Infrastructures/AsyncHandler.hpp"
+#include "Infrastructures/AsyncObjectUtils.hpp"
 #include "Infrastructures/AsyncInfoBase.hpp"
 #include "Infrastructures/AsyncOperationBase.hpp"
-#define E_CANCELED HRESULT_FROM_WIN32(ERROR_CANCELLED)
+#include "Infrastructures/ClosableObjectUtils.hpp"

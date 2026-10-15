@@ -1832,7 +1832,7 @@ namespace ABI::AppxUtils
     HRESULT STDMETHODCALLTYPE AppxPackageBase::GetFootprintFile(AppxPackageFootprintFileType type, IAppxPackagePayloadFile** result)
     {
         const INT32 typeValue{ static_cast<INT32>(type) };
-        auto* local{ static_cast<AppxPackagePayloadFile*>(InterlockedCompareExchangePointer(to_void_pp(m_FootprintFiles[typeValue]), nullptr, nullptr)) };
+        auto* local{ static_cast<IAppxPackagePayloadFile*>(InterlockedCompareExchangePointer(to_void_pp(m_FootprintFiles[typeValue]), nullptr, nullptr)) };
         if (local == nullptr)
         {
             AcquireSRWLockExclusive(&m_Lock);
@@ -1843,7 +1843,7 @@ namespace ABI::AppxUtils
                 hr = m_AppxPackageReader->GetFootprintFile(static_cast<APPX_FOOTPRINT_FILE_TYPE>(type), &payloadFile);
                 if (SUCCEEDED(hr))
                 {
-                    auto* const instance{ new AppxPackagePayloadFile(payloadFile) };
+                    auto* const instance{ new AppxPackagePayloadFileDedicated{ payloadFile } };
                     if (instance)
                     { m_FootprintFiles[typeValue] = instance; }
                     else

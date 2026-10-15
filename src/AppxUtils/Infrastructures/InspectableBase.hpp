@@ -8,7 +8,7 @@ template<TrustLevel level, typename... I>
 class InspectableCommonBase abstract : public I...
 {
 public:
-    InspectableCommonBase()
+    InspectableCommonBase() noexcept
     {
         DllAddRef();
     }
@@ -77,7 +77,7 @@ public:
         return cRef;
     }
 
-    virtual ~InspectableCommonBase()
+    virtual ~InspectableCommonBase() noexcept
     {
         DllRelease();
     }

@@ -59,9 +59,8 @@ namespace ABI::AppxUtils::Internal
 			printf("get_ErrorCode\n");
 			HRESULT hr{ S_OK };
 			AcquireSRWLockShared(&m_Lock);
-			if (m_IsOpening)
-			{ *errorCode = m_ErrorCode; }
-			else
+			*errorCode = m_ErrorCode;
+			if (!m_IsOpening)
 			{ hr = E_ILLEGAL_METHOD_CALL; }
 			ReleaseSRWLockShared(&m_Lock);
 			return hr;

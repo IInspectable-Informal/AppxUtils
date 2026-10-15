@@ -27,6 +27,9 @@
     <ClCompile Include="AppxPackageDriverDependency.cpp" />
     <ClCompile Include="AppxPackagePayloadFile.cpp" />
     <ClCompile Include="AppxUtils.cpp" />
+    <ClCompile Include="AsyncActionUtils.cpp">
+      <Filter>Infrastructures</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -75,6 +78,21 @@
     <ClInclude Include="AppxUtils.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="helpers.hpp" />
+    <ClInclude Include="Infrastructures\UnknownBase.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Infrastructures\AsyncHandler.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Infrastructures\AsyncObjectUtils.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="Infrastructures\ClosableObjectUtils.hpp">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
+    <ClInclude Include="AsyncActionUtils.h">
+      <Filter>Infrastructures</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="AppxUtils.idl" />

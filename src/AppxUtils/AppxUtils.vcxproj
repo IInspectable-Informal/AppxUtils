@@ -340,11 +340,15 @@
     <ClInclude Include="AppxPackageDriverDependency.h" />
     <ClInclude Include="AppxPackagePayloadFile.h" />
     <ClInclude Include="AppxUtils.h" />
+    <ClInclude Include="AsyncActionUtils.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="helpers.hpp" />
+    <ClInclude Include="Infrastructures\AsyncHandler.hpp" />
     <ClInclude Include="Infrastructures\AsyncInfoBase.hpp" />
+    <ClInclude Include="Infrastructures\AsyncObjectUtils.hpp" />
     <ClInclude Include="Infrastructures\AsyncOperationBase.hpp" />
+    <ClInclude Include="Infrastructures\ClosableObjectUtils.hpp" />
     <ClInclude Include="Infrastructures\FoundationStructComparer.hpp" />
     <ClInclude Include="Infrastructures\GuidHelpers.hpp" />
     <ClInclude Include="Infrastructures\HeapManagement.h" />
@@ -353,6 +357,7 @@
     <ClInclude Include="Infrastructures\StaticHelpers.hpp" />
     <ClInclude Include="Infrastructures\StructLifetimeFunctions.hpp" />
     <ClInclude Include="Infrastructures\StructLifetimeFunctionsSpecialized.h" />
+    <ClInclude Include="Infrastructures\UnknownBase.hpp" />
     <ClInclude Include="Infrastructures\VectorView.hpp" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
@@ -366,6 +371,7 @@
     <ClCompile Include="AppxPackageDriverDependency.cpp" />
     <ClCompile Include="AppxPackagePayloadFile.cpp" />
     <ClCompile Include="AppxUtils.cpp" />
+    <ClCompile Include="AsyncActionUtils.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Infrastructures\HeapManagement.cpp" />
     <ClCompile Include="Infrastructures\StructLifetimeFunctionsSpecialized.cpp" />

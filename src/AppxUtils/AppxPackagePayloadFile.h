@@ -4,7 +4,7 @@
 
 namespace ABI::AppxUtils
 {
-	class AppxPackagePayloadFile final : public InspectableElementBase<BaseTrust,
+	class AppxPackagePayloadFileBase abstract : public InspectableCommonBase<BaseTrust,
         IAppxPackagePayloadFile,
         ABI::Windows::Storage::IStorageFile,
         ABI::Windows::Storage::IStorageItem,
@@ -16,7 +16,9 @@ namespace ABI::AppxUtils
     >
 	{
 	public:
-		AppxPackagePayloadFile(IAppxFile*& internalFile) noexcept;
+		AppxPackagePayloadFileBase(IAppxFile*& internalFile) noexcept;
+
+        HRESULT STDMETHODCALLTYPE GetStream(ABI::Windows::Storage::Streams::IRandomAccessStream*& rdmStream);
 
 		HRESULT STDMETHODCALLTYPE get_CompressionOption(ABI::AppxUtils::AppxPackagePayloadFileCompressionOption* value);
 		HRESULT STDMETHODCALLTYPE get_RelativePath(HSTRING* value);
@@ -63,7 +65,7 @@ namespace ABI::AppxUtils
 		//IInspectable
         HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className);
 
-        ~AppxPackagePayloadFile() noexcept;
+        ~AppxPackagePayloadFileBase() noexcept;
 
     private:
         short m_HasCompressionOption{ false };
@@ -80,4 +82,26 @@ namespace ABI::AppxUtils
         IAppxFile* const m_AppxPayloadFile{ nullptr };
         SRWLOCK m_Lock{ SRWLOCK_INIT };
 	};
+
+    class AppxPackagePayloadFileDedicated final : public AppxPackagePayloadFileBase
+    {
+    public:
+        using AppxPackagePayloadFileBase::AppxPackagePayloadFileBase;
+
+        //IUnknown
+        ULONG STDMETHODCALLTYPE Release() override;
+
+        ~AppxPackagePayloadFileDedicated() noexcept = default;
+    };
+
+    class AppxPackagePayloadFile final : public AppxPackagePayloadFileBase
+    {
+    public:
+        using AppxPackagePayloadFileBase::AppxPackagePayloadFileBase;
+
+        //IUnknown
+        ULONG STDMETHODCALLTYPE Release() override;
+
+        ~AppxPackagePayloadFile() noexcept = default;
+    };
 }
