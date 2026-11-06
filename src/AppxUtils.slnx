@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="ARM" />
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="AppxUtils/AppxUtils.vcxproj" Id="e1f38d6b-3dc0-4d5f-ba38-9732d73170c4">
+    <Platform Solution="*|ARM" Project="x64" />
+  </Project>
+</Solution>
