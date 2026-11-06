@@ -118,22 +118,28 @@ namespace ABI::AppxUtils
 
 	HRESULT STDMETHODCALLTYPE AppxPackageDriverDependency::IndexOf(struct AppxPackageDriverConstraint value, UINT32* index, boolean* found)
 	{
-		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, nullptr))
+		HRESULT hr{ S_OK };
+		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, reinterpret_cast<void**>(&hr)))
 		{
-			for (UINT32 i = 0; i < m_Size; ++i)
+			if (SUCCEEDED(hr))
 			{
-				bool result{};
-				StructLifetimeFunctions<struct AppxPackageDriverConstraint>::IsEqualStruct(m_Array[i], value, result);
-				if (result)
+				for (UINT32 i = 0; i < m_Size; ++i)
 				{
-					*index = i;
-					*found = true;
-					return S_OK;
+					bool result{};
+					StructLifetimeFunctions<struct AppxPackageDriverConstraint>::IsEqualStruct(m_Array[i], value, result);
+					if (result)
+					{
+						*index = i;
+						*found = true;
+						return S_OK;
+					}
 				}
+				*index = 0;
+				*found = false;
+				return S_OK;
 			}
-			*index = 0;
-			*found = false;
-			return S_OK;
+			else
+			{ return hr; }
 		}
 		else
 		{ return HRESULT_FROM_WIN32(GetLastError()); }
@@ -303,6 +309,7 @@ namespace ABI::AppxUtils
 				enumerator->Release();
 			}
 		}
+		*reinterpret_cast<HRESULT*>(Context) = hr;
 		return SUCCEEDED(hr);
 	}
 }

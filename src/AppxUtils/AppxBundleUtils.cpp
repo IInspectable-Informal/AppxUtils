@@ -98,6 +98,7 @@ namespace ABI::AppxUtils::Internal
 				if (static_cast<IAppxPackageCore*>(m_Array + i) == value)
 				{
 					*index = i;
+					*found = true;
 					return S_OK;
 				}
 			}
@@ -176,10 +177,19 @@ namespace ABI::AppxUtils::Internal
 #pragma region IAsyncInfo
 	HRESULT STDMETHODCALLTYPE AppxBundleGetPackagesAsyncOp::Close()
 	{
+		HRESULT hr{ S_OK };
 		AcquireSRWLockExclusive(&m_Lock);
-		m_CanContinue = false;
+		const bool opening{ m_IsOpening != 0 };
+		if (static_cast<ABI::AsyncStatus>(m_Status) == ABI::AsyncStatus::Started)
+		{ hr = E_ILLEGAL_METHOD_CALL; }
+		else
+		{ m_IsOpening = false; }
+		auto* const result{ m_Result };
+		m_Result = nullptr;
 		ReleaseSRWLockExclusive(&m_Lock);
-		return S_OK;
+		if (hr == S_OK && opening && result)
+		{ result->Release(); }
+		return hr;
 	}
 #pragma endregion
 

@@ -168,6 +168,7 @@ namespace ABI::AppxUtils::Internal
 					}
 				}
 			}
+			return hr;
 		}
 
 	private:
@@ -207,138 +208,152 @@ namespace ABI::AppxUtils::Internal
 				{ hr = external.m_GIT->GetInterfaceFromGlobal(external.m_FolderGITCookie, __uuidof(folder), to_void_pp(folder)); }
 				if (SUCCEEDED(hr))
 				{
-					ABI::IRandomAccessStream* stream{ nullptr };
-					hr = external.m_Source->GetStream(stream);
+					ABI::IAsyncOperation<ABI::StorageFile*>* async0{ nullptr };
+					hr = folder->CreateFileAsync(external.m_DesiredName, static_cast<ABI::CreationCollisionOption>(external.m_Option), &async0);
 					if (SUCCEEDED(hr))
 					{
-						ABI::IAsyncOperation<ABI::StorageFile*>* async0{ nullptr };
-						hr = folder->CreateFileAsync(external.m_DesiredName, static_cast<ABI::CreationCollisionOption>(external.m_Option), &async0);
+						ABI::IStorageFile* destFile{ nullptr };
+						hr = AsyncOperationUtils<ABI::StorageFile*>::AwaitAsyncObject(async0, destFile);
 						if (SUCCEEDED(hr))
 						{
-							ABI::IStorageFile* file{ nullptr };
-							hr = AsyncOperationUtils<ABI::StorageFile*>::AwaitAsyncObject(async0, file);
+							UINT64 size{};
+							hr = external.m_Source->get_UncompressedSize(&size);
 							if (SUCCEEDED(hr))
 							{
-								UINT64 size{ 0 };
-								hr = stream->get_Size(&size);
-								if (SUCCEEDED(hr))
+								if (size > 0)
 								{
-									if (size > 0)
+									ABI::IRandomAccessStream* sourceStream{ nullptr };
+									hr = external.m_Source->GetStream(sourceStream);
+									if (SUCCEEDED(hr))
 									{
 										ABI::IAsyncOperation<ABI::IRandomAccessStream*>* async1{ nullptr };
-										hr = file->OpenAsync(ABI::FileAccessMode_ReadWrite, &async1);
+										ABI::IStorageFile2* file2{ nullptr };
+										if (SUCCEEDED(destFile->QueryInterface(__uuidof(file2), to_void_pp(file2))))
+										{
+											hr = file2->OpenWithOptionsAsync(ABI::FileAccessMode_ReadWrite, ABI::StorageOpenOptions_None, &async1);
+											file2->Release();
+										}
+										else
+										{ hr = destFile->OpenAsync(ABI::FileAccessMode_ReadWrite, &async1); }
 										if (SUCCEEDED(hr))
 										{
-											ABI::IRandomAccessStream* fileStream{ nullptr };
-											hr = AsyncOperationUtils<ABI::IRandomAccessStream*>::AwaitAsyncObject(async1, fileStream);
+											ABI::IRandomAccessStream* destStream{ nullptr };
+											hr = AsyncOperationUtils<ABI::IRandomAccessStream*>::AwaitAsyncObject(async1, destStream);
 											if (SUCCEEDED(hr))
 											{
-												hr = fileStream->put_Size(size);
+												hr = destStream->put_Size(size);
 												if (SUCCEEDED(hr))
 												{
-													ABI::IOutputStream* outStream{ nullptr };
-													fileStream->QueryInterface(__uuidof(outStream), to_void_pp(outStream));
-													ABI::IAsyncOperation<bool>* async2{ nullptr };
-													hr = outStream->FlushAsync(&async2);
+													hr = destStream->Seek(0);
 													if (SUCCEEDED(hr))
 													{
-														boolean flushResult{};
-														hr = AsyncOperationUtils<bool>::AwaitAsyncObject(async2, flushResult);
-														if (SUCCEEDED(hr))
+														constexpr auto bufferSize{ 16 * 1024 };
+														auto* const readerBuffer{ new StreamReaderBuffer<bufferSize>{} };
+														if (readerBuffer)
 														{
-															hr = fileStream->Seek(0);
-															if (SUCCEEDED(hr))
+															ABI::IInputStream* inputStream{ nullptr };
+															sourceStream->QueryInterface(__uuidof(inputStream), to_void_pp(inputStream));
+															ABI::IOutputStream* outputStream{ nullptr };
+															destStream->QueryInterface(__uuidof(outputStream), to_void_pp(outputStream));
+															UINT64 bytesActualCopied{ 0 };
+															for (; bytesActualCopied < size;)
 															{
-																auto* const buffer{ new StreamReaderBuffer<16 * 1024>{  } };
-																if (buffer)
+																UINT32 actualCopied{ 0 };
+																ABI::IAsyncOperationWithProgress<ABI::IBuffer*, UINT32>* async2{ nullptr };
+																hr = inputStream->ReadAsync(readerBuffer, bufferSize, ABI::InputStreamOptions_ReadAhead, &async2);
+																if (SUCCEEDED(hr))
 																{
-																	ABI::IInputStream* inputStream{ nullptr };
-																	stream->QueryInterface(__uuidof(inputStream), to_void_pp(inputStream));
-																	const UINT64 times{ size / (16 * 1024) + 1 };
-																	for (UINT64 i{ 0 }; i < times; ++i)
-																	{
-																		ABI::IAsyncOperationWithProgress<ABI::IBuffer*, UINT32>* async3{ nullptr };
-																		hr = inputStream->ReadAsync(buffer, 16 * 1024, ABI::InputStreamOptions_ReadAhead, &async3);
-																		if (SUCCEEDED(hr))
-																		{
-																			ABI::IBuffer* dataBuffer{ nullptr };
-																			hr = AsyncOperationWithProgressUtils<ABI::IBuffer*, UINT32>::AwaitAsyncObject(async3, dataBuffer);
-																			if (SUCCEEDED(hr))
-																			{
-																				ABI::IAsyncOperationWithProgress<UINT32, UINT32>* async4{ nullptr };
-																				hr = outStream->WriteAsync(dataBuffer, &async4);
-																				if (SUCCEEDED(hr))
-																				{
-																					UINT32 wroteResult{};
-																					hr = AsyncOperationWithProgressUtils<UINT32, UINT32>::AwaitAsyncObject(async4, wroteResult);
-																			        AsyncOperationWithProgressUtils<UINT32, UINT32>::CloseAsyncObject(async4);
-																					async4->Release();
-																				}
-																			}
-																			AsyncOperationWithProgressUtils<ABI::IBuffer*, UINT32>::CloseAsyncObject(async3);
-																			async3->Release();
-																		}
-																		if (FAILED(hr))
-																		{ break; }
-																	}
+																	ABI::IBuffer* dataBuffer{ nullptr };
+																	hr = AsyncOperationWithProgressUtils<ABI::IBuffer*, UINT32>::AwaitAsyncObject(async2, dataBuffer);
 																	if (SUCCEEDED(hr))
 																	{
-																		hr = outStream->FlushAsync(&async2);
+																		ABI::IAsyncOperationWithProgress<UINT32, UINT32>* async3{ nullptr };
+																		hr = outputStream->WriteAsync(dataBuffer, &async3);
 																		if (SUCCEEDED(hr))
 																		{
-																			hr = AsyncOperationUtils<bool>::AwaitAsyncObject(async2, flushResult);
+																			hr = AsyncOperationWithProgressUtils<UINT32, UINT32>::AwaitAsyncObject(async3, actualCopied);
 																			if (SUCCEEDED(hr))
-																			{ result = file; }
-																		}
-																	}
-																	if (FAILED(hr))
-																	{
-																		ABI::IStorageItem* item{ nullptr };
-																		file->QueryInterface(__uuidof(item), to_void_pp(item));
-																		ABI::IAsyncAction* async3{ nullptr };
-																		if (SUCCEEDED(item->DeleteAsync(ABI::StorageDeleteOption_PermanentDelete, &async3)))
-																		{
-																			AsyncActionUtils::AwaitAsyncObject(async3);
-																			AsyncActionUtils::CloseAsyncObject(async3);
+																			{ bytesActualCopied += actualCopied; }
+																			AsyncOperationWithProgressUtils<UINT32, UINT32>::CloseAsyncObject(async3);
 																			async3->Release();
 																		}
+																		dataBuffer->Release();
 																	}
-																	inputStream->Release();
-																	buffer->Release();
+																	AsyncOperationWithProgressUtils<ABI::IBuffer*, UINT32>::CloseAsyncObject(async2);
+																	async2->Release();
 																}
-																else
-																{ hr = E_OUTOFMEMORY; }
+																if (FAILED(hr))
+																{ break; }
+																else if (actualCopied == 0 && bytesActualCopied < size)
+																{
+																	hr = STG_E_INCOMPLETE;
+																	break;
+																}
 															}
+															if (SUCCEEDED(hr))
+															{
+																ABI::IAsyncOperation<bool>* async4{ nullptr };
+																hr = outputStream->FlushAsync(&async4);
+																if (SUCCEEDED(hr))
+																{
+																	boolean flushResult{};
+																	hr = AsyncOperationUtils<bool>::AwaitAsyncObject(async4, flushResult);
+																	if (SUCCEEDED(hr))
+																	{
+																		TryCloseObject(destStream);
+																		result = destFile;
+																	}
+																	AsyncOperationUtils<bool>::CloseAsyncObject(async4);
+																	async4->Release();
+																}
+															}
+															else
+															{
+																TryCloseObject(destStream);
+																ABI::IStorageItem* item{ nullptr };
+																destFile->QueryInterface(__uuidof(item), to_void_pp(item));
+																ABI::IAsyncAction* async5{ nullptr };
+																if (SUCCEEDED(item->DeleteAsync(ABI::StorageDeleteOption_PermanentDelete, &async5)))
+																{
+																	AsyncActionUtils::AwaitAsyncObject(async5);
+																	AsyncActionUtils::CloseAsyncObject(async5);
+																	async5->Release();
+																}
+																item->Release();
+															}
+															outputStream->Release();
+															inputStream->Release();
+															readerBuffer->Release();
 														}
-														AsyncOperationUtils<bool>::CloseAsyncObject(async2);
-														async2->Release();
+														else
+														{ hr = E_OUTOFMEMORY; }
 													}
-													outStream->Release();
 												}
-												TryCloseObject(fileStream);
-												fileStream->Release();
+												if (FAILED(hr))
+												{ TryCloseObject(destStream); }
+												destStream->Release();
 											}
+											AsyncOperationUtils<ABI::IRandomAccessStream*>::CloseAsyncObject(async1);
+											async1->Release();
 										}
-									}
-									else
-									{
-										file->AddRef();
-										result = file;
+										TryCloseObject(sourceStream);
+										sourceStream->Release();
 									}
 								}
-								file->Release();
+								else
+								{ result = destFile; }
 							}
-							AsyncOperationUtils<ABI::StorageFile*>::CloseAsyncObject(async0);
-							async0->Release();
+							destFile->Release();
 						}
-						TryCloseObject(stream);
-						stream->Release();
+						AsyncOperationUtils<ABI::StorageFile*>::CloseAsyncObject(async0);
+						async0->Release();
 					}
 					folder->Release();
 				}
 				RoUninitialize();
 			}
 			LONG status{};
+			printf("HRESULT: 0x%08X\n", hr);
 			AcquireSRWLockExclusive(&external.m_Lock);
 			if (result)
 			{
@@ -346,7 +361,289 @@ namespace ABI::AppxUtils::Internal
 				external.m_ErrorCode = S_OK;
 				status = static_cast<LONG>(ABI::AsyncStatus::Completed);
 			}
-			else if (external.m_CanContinue)
+			else if (hr != E_CANCELED)
+			{
+				external.m_ErrorCode = hr;
+				status = static_cast<LONG>(ABI::AsyncStatus::Error);
+			}
+			else
+			{
+				external.m_ErrorCode = E_CANCELED;
+				status = static_cast<LONG>(ABI::AsyncStatus::Canceled);
+			}
+			external.m_Status = status;
+			auto* const handler{ external.m_Completed };
+			ReleaseSRWLockExclusive(&external.m_Lock);
+			if (handler)
+			{
+				handler->Invoke(&external, static_cast<ABI::AsyncStatus>(status));
+				handler->Release();
+				AcquireSRWLockExclusive(&external.m_Lock);
+				external.m_Completed = nullptr;
+				ReleaseSRWLockExclusive(&external.m_Lock);
+			}
+			external.Release();
+		}
+	};
+
+	class AppxPackagePayloadFileCopyAndReplaceAsyncOp final : public AsyncActionBase
+	{
+	public:
+		HRESULT STDMETHODCALLTYPE LaunchAsyncTask()
+		{
+			this->AddRef();
+			if (TrySubmitThreadpoolCallback(CopyFileCallback, this, nullptr))
+			{
+				return S_OK;
+			}
+			else
+			{
+				this->Release();
+				return HRESULT_FROM_WIN32(GetLastError());
+			}
+		}
+
+		void STDMETHODCALLTYPE ReleaseResourcesInternal()
+		{
+			reinterpret_cast<IUnknown*>(m_Source)->Release();
+			if (m_DestFile)
+			{
+				m_DestFile->Release();
+			}
+			else
+			{
+				m_GIT->RevokeInterfaceFromGlobal(m_DestFileGITCookie);
+				m_GIT->Release();
+			}
+		}
+
+		//IAsyncInfo
+		HRESULT STDMETHODCALLTYPE Close()
+		{
+			HRESULT hr{ S_OK };
+			AcquireSRWLockExclusive(&m_Lock);
+			const bool opening{ m_IsOpening != 0 };
+			if (static_cast<ABI::AsyncStatus>(m_Status) == ABI::AsyncStatus::Started)
+			{
+				hr = E_ILLEGAL_METHOD_CALL;
+			}
+			else
+			{
+				m_IsOpening = false;
+			}
+			ReleaseSRWLockExclusive(&m_Lock);
+			if (hr == S_OK && opening)
+			{
+				ReleaseResourcesInternal();
+			}
+			return hr;
+		}
+
+		static HRESULT STDMETHODCALLTYPE CreateInstance(AppxPackagePayloadFileBase* const source, ABI::IStorageFile* destFile,
+			AppxPackagePayloadFileCopyAndReplaceAsyncOp*& result)
+		{
+			HRESULT hr{ S_OK };
+			IAgileObject* agileObject{ nullptr };
+			if (SUCCEEDED(destFile->QueryInterface(__uuidof(agileObject), to_void_pp(agileObject))))
+			{
+				agileObject->Release();
+				auto* const instance{ new AppxPackagePayloadFileCopyAndReplaceAsyncOp{ source, destFile } };
+				if (instance)
+				{
+					result = instance;
+					hr = S_OK;
+				}
+				else
+				{
+					hr = E_OUTOFMEMORY;
+				}
+			}
+			else
+			{
+				IGlobalInterfaceTable* pGIT{ nullptr };
+				hr = CoCreateInstance(CLSID_StdGlobalInterfaceTable, nullptr, CLSCTX_INPROC_SERVER, __uuidof(pGIT), to_void_pp(pGIT));
+				if (SUCCEEDED(hr))
+				{
+					DWORD cookie{};
+					hr = pGIT->RegisterInterfaceInGlobal(destFile, __uuidof(destFile), &cookie);
+					if (SUCCEEDED(hr))
+					{
+						auto* const instance{ new AppxPackagePayloadFileCopyAndReplaceAsyncOp{ source, pGIT, cookie } };
+						if (instance)
+						{
+							result = instance;
+							hr = S_OK;
+						}
+						else
+						{
+							hr = E_OUTOFMEMORY;
+							pGIT->RevokeInterfaceFromGlobal(cookie);
+							pGIT->Release();
+						}
+					}
+					else
+					{
+						pGIT->Release();
+					}
+				}
+			}
+			return hr;
+		}
+
+	private:
+		AppxPackagePayloadFileBase* const m_Source{ nullptr };
+		ABI::IStorageFile* const m_DestFile{ nullptr };
+		IGlobalInterfaceTable* const m_GIT{ nullptr };
+		const DWORD m_DestFileGITCookie{};
+
+		AppxPackagePayloadFileCopyAndReplaceAsyncOp(AppxPackagePayloadFileBase* const source, ABI::IStorageFile* destFile) noexcept :
+			m_Source(source), m_DestFile(destFile)
+		{
+			source->AddRef();
+			destFile->AddRef();
+		}
+
+		AppxPackagePayloadFileCopyAndReplaceAsyncOp(AppxPackagePayloadFileBase* const source,
+			IGlobalInterfaceTable* const pGIT, const DWORD cookie) noexcept :
+			m_Source(source), m_GIT(pGIT), m_DestFileGITCookie(cookie)
+		{
+			source->AddRef();
+		}
+
+		static void CALLBACK CopyFileCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
+		{
+			auto& external{ *static_cast<AppxPackagePayloadFileCopyAndReplaceAsyncOp*>(Context) };
+			HRESULT hr{ RoInitialize(RO_INIT_MULTITHREADED) };
+			if (SUCCEEDED(hr))
+			{
+				ABI::IStorageFile* file{ external.m_DestFile };
+				if (file)
+				{ file->AddRef(); }
+				else
+				{ hr = external.m_GIT->GetInterfaceFromGlobal(external.m_DestFileGITCookie, __uuidof(file), to_void_pp(file)); }
+				if (SUCCEEDED(hr))
+				{
+					UINT64 size{};
+					hr = external.m_Source->get_UncompressedSize(&size);
+					if (SUCCEEDED(hr))
+					{
+						if (size > 0)
+						{
+							ABI::IRandomAccessStream* sourceStream{ nullptr };
+							hr = external.m_Source->GetStream(sourceStream);
+							if (SUCCEEDED(hr))
+							{
+								ABI::IAsyncOperation<ABI::IRandomAccessStream*>* async0{ nullptr };
+								ABI::IStorageFile2* file2{ nullptr };
+								if (SUCCEEDED(file->QueryInterface(__uuidof(file2), to_void_pp(file2))))
+								{
+									hr = file2->OpenWithOptionsAsync(ABI::FileAccessMode_ReadWrite, ABI::StorageOpenOptions_AllowOnlyReaders, &async0);
+									file2->Release();
+								}
+								else
+								{ hr = file->OpenAsync(ABI::FileAccessMode_ReadWrite, &async0); }
+								if (SUCCEEDED(hr))
+								{
+									ABI::IRandomAccessStream* destStream{ nullptr };
+									hr = AsyncOperationUtils<ABI::IRandomAccessStream*>::AwaitAsyncObject(async0, destStream);
+									if (SUCCEEDED(hr))
+									{
+										constexpr auto bufferSize{ 16 * 1024 };
+										auto* const readerBuffer{ new StreamReaderBuffer<bufferSize>{} };
+										if (readerBuffer)
+										{
+											hr = destStream->put_Size(size);
+											if (SUCCEEDED(hr))
+											{
+												ABI::IOutputStream* outputStream{ nullptr };
+												destStream->QueryInterface(__uuidof(outputStream), to_void_pp(outputStream));
+												ABI::IAsyncOperation<bool>* async1{ nullptr };
+												hr = outputStream->FlushAsync(&async1);
+												if (SUCCEEDED(hr))
+												{
+													boolean flushResult{};
+													hr = AsyncOperationUtils<bool>::AwaitAsyncObject(async1, flushResult);
+													if (SUCCEEDED(hr))
+													{
+														hr = destStream->Seek(0);
+														if (SUCCEEDED(hr))
+														{
+															ABI::IInputStream* inputStream{ nullptr };
+															sourceStream->QueryInterface(__uuidof(inputStream), to_void_pp(inputStream));
+															const auto times{ size / bufferSize + 1 };
+															for (UINT64 i{ 0 }; i < times; ++i)
+															{
+																ABI::IAsyncOperationWithProgress<ABI::IBuffer*, UINT32>* async2{ nullptr };
+																hr = inputStream->ReadAsync(readerBuffer, bufferSize, ABI::InputStreamOptions_ReadAhead, &async2);
+																if (SUCCEEDED(hr))
+																{
+																	ABI::IBuffer* dataBuffer{ nullptr };
+																	hr = AsyncOperationWithProgressUtils<ABI::IBuffer*, UINT32>::AwaitAsyncObject(async2, dataBuffer);
+																	if (SUCCEEDED(hr))
+																	{
+																		ABI::IAsyncOperationWithProgress<UINT32, UINT32>* async3{ nullptr };
+																		hr = outputStream->WriteAsync(dataBuffer, &async3);
+																		if (SUCCEEDED(hr))
+																		{
+																			UINT32 wroteResult{};
+																			hr = AsyncOperationWithProgressUtils<UINT32, UINT32>::AwaitAsyncObject(async3, wroteResult);
+																			AsyncOperationWithProgressUtils<UINT32, UINT32>::CloseAsyncObject(async3);
+																			async3->Release();
+																		}
+																	}
+																	AsyncOperationWithProgressUtils<ABI::IBuffer*, UINT32>::CloseAsyncObject(async2);
+																	async2->Release();
+																}
+																if (FAILED(hr))
+																{ break; }
+															}
+															inputStream->Release();
+															if (SUCCEEDED(hr))
+															{
+																ABI::IAsyncOperation<bool>* async4{ nullptr };
+																hr = outputStream->FlushAsync(&async4);
+																if (SUCCEEDED(hr))
+																{
+																	hr = AsyncOperationUtils<bool>::AwaitAsyncObject(async4, flushResult);
+																	AsyncOperationUtils<bool>::CloseAsyncObject(async4);
+																	async4->Release();
+																}
+															}
+														}
+													}
+													AsyncOperationUtils<bool>::CloseAsyncObject(async1);
+													async1->Release();
+												}
+												outputStream->Release();
+											}
+											readerBuffer->Release();
+										}
+										else
+										{ hr = E_OUTOFMEMORY; }
+										TryCloseObject(destStream);
+										destStream->Release();
+									}
+									AsyncOperationUtils<ABI::IRandomAccessStream*>::CloseAsyncObject(async0);
+									async0->Release();
+								}
+								TryCloseObject(sourceStream);
+								sourceStream->Release();
+							}
+						}
+					}
+					file->Release();
+				}
+				RoUninitialize();
+			}
+			LONG status{};
+			printf("HRESULT: 0x%08X\n", hr);
+			AcquireSRWLockExclusive(&external.m_Lock);
+			if (SUCCEEDED(hr))
+			{
+				external.m_ErrorCode = S_OK;
+				status = static_cast<LONG>(ABI::AsyncStatus::Completed);
+			}
+			else if (hr != E_CANCELED)
 			{
 				external.m_ErrorCode = hr;
 				status = static_cast<LONG>(ABI::AsyncStatus::Error);
@@ -861,7 +1158,7 @@ namespace ABI::AppxUtils
 
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFileBase::CopyOverload(ABI::IStorageFolder* destinationFolder, HSTRING desiredNewName, ABI::NameCollisionOption option, ABI::IAsyncOperation<ABI::StorageFile*>** operation)
 	{
-		if (destinationFolder && desiredNewName)
+		if (destinationFolder && desiredNewName && option >= ABI::NameCollisionOption_GenerateUniqueName && option <= ABI::NameCollisionOption_FailIfExists)
 		{
 			HRESULT hr{ S_OK };
 			AppxPackagePayloadFileCopyAsyncOp* instance{ nullptr };
@@ -888,7 +1185,29 @@ namespace ABI::AppxUtils
 
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFileBase::CopyAndReplaceAsync(ABI::IStorageFile* fileToReplace, ABI::IAsyncAction** operation)
 	{
-		return E_NOTIMPL;
+		if (fileToReplace)
+		{
+			HRESULT hr{ S_OK };
+			AppxPackagePayloadFileCopyAndReplaceAsyncOp* instance{ nullptr };
+			hr = AppxPackagePayloadFileCopyAndReplaceAsyncOp::CreateInstance(this, fileToReplace, instance);
+			if (SUCCEEDED(hr))
+			{
+				hr = instance->LaunchAsyncTask();
+				if (SUCCEEDED(hr))
+				{
+					*operation = instance;
+					hr = S_OK;
+				}
+				else
+				{
+					instance->ReleaseResourcesInternal();
+					instance->Release();
+				}
+			}
+			return hr;
+		}
+		else
+		{ return E_INVALIDARG; }
 	}
 
 	HRESULT STDMETHODCALLTYPE AppxPackagePayloadFileBase::MoveOverloadDefaultNameAndOptions(ABI::IStorageFolder* destinationFolder, ABI::IAsyncAction** operation)
@@ -967,7 +1286,7 @@ namespace ABI::AppxUtils
 						}
 					}
 					if (hasSeparator)
-					{ hr = WindowsCreateString(relativePath + pos + 1, length + 1 - pos, &m_Name); }
+					{ hr = WindowsCreateString(relativePath + pos + 1, length - 1 - pos, &m_Name); }
 					else
 					{ hr = WindowsCreateString(relativePath, length, &m_Name); }
 					CoTaskMemFree(relativePath);

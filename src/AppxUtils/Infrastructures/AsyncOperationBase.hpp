@@ -160,23 +160,22 @@ namespace ABI::AppxUtils::Internal
 			HRESULT hr{ S_OK };
 			AcquireSRWLockExclusive(&m_Lock);
 			if (static_cast<ABI::Windows::Foundation::AsyncStatus>(m_Status) == ABI::Windows::Foundation::AsyncStatus::Started)
-			{
-				hr = E_ILLEGAL_METHOD_CALL;
-			}
+			{ hr = E_ILLEGAL_METHOD_CALL; }
 			else
 			{
+				const bool opening{ m_IsOpening != 0 };
 				m_IsOpening = false;
 				if constexpr (!IsFundamentalType<TResult_ABI> && !__is_enum(TResult_ABI) && !ABI::Windows::Foundation::Collections::is_foundation_struct<TResult_ABI>::value && __is_trivial(TResult_ABI) && __is_standard_layout(TResult_ABI))
-				{ StructLifetimeFunctions<TResult_ABI>::ReleaseStruct(m_Result); }
+				{ 
+					if (opening)
+					{ StructLifetimeFunctions<TResult_ABI>::ReleaseStruct(m_Result); }
+				}
 			}
 			ReleaseSRWLockExclusive(&m_Lock);
+			return S_OK;
 		}
 
-		virtual ~AsyncOperation() noexcept
-		{
-			if constexpr (!IsFundamentalType<TResult_ABI> && !__is_enum(TResult_ABI) && !ABI::Windows::Foundation::Collections::is_foundation_struct<TResult_ABI>::value && __is_trivial(TResult_ABI) && __is_standard_layout(TResult_ABI))
-			{ StructLifetimeFunctions<TResult_ABI>::ReleaseStruct(m_Result); }
-		}
+		virtual ~AsyncOperation() noexcept = default;
 
 	protected:
 		TResult_ABI m_Result{};
@@ -227,11 +226,7 @@ namespace ABI::AppxUtils::Internal
 			return hr;
 		}
 
-		virtual ~AsyncOperation() noexcept
-		{
-			if (m_Result)
-			{ m_Result->Release(); }
-		}
+		virtual ~AsyncOperation() noexcept = default;
 
 	protected:
 		TResult_ABI m_Result{ nullptr };
@@ -285,18 +280,16 @@ namespace ABI::AppxUtils::Internal
 			{ hr = E_ILLEGAL_METHOD_CALL; }
 			else
 			{
+				const bool opening{ m_IsOpening != 0 };
 				m_IsOpening = false;
-				WindowsDeleteString(m_Result);
+				if (opening && m_Result)
+				{ WindowsDeleteString(m_Result); }
 				m_Result = nullptr;
 			}
 			ReleaseSRWLockExclusive(&m_Lock);
 		}
 
-		virtual ~AsyncOperation() noexcept
-		{
-			if (m_Result)
-			{ WindowsDeleteString(m_Result); }
-		}
+		virtual ~AsyncOperation() noexcept = default;
 
 	protected:
 		HSTRING m_Result{ nullptr };

@@ -48,5 +48,6 @@
 #include "Infrastructures/AsyncHandler.hpp"
 #include "Infrastructures/AsyncObjectUtils.hpp"
 #include "Infrastructures/AsyncInfoBase.hpp"
+#include "Infrastructures/AsyncActionBase.h"
 #include "Infrastructures/AsyncOperationBase.hpp"
 #include "Infrastructures/ClosableObjectUtils.hpp"

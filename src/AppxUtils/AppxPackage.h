@@ -59,6 +59,7 @@ namespace ABI::AppxUtils
         HRESULT STDMETHODCALLTYPE TryGetFootprintFile(AppxPackageFootprintFileType type, IAppxPackagePayloadFile** file, boolean* result);
 
         //IAppxPackagePayloadFilesProvider
+        HRESULT STDMETHODCALLTYPE GetPayloadFile(HSTRING relativePath, IAppxPackagePayloadFile** result);
         HRESULT STDMETHODCALLTYPE GetPayloadFiles(ABI::Windows::Foundation::Collections::IMapView<HSTRING, AppxPackagePayloadFile*>** result);
 
         //IAppxPackageLegacy

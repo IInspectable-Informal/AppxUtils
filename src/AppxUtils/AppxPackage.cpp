@@ -688,8 +688,7 @@ namespace ABI::AppxUtils
                     UINT32 count{ 0 };
                     UINT32 completed{ 0 };
                     IAppxManifestReader2* reader2{ nullptr };
-                    hr = reader->QueryInterface(__uuidof(reader2), to_void_pp(reader2));
-                    if (SUCCEEDED(hr))
+                    if (SUCCEEDED(reader->QueryInterface(__uuidof(reader2), to_void_pp(reader2))))
                     {
                         IAppxManifestQualifiedResourcesEnumerator* enumerator{ nullptr };
                         hr = reader2->GetQualifiedResources(&enumerator);
@@ -1872,6 +1871,28 @@ namespace ABI::AppxUtils
 #pragma endregion
 
 #pragma region IAppxPackagePayloadFilesProvider
+    HRESULT STDMETHODCALLTYPE AppxPackageBase::GetPayloadFile(HSTRING relativePath, IAppxPackagePayloadFile** result)
+    {
+        HRESULT hr{ S_OK };
+        IAppxFile* file{ nullptr };
+        hr = m_AppxPackageReader->GetPayloadFile(WindowsGetStringRawBuffer(relativePath, nullptr), &file);
+        if (SUCCEEDED(hr))
+        {
+            auto* const instance{ new AppxPackagePayloadFileDedicated{file} };
+            if (instance)
+            {
+                *result = instance;
+                return S_OK;
+            }
+            else
+            {
+                hr = E_OUTOFMEMORY;
+                file->Release();
+            }
+        }
+        return hr;
+    }
+
     HRESULT STDMETHODCALLTYPE AppxPackageBase::GetPayloadFiles(ABI::IMapView<HSTRING, AppxPackagePayloadFile*>** result)
     {
         auto local{ static_cast<ABI::IMapView<HSTRING, AppxPackagePayloadFile*>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_PayloadFiles), nullptr, nullptr)) };

@@ -42,6 +42,7 @@ namespace ABI::AppxUtils::Internal
 		{
 			HRESULT hr{ S_OK };
 			AcquireSRWLockExclusive(&m_Lock);
+			const bool opening{ m_IsOpening != 0 };
 			if (static_cast<ABI::AsyncStatus>(m_Status) == ABI::AsyncStatus::Started)
 			{ hr = E_ILLEGAL_METHOD_CALL; }
 			else
@@ -49,10 +50,8 @@ namespace ABI::AppxUtils::Internal
 			auto* const result{ m_Result };
 			m_Result = nullptr;
 			ReleaseSRWLockExclusive(&m_Lock);
-			if (result)
-			{
-				result->Release();
-			}
+			if (hr == S_OK && opening && result)
+			{ result->Release(); }
 			return hr;
 		}
 
@@ -281,6 +280,7 @@ namespace ABI::AppxUtils
 						if (instance)
 						{
 							*result = instance;
+							stream->Release();
 							return S_OK;
 						}
 						else

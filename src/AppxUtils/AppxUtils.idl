@@ -281,6 +281,7 @@ namespace AppxUtils
 	[exclusiveto(AppxPackage)]
 	interface IAppxPackagePayloadFilesProvider
 	{
+		AppxPackagePayloadFile GetPayloadFile(String relativePath);
 		Windows.Foundation.Collections.IMapView<String, AppxPackagePayloadFile> GetPayloadFiles();
 	};
 
