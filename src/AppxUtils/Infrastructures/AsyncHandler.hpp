@@ -6,7 +6,7 @@
 namespace ABI::AppxUtils::Internal
 {
 	template<typename TResult>
-	class AsyncOperationCompletedHandler abstract : public UnknownBase<
+	class AsyncOperationCompletedHandler : public UnknownBase<
 		ABI::Windows::Foundation::IAsyncOperationCompletedHandler<TResult>
 	>
 	{
@@ -15,7 +15,7 @@ namespace ABI::AppxUtils::Internal
 	};
 
 	template<typename TResult, typename TProgress>
-	class AsyncOperationWithProgressCompletedHandler abstract : public UnknownBase<
+	class AsyncOperationWithProgressCompletedHandler : public UnknownBase<
 		ABI::Windows::Foundation::IAsyncOperationWithProgressCompletedHandler<TResult, TProgress>
 	>
 	{

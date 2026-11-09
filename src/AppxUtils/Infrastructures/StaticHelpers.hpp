@@ -1,6 +1,7 @@
 // Copyright 2026 IInspectable-Informal
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
+#include <type_traits>
 
 namespace ABI::AppxUtils::Internal
 {
@@ -92,22 +93,25 @@ namespace ABI::AppxUtils::Internal
 	constexpr bool __is_complete_type<T, decltype(void(sizeof(T)))>{ true };
 
 	template<typename T>
-	struct RemovePointer
+	struct RemovePointerHelper
 	{ using type = T; };
 
 	template<typename T>
-	struct RemovePointer<T*>
+	struct RemovePointerHelper<T*>
 	{ using type = T; };
 
 	template<typename T>
-	struct RemovePointer<T* const>
+	struct RemovePointerHelper<T* const>
 	{ using type = T; };
 
 	template<typename T>
-	struct RemovePointer<T* volatile>
+	struct RemovePointerHelper<T* volatile>
 	{ using type = T; };
 
 	template<typename T>
-	struct RemovePointer<T* const volatile>
+	struct RemovePointerHelper<T* const volatile>
 	{ using type = T; };
+
+	template<typename T>
+	using RemovePointer = typename RemovePointerHelper<T>::type;
 }

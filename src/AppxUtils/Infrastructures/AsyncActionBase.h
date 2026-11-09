@@ -5,7 +5,7 @@
 
 namespace ABI::AppxUtils::Internal
 {
-	class AsyncActionBase abstract : public AsyncInfoBase<ABI::Windows::Foundation::IAsyncAction>
+	class AsyncActionBase : public AsyncInfoBase<ABI::Windows::Foundation::IAsyncAction>
 	{
 	public:
 		AsyncActionBase() noexcept = default;

@@ -4,7 +4,7 @@
 
 namespace ABI::AppxUtils
 {
-    class AppxPackageBase abstract : public InspectableCommonBase<BaseTrust,
+    class AppxPackageBase : public InspectableCommonBase<BaseTrust,
         IAppxPackageCore, IAppxPackage, IAppxPackage3, IAppxPackage4, IAppxPackage6, IAppxPackage10,
         IAppxPackageFootprintFilesProvider, IAppxPackagePayloadFilesProvider,
         IAppxPackageLegacy,
@@ -31,8 +31,6 @@ namespace ABI::AppxUtils
         HRESULT STDMETHODCALLTYPE get_PackageDependencies(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageDependency>** value);
         HRESULT STDMETHODCALLTYPE get_Resources(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageResource>** value);
         HRESULT STDMETHODCALLTYPE get_DeviceCapabilities(ABI::Windows::Foundation::Collections::IVectorView<HSTRING>** value);
-
-        HRESULT STDMETHODCALLTYPE GetManifestStream(ABI::Windows::Storage::Streams::IInputStream** result);
 
         //IAppxPackage
         HRESULT STDMETHODCALLTYPE get_TargetDeviceFamilies(ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageTargetDeviceFamily>** value);
@@ -95,7 +93,6 @@ namespace ABI::AppxUtils
         ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageDependency>* m_PackageDependencies{ nullptr };
         ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageResource>* m_Resources{ nullptr };
         ABI::Windows::Foundation::Collections::IVectorView<HSTRING>* m_DeviceCapabilities{ nullptr };
-        ABI::Windows::Storage::Streams::IRandomAccessStream* m_ManifestStream{ nullptr };
 
         ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageTargetDeviceFamily>* m_TargetDeviceFamilies{ nullptr };
         ABI::Windows::Foundation::Collections::IVectorView<HSTRING>* m_Capabilities{ nullptr };
@@ -138,6 +135,17 @@ namespace ABI::AppxUtils
         HRESULT STDMETHODCALLTYPE GetPackageId(IAppxManifestPackageId*& pkgId);
     };
 
+    class AppxPackageDedicated final : public AppxPackageBase
+    {
+    public:
+        using AppxPackageBase::AppxPackageBase;
+
+        //IUnknown
+        ULONG STDMETHODCALLTYPE Release() override;
+
+        ~AppxPackageDedicated() noexcept = default;
+    };
+
     class AppxPackage final : public AppxPackageBase
     {
     public:
@@ -147,16 +155,5 @@ namespace ABI::AppxUtils
         ULONG STDMETHODCALLTYPE Release() override;
 
         ~AppxPackage() noexcept;
-    };
-
-    class AppxPackageElement final : public AppxPackageBase
-    {
-    public:
-        using AppxPackageBase::AppxPackageBase;
-
-        //IUnknown
-        ULONG STDMETHODCALLTYPE Release() override;
-
-        ~AppxPackageElement() noexcept;
     };
 }

@@ -4,7 +4,7 @@
 
 namespace ABI::AppxUtils
 {
-	class AppxPackagePayloadFileBase abstract : public InspectableCommonBase<BaseTrust,
+	class AppxPackagePayloadFileBase : public InspectableCommonBase<BaseTrust,
         IAppxPackagePayloadFile,
         ABI::Windows::Storage::IStorageFile,
         ABI::Windows::Storage::IStorageItem,

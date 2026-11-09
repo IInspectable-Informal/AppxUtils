@@ -104,7 +104,7 @@ namespace ABI::AppxUtils::Internal
 											if (SUCCEEDED(hr))
 											{
 												const bool canContinue{ external.get_CanContinue()  };
-												IAppxPackageCore* instance{ canContinue ? new AppxPackage{ reader } : nullptr };
+												IAppxPackageCore* instance{ canContinue ? new AppxPackageDedicated{ reader } : nullptr };
 												if (instance)
 												{ result = instance; }
 												else
@@ -204,7 +204,7 @@ namespace ABI::AppxUtils
 					printf("QPC: %lld\n", qpc2.QuadPart);
 					if (SUCCEEDED(hr))
 					{
-						IAppxPackageCore* instance{ new AppxPackage{ reader } };
+						IAppxPackageCore* instance{ new AppxPackageDedicated{ reader } };
 						if (instance)
 						{ *result = instance; }
 						else

@@ -13,7 +13,7 @@ namespace ABI
 
 namespace ABI::AppxUtils
 {
-	constexpr wchar_t* const g_PropNames[]
+	constexpr wchar_t g_PropNames[][23]
 	{
 		L"AppListEntry",
 		L"BackgroundColor",

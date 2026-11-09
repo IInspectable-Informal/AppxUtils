@@ -918,44 +918,6 @@ namespace ABI::AppxUtils
         *value = local;
         return S_OK;
     }
-
-    HRESULT STDMETHODCALLTYPE AppxPackageBase::GetManifestStream(ABI::IInputStream** result)
-    {
-        HRESULT hr{ S_OK };
-        auto local{ reinterpret_cast<ABI::IRandomAccessStream*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ManifestStream), nullptr, nullptr)) };
-        if (local == nullptr)
-        {
-            AcquireSRWLockExclusive(&m_Lock);
-            if (!m_ManifestStream)
-            {
-                IAppxManifestReader* reader{ nullptr };
-                hr = GetManifestReader(reader);
-                if (SUCCEEDED(hr))
-                {
-                    IStream* stream{ nullptr };
-                    hr = reader->GetStream(&stream);
-                    if (SUCCEEDED(hr))
-                    {
-                        hr = CreateRandomAccessStreamOverStream(stream, BSOS_DEFAULT, __uuidof(m_ManifestStream), to_void_pp(m_ManifestStream));
-                        stream->Release();
-                    }
-                }
-            }
-            ReleaseSRWLockExclusive(&m_Lock);
-            if (FAILED(hr))
-            { return hr; }
-            local = reinterpret_cast<ABI::IRandomAccessStream*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ManifestStream), nullptr, nullptr));
-        }
-
-        ABI::IRandomAccessStream* clonedStream{ nullptr };
-        hr = local->CloneStream(&clonedStream);
-        if (SUCCEEDED(hr))
-        {
-            hr = clonedStream->QueryInterface(__uuidof(*result), to_void_pp(*result));
-            clonedStream->Release();
-        }
-        return hr;
-    }
 #pragma endregion
 
 #pragma region IAppxPackage
@@ -2094,14 +2056,6 @@ namespace ABI::AppxUtils
         { m_Resources->Release(); }
         if (m_DeviceCapabilities)
         { m_DeviceCapabilities->Release(); }
-        if (m_ManifestStream)
-        {
-            ABI::IClosable* closable{ nullptr };
-            m_ManifestStream->QueryInterface(__uuidof(closable), to_void_pp(closable));
-            closable->Close();
-            closable->Release();
-            m_ManifestStream->Release();
-        }
 
         if (m_TargetDeviceFamilies)
         { m_TargetDeviceFamilies->Release(); }
@@ -2143,9 +2097,9 @@ namespace ABI::AppxUtils
     }
 #pragma endregion
 
-#pragma region AppxPackage
+#pragma region AppxPackageDedicated
 #pragma region IUnknown
-    ULONG STDMETHODCALLTYPE AppxPackage::Release()
+    ULONG STDMETHODCALLTYPE AppxPackageDedicated::Release()
     {
         const ULONG cRef{ InterlockedDecrement(&m_RefCount) };
         if (!cRef)
@@ -2153,25 +2107,21 @@ namespace ABI::AppxUtils
         return cRef;
     }
 #pragma endregion
-
-    //Destructor
-    AppxPackage::~AppxPackage() noexcept
-    { }
 #pragma endregion
 
-#pragma region AppxPackageElement
+#pragma region AppxPackage
 #pragma region IUnknown
-    ULONG STDMETHODCALLTYPE AppxPackageElement::Release()
+    ULONG STDMETHODCALLTYPE AppxPackage::Release()
     {
         const ULONG cRef{ InterlockedDecrement(&m_RefCount) };
         if (!cRef)
-        { this->~AppxPackageElement(); }
+        { this->~AppxPackage(); }
         return cRef;
     }
 #pragma endregion
 
     //Destructor
-    AppxPackageElement::~AppxPackageElement() noexcept
+    AppxPackage::~AppxPackage() noexcept
     { }
 #pragma endregion
 }

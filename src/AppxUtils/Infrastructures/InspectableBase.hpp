@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 template<TrustLevel level, typename... I>
-class InspectableCommonBase abstract : public I...
+class InspectableCommonBase : public I...
 {
 public:
     InspectableCommonBase() noexcept
@@ -98,7 +98,7 @@ public:
     //IUnknown
     ULONG STDMETHODCALLTYPE Release() override
     {
-        const ULONG cRef{ InterlockedDecrement(&m_RefCount) };
+        const ULONG cRef{ InterlockedDecrement(&this->m_RefCount) };
         printf("-- COM Object (0x%016p) Ref Count: %d\n", this, cRef);
         if (!cRef)
         { delete this; }
@@ -115,7 +115,7 @@ public:
     //IUnknown
     ULONG STDMETHODCALLTYPE Release() override
     {
-        const ULONG cRef{ InterlockedDecrement(&m_RefCount) };
+        const ULONG cRef{ InterlockedDecrement(&this->m_RefCount) };
         printf("-- COM Object (0x%016p) Ref Count: %d\n", this, cRef);
         if (!cRef)
         { this->~InspectableElementBase(); }

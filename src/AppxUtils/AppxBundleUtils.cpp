@@ -19,140 +19,6 @@ namespace ABI
 
 namespace ABI::AppxUtils::Internal
 {
-	class AppxPackageVectorView final : public VectorViewBase<ABI::AppxPackage*>
-	{
-	private:
-		class InternalIterator final : public InternalIteratorBase
-		{
-		public:
-			InternalIterator(AppxPackageElement* const list, const UINT32 size, AppxPackageVectorView* const vectorView) noexcept :
-				InternalIteratorBase(size), m_Array(list), m_VectorView(vectorView)
-			{
-				vectorView->AddRef();
-			}
-
-			HRESULT STDMETHODCALLTYPE get_Current(T_ABI* current)
-			{
-				if (m_Current < m_Size)
-				{
-					auto* const element{ m_Array + m_Current };
-					element->AddRef();
-					*current = element;
-					return S_OK;
-				}
-				else
-				{ return E_BOUNDS; }
-			}
-
-			HRESULT STDMETHODCALLTYPE GetMany(UINT32 capacity, T_ABI* value, UINT32* actual)
-			{
-				UINT32 itemsGot{ 0 };
-				for (; itemsGot < capacity && m_Current < m_Size; ++m_Current, ++itemsGot)
-				{
-					AppxPackageElement* const element{ m_Array + m_Current };
-					element->AddRef();
-					value[itemsGot] = element;
-				}
-				*actual = itemsGot;
-				return S_OK;
-			}
-
-			//IInspectable
-			HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className)
-			{ return WindowsCreateString(L"Windows.Foundation.Collections.IIterator`1<AppxUtils.AppxPackage>", 65, className); }
-
-			~InternalIterator()
-			{
-				m_VectorView->Release();
-			}
-
-		private:
-			AppxPackageElement* const m_Array{ nullptr };
-			AppxPackageVectorView* const m_VectorView{ nullptr };
-		};
-
-	public:
-		AppxPackageVectorView(AppxPackageElement* const list, const UINT32 size) noexcept :
-			m_Array(list), VectorViewBase(size)
-		{
-
-		}
-
-		HRESULT STDMETHODCALLTYPE GetAt(UINT32 index, T_ABI* item)
-		{
-			if (index < m_Size)
-			{
-				auto* const element{ m_Array + index };
-				element->AddRef();
-				*item = element;
-				return S_OK;
-			}
-			else
-			{ return E_BOUNDS; }
-		}
-
-		HRESULT STDMETHODCALLTYPE IndexOf(T_ABI value, UINT32* index, boolean* found)
-		{
-			for (UINT32 i{ 0 }; i < m_Size; ++i)
-			{
-				if (static_cast<IAppxPackageCore*>(m_Array + i) == value)
-				{
-					*index = i;
-					*found = true;
-					return S_OK;
-				}
-			}
-			*index = 0;
-			*found = false;
-			return S_OK;
-		}
-
-		HRESULT STDMETHODCALLTYPE GetMany(UINT32 startIndex, UINT32 capacity, T_ABI* value, UINT32* actual)
-		{
-			if (startIndex <= m_Size)
-			{
-				UINT32 itemsGot{ 0 };
-				for (UINT32 i{ startIndex }; itemsGot < capacity && i < m_Size; ++i, ++itemsGot)
-				{
-					auto* const element{ m_Array + i };
-					element->AddRef();
-					value[itemsGot] = element;
-				}
-				*actual = itemsGot;
-				return S_OK;
-			}
-			else
-			{ return E_BOUNDS; }
-		}
-
-		//IIterable<AppxPackage>
-		HRESULT STDMETHODCALLTYPE First(ABI::Windows::Foundation::Collections::IIterator<T_Logical>** first)
-		{
-			auto* const instance{ new InternalIterator{ m_Array, m_Size, this } };
-			if (instance)
-			{
-				*first = instance;
-				return S_OK;
-			}
-			else
-			{ return E_OUTOFMEMORY; }
-		}
-
-		//IInspectable
-		HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className)
-		{ return WindowsCreateString(L"Windows.Foundation.Collections.IVectorView`1<AppxUtils.AppxPackage>", 67, className); }
-
-		~AppxPackageVectorView() noexcept
-		{
-			for (UINT32 i{ m_Size }; i > 0;)
-			{ m_Array[--i].Release(); }
-			::operator delete[](m_Array);
-		}
-
-	private:
-		AppxPackageElement* const m_Array{ nullptr };
-	};
-
 #pragma region AppxBundleGetPackagesAsyncOp
 	AppxBundleGetPackagesAsyncOp::AppxBundleGetPackagesAsyncOp(DWORD& bundleReader) noexcept :
 		m_BundleReader(bundleReader)
@@ -241,7 +107,7 @@ namespace ABI::AppxUtils::Internal
 									{
 										if (external.get_CanContinue())
 										{
-											auto* const packages{ static_cast<AppxPackageElement*>(::operator new[](__aligned_size_of<AppxPackageElement> * count)) };
+											auto* const packages{ static_cast<AppxPackage*>(::operator new[](__aligned_size_of<AppxPackage> * count)) };
 											if (packages)
 											{
 												enumerator->GetHasCurrent(&hasNext);
@@ -262,7 +128,7 @@ namespace ABI::AppxUtils::Internal
 																hr = factory->CreatePackageReader(stream, &reader);
 																if (SUCCEEDED(hr))
 																{
-																	new (packages + completed) AppxPackageElement{ reader };
+																	new (packages + completed) AppxPackage{ reader };
 																	++completed;
 																	enumerator->MoveNext(&hasNext);
 																}
@@ -286,7 +152,7 @@ namespace ABI::AppxUtils::Internal
 												if (SUCCEEDED(hr))
 												{
 													const bool canContinue{ external.get_CanContinue() };
-													auto* const instance{ canContinue ? new AppxPackageVectorView{ packages, count } : nullptr };
+													auto* const instance{ canContinue ? new VectorView<AppxPackage*>{ packages, count } : nullptr };
 													if (instance)
 													{ result = instance; }
 													else

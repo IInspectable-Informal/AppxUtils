@@ -6,7 +6,7 @@
 namespace ABI::AppxUtils::Internal
 {
 	template<typename TResult>
-	class AsyncOperationBase abstract : public AsyncInfoBase<ABI::Windows::Foundation::IAsyncOperation<TResult>>
+	class AsyncOperationBase : public AsyncInfoBase<ABI::Windows::Foundation::IAsyncOperation<TResult>>
 	{
 	protected:
 		using IBase = ABI::Windows::Foundation::IAsyncOperation<TResult>;
@@ -29,29 +29,29 @@ namespace ABI::AppxUtils::Internal
 			{ handler->AddRef(); }
 			ABI::Windows::Foundation::AsyncStatus status{};
 			HRESULT hr{ S_OK };
-			AcquireSRWLockExclusive(&m_Lock);
-			if (m_IsOpening)
+			AcquireSRWLockExclusive(&this->m_Lock);
+			if (this->m_IsOpening)
 			{
 				if (m_Completed)
 				{ hr = E_ILLEGAL_DELEGATE_ASSIGNMENT; }
 				else
 				{
 					m_Completed = handler;
-					status = static_cast<ABI::Windows::Foundation::AsyncStatus>(m_Status);
+					status = static_cast<ABI::Windows::Foundation::AsyncStatus>(this->m_Status);
 				}
 			}
 			else
 			{ hr = E_ILLEGAL_METHOD_CALL; }
-			ReleaseSRWLockExclusive(&m_Lock);
+			ReleaseSRWLockExclusive(&this->m_Lock);
 			if (SUCCEEDED(hr))
 			{
 				if (status != ABI::Windows::Foundation::AsyncStatus::Started && handler)
 				{
 					handler->Invoke(this, status);
 					handler->Release();
-					AcquireSRWLockExclusive(&m_Lock);
+					AcquireSRWLockExclusive(&this->m_Lock);
 					m_Completed = nullptr;
-					ReleaseSRWLockExclusive(&m_Lock);
+					ReleaseSRWLockExclusive(&this->m_Lock);
 				}
 			}
 			else if (handler)
@@ -63,8 +63,8 @@ namespace ABI::AppxUtils::Internal
 		{
 			printf("get_Completed\n");
 			HRESULT hr{ S_OK };
-			AcquireSRWLockShared(&m_Lock);
-			if (m_IsOpening)
+			AcquireSRWLockShared(&this->m_Lock);
+			if (this->m_IsOpening)
 			{
 				if (m_Completed)
 				{ m_Completed->AddRef(); }
@@ -73,7 +73,7 @@ namespace ABI::AppxUtils::Internal
 			}
 			else
 			{ hr = E_ILLEGAL_METHOD_CALL; }
-			ReleaseSRWLockShared(&m_Lock);
+			ReleaseSRWLockShared(&this->m_Lock);
 			return hr;
 		}
 #pragma endregion
@@ -114,15 +114,23 @@ namespace ABI::AppxUtils::Internal
 	template<typename TResult>
 	class AsyncOperation abstract : public AsyncOperationBase<TResult>
 	{
+	private:
+		using Base = AsyncOperationBase<TResult>;
+		using IBase = Base;
+		using TResult_Complex = Base::TResult_Complex;
+		using TResult_ABI = Base::TResult_ABI;
+		using TResult_Logical = Base::TResult_Logical;
+		using ICompletedHandler = Base::ICompletedHandler;
+
 	public:
 		HRESULT STDMETHODCALLTYPE GetResults(TResult_ABI* results)
 		{
 			printf("GetResults\n");
 			HRESULT hr{ S_OK };
-			AcquireSRWLockShared(&m_Lock);
-			if (m_IsOpening)
+			AcquireSRWLockShared(&this->m_Lock);
+			if (this->m_IsOpening)
 			{
-				switch (static_cast<ABI::Windows::Foundation::AsyncStatus>(m_Status))
+				switch (static_cast<ABI::Windows::Foundation::AsyncStatus>(this->m_Status))
 				{
 					case ABI::Windows::Foundation::AsyncStatus::Completed:
 					{
@@ -137,7 +145,7 @@ namespace ABI::AppxUtils::Internal
 					} break;
 
 					case ABI::Windows::Foundation::AsyncStatus::Error:
-						hr = m_ErrorCode;
+						hr = this->m_ErrorCode;
 						break;
 
 					case ABI::Windows::Foundation::AsyncStatus::Canceled:
@@ -151,27 +159,27 @@ namespace ABI::AppxUtils::Internal
 			}
 			else
 			{ hr = E_ILLEGAL_METHOD_CALL; }
-			ReleaseSRWLockShared(&m_Lock);
+			ReleaseSRWLockShared(&this->m_Lock);
 			return hr;
 		}
 
 		HRESULT STDMETHODCALLTYPE Close()
 		{
 			HRESULT hr{ S_OK };
-			AcquireSRWLockExclusive(&m_Lock);
-			if (static_cast<ABI::Windows::Foundation::AsyncStatus>(m_Status) == ABI::Windows::Foundation::AsyncStatus::Started)
+			AcquireSRWLockExclusive(&this->m_Lock);
+			if (static_cast<ABI::Windows::Foundation::AsyncStatus>(this->m_Status) == ABI::Windows::Foundation::AsyncStatus::Started)
 			{ hr = E_ILLEGAL_METHOD_CALL; }
 			else
 			{
-				const bool opening{ m_IsOpening != 0 };
-				m_IsOpening = false;
+				const bool opening{ this->m_IsOpening != 0 };
+				this->m_IsOpening = false;
 				if constexpr (!IsFundamentalType<TResult_ABI> && !__is_enum(TResult_ABI) && !ABI::Windows::Foundation::Collections::is_foundation_struct<TResult_ABI>::value && __is_trivial(TResult_ABI) && __is_standard_layout(TResult_ABI))
 				{ 
 					if (opening)
 					{ StructLifetimeFunctions<TResult_ABI>::ReleaseStruct(m_Result); }
 				}
 			}
-			ReleaseSRWLockExclusive(&m_Lock);
+			ReleaseSRWLockExclusive(&this->m_Lock);
 			return S_OK;
 		}
 
@@ -195,10 +203,10 @@ namespace ABI::AppxUtils::Internal
 		{
 			printf("GetResults\n");
 			HRESULT hr{ S_OK };
-			AcquireSRWLockShared(&m_Lock);
-			if (m_IsOpening)
+			AcquireSRWLockShared(&this->m_Lock);
+			if (this->m_IsOpening)
 			{
-				switch (static_cast<ABI::Windows::Foundation::AsyncStatus>(m_Status))
+				switch (static_cast<ABI::Windows::Foundation::AsyncStatus>(this->m_Status))
 				{
 					case ABI::Windows::Foundation::AsyncStatus::Completed:
 					{
@@ -208,7 +216,7 @@ namespace ABI::AppxUtils::Internal
 					} break;
 
 					case ABI::Windows::Foundation::AsyncStatus::Error:
-						hr = m_ErrorCode;
+						hr = this->m_ErrorCode;
 						break;
 
 					case ABI::Windows::Foundation::AsyncStatus::Canceled:
@@ -222,7 +230,7 @@ namespace ABI::AppxUtils::Internal
 			}
 			else
 			{ hr = E_ILLEGAL_METHOD_CALL; }
-			ReleaseSRWLockShared(&m_Lock);
+			ReleaseSRWLockShared(&this->m_Lock);
 			return hr;
 		}
 

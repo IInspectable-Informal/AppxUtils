@@ -35,6 +35,7 @@
 #include "dllmain.h"
 #include "Generated Files/AppxUtils.g.h"
 #include "Generated Files/AppxUtilsInterop.g.h"
+//#include "Infrastructures/AtomicOperations.hpp"
 #include "Infrastructures/GuidHelpers.hpp"
 #include "Infrastructures/HeapManagement.h"
 #include "Infrastructures/UnknownBase.hpp"

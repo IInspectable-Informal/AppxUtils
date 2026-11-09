@@ -424,9 +424,7 @@ namespace ABI::AppxUtils::Internal
 			AcquireSRWLockExclusive(&m_Lock);
 			const bool opening{ m_IsOpening != 0 };
 			if (static_cast<ABI::AsyncStatus>(m_Status) == ABI::AsyncStatus::Started)
-			{
-				hr = E_ILLEGAL_METHOD_CALL;
-			}
+			{ hr = E_ILLEGAL_METHOD_CALL; }
 			else
 			{
 				m_IsOpening = false;
@@ -548,78 +546,94 @@ namespace ABI::AppxUtils::Internal
 									hr = AsyncOperationUtils<ABI::IRandomAccessStream*>::AwaitAsyncObject(async0, destStream);
 									if (SUCCEEDED(hr))
 									{
-										constexpr auto bufferSize{ 16 * 1024 };
-										auto* const readerBuffer{ new StreamReaderBuffer<bufferSize>{} };
-										if (readerBuffer)
+										hr = destStream->put_Size(size);
+										if (SUCCEEDED(hr))
 										{
-											hr = destStream->put_Size(size);
+											hr = destStream->Seek(0);
 											if (SUCCEEDED(hr))
+											{
+												constexpr auto bufferSize{ 16 * 1024 };
+												auto* const readerBuffer{ new StreamReaderBuffer<bufferSize>{} };
+												if (readerBuffer)
+												{
+													ABI::IInputStream* inputStream{ nullptr };
+													sourceStream->QueryInterface(__uuidof(inputStream), to_void_pp(inputStream));
+													ABI::IOutputStream* outputStream{ nullptr };
+													destStream->QueryInterface(__uuidof(outputStream), to_void_pp(outputStream));
+													UINT64 bytesActualCopied{ 0 };
+													for (; bytesActualCopied < size;)
+													{
+														UINT32 actualCopied{ 0 };
+														ABI::IAsyncOperationWithProgress<ABI::IBuffer*, UINT32>* async2{ nullptr };
+														hr = inputStream->ReadAsync(readerBuffer, bufferSize, ABI::InputStreamOptions_ReadAhead, &async2);
+														if (SUCCEEDED(hr))
+														{
+															ABI::IBuffer* dataBuffer{ nullptr };
+															hr = AsyncOperationWithProgressUtils<ABI::IBuffer*, UINT32>::AwaitAsyncObject(async2, dataBuffer);
+															if (SUCCEEDED(hr))
+															{
+																ABI::IAsyncOperationWithProgress<UINT32, UINT32>* async3{ nullptr };
+																hr = outputStream->WriteAsync(dataBuffer, &async3);
+																if (SUCCEEDED(hr))
+																{
+																	hr = AsyncOperationWithProgressUtils<UINT32, UINT32>::AwaitAsyncObject(async3, actualCopied);
+																	if (SUCCEEDED(hr))
+																	{
+																		bytesActualCopied += actualCopied;
+																	}
+																	AsyncOperationWithProgressUtils<UINT32, UINT32>::CloseAsyncObject(async3);
+																	async3->Release();
+																}
+																dataBuffer->Release();
+															}
+															AsyncOperationWithProgressUtils<ABI::IBuffer*, UINT32>::CloseAsyncObject(async2);
+															async2->Release();
+														}
+														if (FAILED(hr))
+														{ break; }
+														else if (actualCopied == 0 && bytesActualCopied < size)
+														{
+															hr = STG_E_INCOMPLETE;
+															break;
+														}
+													}
+													if (SUCCEEDED(hr))
+													{
+														ABI::IAsyncOperation<bool>* async4{ nullptr };
+														hr = outputStream->FlushAsync(&async4);
+														if (SUCCEEDED(hr))
+														{
+															boolean flushResult{};
+															hr = AsyncOperationUtils<bool>::AwaitAsyncObject(async4, flushResult);
+															AsyncOperationUtils<bool>::CloseAsyncObject(async4);
+															async4->Release();
+														}
+													}
+													outputStream->Release();
+													inputStream->Release();
+													readerBuffer->Release();
+												}
+												else
+												{ hr = E_OUTOFMEMORY; }
+											}
+										}
+										if (FAILED(hr))
+										{
+											if (SUCCEEDED(destStream->put_Size(0)))
 											{
 												ABI::IOutputStream* outputStream{ nullptr };
 												destStream->QueryInterface(__uuidof(outputStream), to_void_pp(outputStream));
-												ABI::IAsyncOperation<bool>* async1{ nullptr };
-												hr = outputStream->FlushAsync(&async1);
-												if (SUCCEEDED(hr))
+												ABI::IAsyncOperation<bool>* async5{ nullptr };
+												if (SUCCEEDED(outputStream->FlushAsync(&async5)))
 												{
 													boolean flushResult{};
-													hr = AsyncOperationUtils<bool>::AwaitAsyncObject(async1, flushResult);
-													if (SUCCEEDED(hr))
-													{
-														hr = destStream->Seek(0);
-														if (SUCCEEDED(hr))
-														{
-															ABI::IInputStream* inputStream{ nullptr };
-															sourceStream->QueryInterface(__uuidof(inputStream), to_void_pp(inputStream));
-															const auto times{ size / bufferSize + 1 };
-															for (UINT64 i{ 0 }; i < times; ++i)
-															{
-																ABI::IAsyncOperationWithProgress<ABI::IBuffer*, UINT32>* async2{ nullptr };
-																hr = inputStream->ReadAsync(readerBuffer, bufferSize, ABI::InputStreamOptions_ReadAhead, &async2);
-																if (SUCCEEDED(hr))
-																{
-																	ABI::IBuffer* dataBuffer{ nullptr };
-																	hr = AsyncOperationWithProgressUtils<ABI::IBuffer*, UINT32>::AwaitAsyncObject(async2, dataBuffer);
-																	if (SUCCEEDED(hr))
-																	{
-																		ABI::IAsyncOperationWithProgress<UINT32, UINT32>* async3{ nullptr };
-																		hr = outputStream->WriteAsync(dataBuffer, &async3);
-																		if (SUCCEEDED(hr))
-																		{
-																			UINT32 wroteResult{};
-																			hr = AsyncOperationWithProgressUtils<UINT32, UINT32>::AwaitAsyncObject(async3, wroteResult);
-																			AsyncOperationWithProgressUtils<UINT32, UINT32>::CloseAsyncObject(async3);
-																			async3->Release();
-																		}
-																	}
-																	AsyncOperationWithProgressUtils<ABI::IBuffer*, UINT32>::CloseAsyncObject(async2);
-																	async2->Release();
-																}
-																if (FAILED(hr))
-																{ break; }
-															}
-															inputStream->Release();
-															if (SUCCEEDED(hr))
-															{
-																ABI::IAsyncOperation<bool>* async4{ nullptr };
-																hr = outputStream->FlushAsync(&async4);
-																if (SUCCEEDED(hr))
-																{
-																	hr = AsyncOperationUtils<bool>::AwaitAsyncObject(async4, flushResult);
-																	AsyncOperationUtils<bool>::CloseAsyncObject(async4);
-																	async4->Release();
-																}
-															}
-														}
-													}
-													AsyncOperationUtils<bool>::CloseAsyncObject(async1);
-													async1->Release();
+													AsyncOperationUtils<bool>::AwaitAsyncObject(async5, flushResult);
+													AsyncOperationUtils<bool>::CloseAsyncObject(async5);
+													async5->Release();
 												}
 												outputStream->Release();
 											}
-											readerBuffer->Release();
 										}
-										else
-										{ hr = E_OUTOFMEMORY; }
 										TryCloseObject(destStream);
 										destStream->Release();
 									}

@@ -252,8 +252,6 @@ namespace AppxUtils
 		Windows.Foundation.Collections.IVectorView<AppxPackageResource> Resources{ get; };
 
 		Windows.Foundation.Collections.IVectorView<String> DeviceCapabilities{ get; };
-
-		Windows.Storage.Streams.IInputStream GetManifestStream();
 	};
 
 	enum AppxPackagePayloadFileCompressionOption

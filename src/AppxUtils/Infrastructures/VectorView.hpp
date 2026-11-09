@@ -6,7 +6,7 @@
 namespace ABI::AppxUtils::Internal
 {
 	template<typename T>
-	class VectorViewBase abstract : public InspectableBase<BaseTrust,
+	class VectorViewBase : public InspectableBase<BaseTrust,
 		ABI::Windows::Foundation::Collections::IVectorView<T>,
 		ABI::Windows::Foundation::Collections::IIterable<T>,
 		IAgileObject
@@ -17,7 +17,7 @@ namespace ABI::AppxUtils::Internal
 		using T_ABI = typename ABI::Windows::Foundation::Internal::GetAbiType<T_Complex>::type;
 		using T_Logical = typename ABI::Windows::Foundation::Internal::GetLogicalType<T_Complex>::type;
 
-		class InternalIteratorBase abstract : public InspectableBase<BaseTrust,
+		class InternalIteratorBase : public InspectableBase<BaseTrust,
 			ABI::Windows::Foundation::Collections::IIterator<T>,
 			IAgileObject
 		>
@@ -71,6 +71,12 @@ namespace ABI::AppxUtils::Internal
 	class VectorView : public VectorViewBase<T>
 	{
 	private:
+		using Base = VectorViewBase<T>;
+		using T_Complex = Base::T_Complex;
+		using T_ABI = Base::T_ABI;
+		using T_Logical = Base::T_Logical;
+		using InternalIteratorBase = Base::InternalIteratorBase;
+
 		class InternalIterator final : public InternalIteratorBase
 		{
 		public:
@@ -82,9 +88,9 @@ namespace ABI::AppxUtils::Internal
 
 			HRESULT STDMETHODCALLTYPE get_Current(T_ABI* current)
 			{
-				if (m_Current < m_Size)
+				if (this->m_Current < this->m_Size)
 				{
-					T_ABI& element{ m_Array[m_Current] };
+					T_ABI& element{ m_Array[this->m_Current] };
 					if constexpr (IsFundamentalType<T_ABI> || __is_enum(T_ABI))
 					{ *current = element; }
 					else if constexpr (ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value)
@@ -106,9 +112,9 @@ namespace ABI::AppxUtils::Internal
 			HRESULT STDMETHODCALLTYPE GetMany(UINT32 capacity, T_ABI* value, UINT32* actual) override
 			{
 				UINT32 itemsGot{ 0 };
-				for (; itemsGot < capacity && m_Current < m_Size; ++m_Current, ++itemsGot)
+				for (; itemsGot < capacity && this->m_Current < this->m_Size; ++this->m_Current, ++itemsGot)
 				{
-					T_ABI& element{ m_Array[m_Current] };
+					T_ABI& element{ m_Array[this->m_Current] };
 					if constexpr (IsFundamentalType<T_ABI> || __is_enum(T_ABI))
 					{ value[itemsGot] = element; }
 					else if constexpr (ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value)
@@ -164,7 +170,7 @@ namespace ABI::AppxUtils::Internal
 	public:
 		HRESULT STDMETHODCALLTYPE GetAt(UINT32 index, T_ABI* item)
 		{
-			if (index < m_Size)
+			if (index < this->m_Size)
 			{
 				T_ABI& element = m_Array[index];
 				if constexpr (IsFundamentalType<T_ABI> || __is_enum(T_ABI))
@@ -187,7 +193,7 @@ namespace ABI::AppxUtils::Internal
 
 		HRESULT STDMETHODCALLTYPE IndexOf(T_ABI value, UINT32* index, boolean* found)
 		{
-			for (UINT32 i = 0; i < m_Size; ++i)
+			for (UINT32 i = 0; i < this->m_Size; ++i)
 			{
 				T_ABI& element{ m_Array[i] };
 				if constexpr (IsFundamentalType<T_ABI> || __is_enum(T_ABI))
@@ -245,10 +251,10 @@ namespace ABI::AppxUtils::Internal
 
 		HRESULT STDMETHODCALLTYPE GetMany(UINT32 startIndex, UINT32 capacity, T_ABI* value, UINT32* actual) override
 		{
-			if (startIndex <= m_Size)
+			if (startIndex <= this->m_Size)
 			{
 				UINT32 itemsGot{ 0 };
-				for (UINT32 i{ startIndex }; itemsGot < capacity && i < m_Size; ++i, ++itemsGot)
+				for (UINT32 i{ startIndex }; itemsGot < capacity && i < this->m_Size; ++i, ++itemsGot)
 				{
 					T_ABI& element{ m_Array[i] };
 					if constexpr (IsFundamentalType<T_ABI> || __is_enum(T_ABI))
@@ -278,7 +284,7 @@ namespace ABI::AppxUtils::Internal
 		//IIterable
 		HRESULT STDMETHODCALLTYPE First(ABI::Windows::Foundation::Collections::IIterator<T_Logical>** first)
 		{
-			InternalIterator* iterator{ new InternalIterator{ m_Array, m_Size, this } };
+			InternalIterator* iterator{ new InternalIterator{ m_Array, this->m_Size, this } };
 			if (iterator)
 			{
 				*first = iterator;
@@ -299,7 +305,7 @@ namespace ABI::AppxUtils::Internal
 
 		virtual ~VectorView() noexcept
 		{
-			for (UINT32 i = 0; i < m_Size; ++i)
+			for (UINT32 i = 0; i < this->m_Size; ++i)
 			{
 				T& element{ m_Array[i] };
 				if constexpr (!IsFundamentalType<T_ABI> && !__is_enum(T_ABI) && !ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value && __is_trivial(T_ABI) && __is_standard_layout(T_ABI))
@@ -310,7 +316,7 @@ namespace ABI::AppxUtils::Internal
 
 		static HRESULT STDMETHODCALLTYPE CreateInstance(T*& list, const UINT32 size, VectorView<T>*& result) noexcept
 		{
-			VectorView<T>* instance{ new VectorView<T>(list, size) };
+			auto* const instance{ new VectorView<T>(list, size) };
 			if (instance)
 			{
 				result = instance;
@@ -320,7 +326,7 @@ namespace ABI::AppxUtils::Internal
 			{ return E_OUTOFMEMORY; }
 		}
 		
-		VectorView(T*& list, const UINT32 size) noexcept : m_Array(list), VectorViewBase(size)
+		VectorView(T*& list, const UINT32 size) noexcept : VectorViewBase<T>(size), m_Array(list)
 		{
 
 		}
@@ -345,9 +351,11 @@ namespace ABI::AppxUtils::Internal
 	class VectorView<T*> : public VectorViewBase<T*>
 	{
 	private:
-		using T_Complex = typename ABI::Windows::Foundation::Collections::IVectorView<T*>::T_complex;
-		using T_ABI = typename ABI::Windows::Foundation::Internal::GetAbiType<T_Complex>::type;
-		using T_Logical = typename ABI::Windows::Foundation::Internal::GetLogicalType<T_Complex>::type;
+		using Base = VectorViewBase<T*>;
+		using T_Complex = Base::T_Complex;
+		using T_ABI = Base::T_ABI;
+		using T_Logical = Base::T_Logical;
+		using InternalIteratorBase = Base::InternalIteratorBase;
 
 		class InternalIterator final : public InternalIteratorBase
 		{
@@ -360,10 +368,10 @@ namespace ABI::AppxUtils::Internal
 
 			HRESULT STDMETHODCALLTYPE get_Current(T_ABI* current)
 			{
-				if (m_Current < m_Size)
+				if (this->m_Current < this->m_Size)
 				{
-					T* const element{ m_Array + m_Current };
-					if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
+					T* const element{ m_Array + this->m_Current };
+					if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>))
 					{
 						element->AddRef();
 						*current = element;
@@ -381,11 +389,11 @@ namespace ABI::AppxUtils::Internal
 			HRESULT STDMETHODCALLTYPE GetMany(UINT32 capacity, T_ABI* value, UINT32* actual) override
 			{
 				UINT32 itemsGot{ 0 };
-				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
+				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>))
 				{
-					for (; itemsGot < capacity && m_Current < m_Size; ++m_Current, ++itemsGot)
+					for (; itemsGot < capacity && this->m_Current < this->m_Size; ++this->m_Current, ++itemsGot)
 					{
-						T* const element{ m_Array + m_Current };
+						T* const element{ m_Array + this->m_Current };
 						element->AddRef();
 						value[itemsGot] = element;
 					}
@@ -428,10 +436,10 @@ namespace ABI::AppxUtils::Internal
 	public:
 		HRESULT STDMETHODCALLTYPE GetAt(UINT32 index, T_ABI* item)
 		{
-			if (index < m_Size)
+			if (index < this->m_Size)
 			{
 				T* const element{ m_Array + index };
-				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
+				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>))
 				{
 					element->AddRef();
 					*item = element;
@@ -448,10 +456,10 @@ namespace ABI::AppxUtils::Internal
 
 		HRESULT STDMETHODCALLTYPE IndexOf(T_ABI value, UINT32* index, boolean* found)
 		{
-			for (UINT32 i = 0; i < m_Size; ++i)
+			for (UINT32 i = 0; i < this->m_Size; ++i)
 			{
 				T* const element{ m_Array + i };
-				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
+				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>))
 				{
 					if (static_cast<T_ABI>(element) == value)
 					{
@@ -477,12 +485,12 @@ namespace ABI::AppxUtils::Internal
 
 		HRESULT STDMETHODCALLTYPE GetMany(UINT32 startIndex, UINT32 capacity, T_ABI* value, UINT32* actual) override
 		{
-			if (startIndex <= m_Size)
+			if (startIndex <= this->m_Size)
 			{
 				UINT32 itemsGot{ 0 };
-				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
+				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>))
 				{
-					for (UINT32 i{ startIndex }; itemsGot < capacity && i < m_Size; ++i, ++itemsGot)
+					for (UINT32 i{ startIndex }; itemsGot < capacity && i < this->m_Size; ++i, ++itemsGot)
 					{
 						T* const element{ m_Array + i };
 						element->AddRef();
@@ -499,7 +507,7 @@ namespace ABI::AppxUtils::Internal
 		//IIterable
 		HRESULT STDMETHODCALLTYPE First(ABI::Windows::Foundation::Collections::IIterator<T_Logical>** first)
 		{
-			InternalIterator* iterator{ new InternalIterator(m_Array, m_Size, this) };
+			InternalIterator* iterator{ new InternalIterator(m_Array, this->m_Size, this) };
 			if (iterator)
 			{
 				*first = iterator;
@@ -520,22 +528,20 @@ namespace ABI::AppxUtils::Internal
 
 		virtual ~VectorView() noexcept
 		{
-			for (UINT32 i{ m_Size }; i > 0;)
+			for (UINT32 i{ this->m_Size }; i > 0;)
 			{
 				T* const element{ m_Array + --i };
-				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>::type))
+				if constexpr (__is_base_of(IUnknown, RemovePointer<T_ABI>))
 				{
 					element->Release();
 				}
 			}
 			::operator delete[](m_Array);
-			if (m_CriticalSections)
-			{ delete[] m_CriticalSections; }
 		}
 
-		static HRESULT STDMETHODCALLTYPE CreateInstance(T*& list, const UINT32 size, VectorView<T*>*& result, const CRITICAL_SECTION* const& criticalSections = nullptr) noexcept
+		static HRESULT STDMETHODCALLTYPE CreateInstance(T* const list, const UINT32 size, VectorView<T*>*& result) noexcept
 		{
-			VectorView<T*>* instance{ new VectorView<T*>(list, size, criticalSections) };
+			auto* const instance{ new VectorView<T*>(list, size) };
 			if (instance)
 			{
 				result = instance;
@@ -545,15 +551,14 @@ namespace ABI::AppxUtils::Internal
 			{ return E_OUTOFMEMORY; }
 		}
 
-		VectorView(T*& list, const UINT32 size, const CRITICAL_SECTION* const& criticalSections = nullptr) noexcept :
-			VectorViewBase(size), m_Array(list), m_CriticalSections(criticalSections)
+		VectorView(T* const list, const UINT32 size) noexcept :
+			VectorViewBase<T*>(size), m_Array(list)
 		{
 
 		}
 
 	private:
 		T* const m_Array{ nullptr };
-		const CRITICAL_SECTION* const m_CriticalSections{ nullptr };
 
 		static inline INIT_ONCE s_InitOnce{ INIT_ONCE_STATIC_INIT };
 		static inline const wchar_t* s_ClassName{ nullptr };
@@ -705,7 +710,7 @@ namespace ABI::AppxUtils::Internal
 
 		static HRESULT STDMETHODCALLTYPE CreateInstance(HSTRING*& list, const UINT32 size, VectorView<HSTRING>*& result) noexcept
 		{
-			VectorView<HSTRING>* instance{ new VectorView<HSTRING>{ list, size } };
+			auto* const instance{ new VectorView<HSTRING>{ list, size } };
 			if (instance)
 			{
 				result = instance;
