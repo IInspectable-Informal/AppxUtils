@@ -1792,37 +1792,42 @@ namespace ABI::AppxUtils
 #pragma region IAppxPackageFootprintFilesProvider
     HRESULT STDMETHODCALLTYPE AppxPackageBase::GetFootprintFile(AppxPackageFootprintFileType type, IAppxPackagePayloadFile** result)
     {
-        const INT32 typeValue{ static_cast<INT32>(type) };
-        auto* local{ static_cast<IAppxPackagePayloadFile*>(InterlockedCompareExchangePointer(to_void_pp(m_FootprintFiles[typeValue]), nullptr, nullptr)) };
-        if (local == nullptr)
+        if (type >= AppxPackageFootprintFileType::Manifest && type <= AppxPackageFootprintFileType::ContentGroupMap)
         {
-            AcquireSRWLockExclusive(&m_Lock);
-            HRESULT hr{ S_OK };
-            if (!m_FootprintFiles[typeValue])
+            const INT32 typeValue{ static_cast<INT32>(type) };
+            auto* local{ static_cast<IAppxPackagePayloadFile*>(InterlockedCompareExchangePointer(to_void_pp(m_FootprintFiles[typeValue]), nullptr, nullptr)) };
+            if (local == nullptr)
             {
-                IAppxFile* payloadFile{ nullptr };
-                hr = m_AppxPackageReader->GetFootprintFile(static_cast<APPX_FOOTPRINT_FILE_TYPE>(type), &payloadFile);
-                if (SUCCEEDED(hr))
+                AcquireSRWLockExclusive(&m_Lock);
+                HRESULT hr{ S_OK };
+                if (!m_FootprintFiles[typeValue])
                 {
-                    auto* const instance{ new AppxPackagePayloadFileDedicated{ payloadFile } };
-                    if (instance)
-                    { m_FootprintFiles[typeValue] = instance; }
-                    else
+                    IAppxFile* payloadFile{ nullptr };
+                    hr = m_AppxPackageReader->GetFootprintFile(static_cast<APPX_FOOTPRINT_FILE_TYPE>(type), &payloadFile);
+                    if (SUCCEEDED(hr))
                     {
-                        hr = E_OUTOFMEMORY;
-                        payloadFile->Release();
+                        auto* const instance{ new AppxPackagePayloadFileDedicated{ payloadFile } };
+                        if (instance)
+                        { m_FootprintFiles[typeValue] = instance; }
+                        else
+                        {
+                            hr = E_OUTOFMEMORY;
+                            payloadFile->Release();
+                        }
                     }
                 }
+                local = m_FootprintFiles[typeValue];
+                ReleaseSRWLockExclusive(&m_Lock);
+                if (FAILED(hr))
+                { return hr; }
             }
-            local = m_FootprintFiles[typeValue];
-            ReleaseSRWLockExclusive(&m_Lock);
-            if (FAILED(hr))
-            { return hr; }
-        }
 
-        local->AddRef();
-        *result = local;
-        return S_OK;
+            local->AddRef();
+            *result = local;
+            return S_OK;
+        }
+        else
+        { return E_INVALIDARG; }
     }
 
     HRESULT STDMETHODCALLTYPE AppxPackageBase::TryGetFootprintFile(AppxPackageFootprintFileType type, IAppxPackagePayloadFile** file, boolean* result)
