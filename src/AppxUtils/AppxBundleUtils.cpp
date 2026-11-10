@@ -189,7 +189,7 @@ namespace ABI::AppxUtils::Internal
 			CoUninitialize();
 		}
 		LONG newStatus{};
-		AcquireSRWLockShared(&external.m_Lock);
+		AcquireSRWLockExclusive(&external.m_Lock);
 		if (result)
 		{
 			external.m_Result = result;
@@ -208,7 +208,7 @@ namespace ABI::AppxUtils::Internal
 		}
 		external.m_Status = newStatus;
 		auto* const local{ external.m_Completed };
-		ReleaseSRWLockShared(&external.m_Lock);
+		ReleaseSRWLockExclusive(&external.m_Lock);
 		if (local)
 		{ local->Invoke(&external, static_cast<ABI::AsyncStatus>(newStatus)); }
 		external.Release();
