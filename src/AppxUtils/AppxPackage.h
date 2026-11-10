@@ -81,6 +81,7 @@ namespace ABI::AppxUtils
         short m_HasVersion{ false };
         short m_HasArchitecture{ false };
         short m_HasPackageType{ false };
+        const short m_Placeholder0{};
         struct ABI::Windows::ApplicationModel::PackageVersion m_Version{ 0, 0, 0, 0 };
         ABI::Windows::System::ProcessorArchitecture m_Architecture{ ABI::Windows::System::ProcessorArchitecture_Unknown };
         AppxPackageType m_PackageType{ AppxPackageType::Main };
@@ -104,13 +105,14 @@ namespace ABI::AppxUtils
 
         short m_HasIsOptionalPackage{ false };
         bool m_IsOptionalPackage{ false };
+
+        short m_HasIsNonQualifiedResourcePackage{ false };
+        bool m_IsNonQualifiedResourcePackage{ false };
+
         HSTRING m_MainPackageName{ nullptr };
 
         ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageMainPackageDependency>* m_MainPackageDependencies{ nullptr };
 
-        short m_HasIsNonQualifiedResourcePackage{ false };
-        bool m_IsNonQualifiedResourcePackage{ false };
-        
         ABI::Windows::Foundation::Collections::IVectorView<AppxPackageDriverDependency*>* m_DriverDependencies{ nullptr };
         ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageOSPackageDependency>* m_OSPackageDependencies{ nullptr };
         ABI::Windows::Foundation::Collections::IVectorView<struct AppxPackageHostRuntimeDependency>* m_HostRuntimeDependencies{ nullptr };
@@ -122,6 +124,7 @@ namespace ABI::AppxUtils
         short m_HasMinVersionLegacy{ false };
         short m_HasMaxVersionTestedLegacy{ false };
         short m_HasCapabilitiesLegacy{ false };
+        const short m_Placeholder1{};
         struct ABI::Windows::ApplicationModel::PackageVersion m_MinVersionLegacy { 0, 0, 0, 0 };
         struct ABI::Windows::ApplicationModel::PackageVersion m_MaxVersionTestedLegacy { 0, 0, 0, 0 };
         AppxPackageCapabilitiesLegacy m_CapabilitiesLegacy{ AppxPackageCapabilitiesLegacy::NoCapability };

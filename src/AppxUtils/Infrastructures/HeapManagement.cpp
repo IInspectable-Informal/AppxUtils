@@ -4,7 +4,7 @@
 #include "HeapManagement.h"
 #include <stdio.h>
 
-void* __stdcall operator new(size_t size)
+void* __cdecl operator new(size_t size)
 {
 	printf("Allocating mem...");
 	auto* ptr = HeapAlloc(GetProcessHeap(), 0, size);
@@ -12,7 +12,7 @@ void* __stdcall operator new(size_t size)
 	return ptr;
 }
 
-void __stdcall operator delete(void* ptr) noexcept
+void __cdecl operator delete(void* ptr) noexcept
 {
 	if (ptr)
 	{
@@ -21,7 +21,10 @@ void __stdcall operator delete(void* ptr) noexcept
 	}
 }
 
-void* __stdcall operator new[](size_t size)
+void __cdecl operator delete(void* ptr, size_t size) noexcept
+{ HeapFree(GetProcessHeap(), 0, ptr); }
+
+void* __cdecl operator new[](size_t size)
 {
 	printf("Allocating array mem...");
 	auto* ptr = HeapAlloc(GetProcessHeap(), 0, size);
@@ -29,7 +32,7 @@ void* __stdcall operator new[](size_t size)
 	return ptr;
 }
 
-void __stdcall operator delete[](void* ptr) noexcept
+void __cdecl operator delete[](void* ptr) noexcept
 {
 	if (ptr)
 	{
@@ -38,5 +41,8 @@ void __stdcall operator delete[](void* ptr) noexcept
 	}
 }
 
-void* __stdcall operator new(size_t size, void* ptr) noexcept
+void __cdecl operator delete[](void* ptr, size_t size) noexcept
+{ HeapFree(GetProcessHeap(), 0, ptr); }
+
+void* __cdecl operator new(size_t size, void* ptr) noexcept
 { return ptr; }

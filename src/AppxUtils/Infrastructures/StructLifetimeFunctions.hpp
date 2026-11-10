@@ -5,9 +5,10 @@
 namespace ABI::AppxUtils::Internal
 {
 	template<typename T>
+	    requires (!ABI::Windows::Foundation::Collections::is_pointer<T>::value && !__is_enum(T) && __is_trivial(T) && __is_standard_layout(T))
 	class StructLifetimeFunctions final
 	{
-		static_assert(!ABI::Windows::Foundation::Collections::is_pointer<T>::value && !__is_enum(T) && __is_trivial(T) && __is_standard_layout(T), "T must be a struct");
+		//static_assert(!ABI::Windows::Foundation::Collections::is_pointer<T>::value && !__is_enum(T) && __is_trivial(T) && __is_standard_layout(T), "T must be a struct");
 		static_assert(sizeof(T) == 0, "StructLifetimeFunctions<T> must be specialized!");
 
 	public:

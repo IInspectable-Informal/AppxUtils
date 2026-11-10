@@ -5,10 +5,9 @@
 
 namespace ABI::AppxUtils::Internal
 {
-	template<typename IAsyncInterface>
+	template<IAsyncInterface I>
 	class AsyncInfoBase : public InspectableBase<BaseTrust,
-		IAsyncInterface,
-		ABI::Windows::Foundation::IAsyncInfo,
+		I, ABI::Windows::Foundation::IAsyncInfo,
 		IAgileObject
 	>
 	{
@@ -76,14 +75,14 @@ namespace ABI::AppxUtils::Internal
 		}
 #pragma endregion
 
-		ULONG AddRef() override
+		ULONG STDMETHODCALLTYPE AddRef() override
 		{
 			const ULONG cRef{ InterlockedIncrement(&this->m_RefCount) };
 			printf("++ Async Operation Ref Count: %d\n", cRef);
 			return cRef;
 		}
 
-		ULONG Release() override
+		ULONG STDMETHODCALLTYPE Release() override
 		{
 			const ULONG cRef{ InterlockedDecrement(&this->m_RefCount) };
 			printf("-- Async Operation Ref Count: %d\n", cRef);

@@ -62,6 +62,7 @@ namespace ABI::AppxUtils::Internal
 	//Destructor
 	AppxBundleGetPackagesAsyncOp::~AppxBundleGetPackagesAsyncOp() noexcept
 	{
+
 		//m_BundleReader->Release();
 	}
 

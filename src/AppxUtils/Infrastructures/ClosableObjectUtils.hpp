@@ -3,8 +3,7 @@
 #pragma once
 #include "helpers.hpp"
 
-template<typename T>
-requires __is_base_of(IUnknown, ABI::AppxUtils::Internal::RemovePointer<T>)
+template<ABI::AppxUtils::Internal::ICOMInterface T>
 inline void __stdcall TryCloseObject(T* const object)
 {
 	//static_assert(__is_base_of(IUnknown, ABI::AppxUtils::Internal::RemovePointer<T>), "T must be a COM interface!");
