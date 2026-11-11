@@ -69,14 +69,20 @@ namespace ABI::AppxUtils
 	>
 	{
 	public:
+		AppxBlockMap(IAppxBlockMapReader* const blockMapReader) noexcept;
+
 		HRESULT STDMETHODCALLTYPE get_HashMethod(HSTRING* value);
 		HRESULT STDMETHODCALLTYPE get_Files(ABI::Windows::Foundation::Collections::IMapView<HSTRING, AppxBlockMapFile*>** value);
-		HRESULT STDMETHODCALLTYPE GetBlockMapStream(ABI::Windows::Storage::Streams::IInputStream** result);
 
 		//IInspectable
 		HRESULT STDMETHODCALLTYPE GetRuntimeClassName(HSTRING* className);
 
+		~AppxBlockMap() noexcept;
+
 	private:
+		HSTRING m_HashMethod{ nullptr };
+
 		IAppxBlockMapReader* const m_BlockMapReader{ nullptr };
+		SRWLOCK m_Lock{ SRWLOCK_INIT };
 	};
 }

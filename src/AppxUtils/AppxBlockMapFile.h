@@ -10,7 +10,7 @@ namespace ABI::AppxUtils
 	>
 	{
 	public:
-		AppxBlockMapBlock(const UINT32 compressedSize, const UINT32 hashArraySize, BYTE* hashArray) noexcept;
+		AppxBlockMapBlock(const UINT32 compressedSize, const UINT32 hashArraySize, BYTE* const hashArray) noexcept;
 
 		HRESULT STDMETHODCALLTYPE get_Hash(UINT32* valueLength, byte** value);
 		HRESULT STDMETHODCALLTYPE get_CompressedSize(UINT32* value);
@@ -23,7 +23,7 @@ namespace ABI::AppxUtils
 	private:
 		const UINT32 m_CompressedSize{ 0 };
 		const UINT32 m_HashArraySize{ 0 };
-		byte* m_HashArray{ nullptr };
+		byte* const m_HashArray{ nullptr };
 	};
 
 	class AppxBlockMapFile final : public InspectableBase<BaseTrust,
@@ -32,6 +32,8 @@ namespace ABI::AppxUtils
 	>
 	{
 	public:
+		AppxBlockMapFile(IAppxBlockMapFile* const blockMapFile) noexcept;
+
 		HRESULT STDMETHODCALLTYPE get_LocalFileHeaderSize(UINT32* value);
 		HRESULT STDMETHODCALLTYPE get_UncompressedSize(UINT64* value);
 		HRESULT STDMETHODCALLTYPE get_Blocks(ABI::Windows::Foundation::Collections::IVectorView<AppxBlockMapBlock*>** value);
@@ -44,10 +46,13 @@ namespace ABI::AppxUtils
 		~AppxBlockMapFile() noexcept;
 
 	private:
+		short m_HasLocalFileHeaderSize{ false };
+		short m_HasUncompressedSize{ false };
 		UINT32 m_LocalFileHeaderSize{};
 		UINT64 m_UncompressedSize{};
 		ABI::Windows::Foundation::Collections::IVectorView<AppxBlockMapBlock*>* m_Blocks{ nullptr };
 
 		IAppxBlockMapFile* const m_BlockMapFile{ nullptr };
+		SRWLOCK m_Lock{ SRWLOCK_INIT };
 	};
 }

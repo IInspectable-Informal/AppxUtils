@@ -6,6 +6,7 @@ namespace ABI::AppxUtils
 {
 	class AppxBundle final : public InspectableBase<BaseTrust,
 		IAppxBundleCore,
+        IAppxBundleFootprintFilesProvider,
         IAppxBundleInterop,
 		IAgileObject
 	>
@@ -22,7 +23,10 @@ namespace ABI::AppxUtils
         HRESULT STDMETHODCALLTYPE get_ResourceId(HSTRING* value);
 
         HRESULT STDMETHODCALLTYPE GetPackagesAsync(ABI::Windows::Foundation::IAsyncOperation<ABI::Windows::Foundation::Collections::IVectorView<AppxPackage*>*>** operation);
-        HRESULT STDMETHODCALLTYPE GetManifestStream(ABI::Windows::Storage::Streams::IInputStream** result);
+
+        //IAppxBundleFootprintFilesProvider
+        HRESULT STDMETHODCALLTYPE GetFootprintFile(AppxBundleFootprintFileType type, IAppxPackagePayloadFile** result);
+        HRESULT STDMETHODCALLTYPE TryGetFootprintFile(AppxBundleFootprintFileType type, IAppxPackagePayloadFile** file, boolean* result);
 
         //IAppxBundleInterop
         HRESULT STDMETHODCALLTYPE get_BundleReader(IAppxBundleReader** value);
@@ -43,7 +47,8 @@ namespace ABI::AppxUtils
         ABI::Windows::System::ProcessorArchitecture m_Architecture{ ABI::Windows::System::ProcessorArchitecture_Unknown };
         HSTRING m_ResourceId{ nullptr };
         ABI::Windows::Foundation::IAsyncOperation<ABI::Windows::Foundation::Collections::IVectorView<AppxPackage*>*>* m_GetPackagesAsyncOp{ nullptr };
-        ABI::Windows::Storage::Streams::IRandomAccessStream* m_ManifestStream{ nullptr };
+
+        IAppxPackagePayloadFile* m_FootprintFiles[3]{ nullptr };
 
         IAppxBundleReader* const m_BundleReader{ nullptr };
         SRWLOCK m_Lock{ SRWLOCK_INIT };

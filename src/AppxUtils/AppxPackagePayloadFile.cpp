@@ -66,7 +66,7 @@ namespace ABI::AppxUtils::Internal
 
 	private:
 		UINT32 m_Length{ 0 };
-		byte m_Buffer[capacity]{ 0x00 };
+		byte m_Buffer[capacity];
 	};
 
 	class AppxPackagePayloadFileCopyAsyncOp final : public AsyncOperation<ABI::StorageFile*>

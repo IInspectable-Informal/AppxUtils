@@ -4,6 +4,7 @@
 #include "AppxPackage.h"
 #include "AppxBundle.h"
 #include "AppxBundleUtils.h"
+#include "AppxPackagePayloadFile.h"
 #include "helpers.hpp"
 #include <stdio.h>
 #include <wrl/async.h>
@@ -304,42 +305,53 @@ namespace ABI::AppxUtils
 		*operation = local;
 		return S_OK;
 	}
+#pragma endregion
 
-	HRESULT STDMETHODCALLTYPE AppxBundle::GetManifestStream(ABI::IInputStream** result)
+#pragma region IAppxBundleFootprintFilesProvider
+	HRESULT STDMETHODCALLTYPE AppxBundle::GetFootprintFile(AppxBundleFootprintFileType type, IAppxPackagePayloadFile** result)
 	{
-		HRESULT hr{ S_OK };
-		auto local{ reinterpret_cast<ABI::IRandomAccessStream*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_ManifestStream), nullptr, nullptr)) };
-		if (local == nullptr)
+		if (type >= AppxBundleFootprintFileType::Manifest && type <= AppxBundleFootprintFileType::Signature)
 		{
-			AcquireSRWLockExclusive(&m_Lock);
-			if (!m_ManifestStream)
+			const INT32 typeValue{ static_cast<INT32>(type) };
+			auto* local{ static_cast<IAppxPackagePayloadFile*>(InterlockedCompareExchangePointer(to_void_pp(m_FootprintFiles[typeValue]), nullptr, nullptr)) };
+			if (local == nullptr)
 			{
-				IAppxBundleManifestReader* reader{ nullptr };
-				hr = GetManifestReader(reader);
-				if (SUCCEEDED(hr))
+				AcquireSRWLockExclusive(&m_Lock);
+				HRESULT hr{ S_OK };
+				if (!m_FootprintFiles[typeValue])
 				{
-					IStream* stream{ nullptr };
-					hr = reader->GetStream(&stream);
+					IAppxFile* payloadFile{ nullptr };
+					hr = m_BundleReader->GetFootprintFile(static_cast<APPX_BUNDLE_FOOTPRINT_FILE_TYPE>(type), &payloadFile);
 					if (SUCCEEDED(hr))
 					{
-						hr = CreateRandomAccessStreamOverStream(stream, BSOS_DEFAULT, __uuidof(m_ManifestStream), to_void_pp(m_ManifestStream));
-						stream->Release();
+						auto* const instance{ new AppxPackagePayloadFileDedicated{ payloadFile } };
+						if (instance)
+						{ m_FootprintFiles[typeValue] = instance; }
+						else
+						{
+							hr = E_OUTOFMEMORY;
+							payloadFile->Release();
+						}
 					}
 				}
+				local = m_FootprintFiles[typeValue];
+				ReleaseSRWLockExclusive(&m_Lock);
+				if (FAILED(hr))
+				{ return hr; }
 			}
-			local = m_ManifestStream;
-			ReleaseSRWLockExclusive(&m_Lock);
-			if (FAILED(hr))
-			{ return hr; }
+
+			local->AddRef();
+			*result = local;
+			return S_OK;
 		}
-		ABI::IRandomAccessStream* clonedStream{ nullptr };
-		hr = local->CloneStream(&clonedStream);
-		if (SUCCEEDED(hr))
-		{
-			hr = clonedStream->QueryInterface(__uuidof(*result), to_void_pp(*result));
-			clonedStream->Release();
-		}
-		return hr;
+		else
+		{ return E_INVALIDARG; }
+	}
+
+	HRESULT STDMETHODCALLTYPE AppxBundle::TryGetFootprintFile(AppxBundleFootprintFileType type, IAppxPackagePayloadFile** file, boolean* result)
+	{
+		*result = SUCCEEDED(GetFootprintFile(type, file));
+		return S_OK;
 	}
 #pragma endregion
 
@@ -409,15 +421,13 @@ namespace ABI::AppxUtils
 		{ WindowsDeleteString(m_ResourceId); }
 		if (m_GetPackagesAsyncOp)
 		{ m_GetPackagesAsyncOp->Release(); }
-		if (m_ManifestStream)
+
+		for (UINT32 i{ 0 }; i < 3; ++i)
 		{
-			ABI::IClosable* closable{ nullptr };
-			m_ManifestStream->QueryInterface(__uuidof(closable), to_void_pp(closable));
-			closable->Close();
-			closable->Release();
-			m_ManifestStream->Release();
+			auto* const element{ m_FootprintFiles[i] };
+			if (element)
+			{ element->Release(); }
 		}
 	}
-
 #pragma endregion;
 }

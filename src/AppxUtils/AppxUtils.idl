@@ -331,8 +331,6 @@ namespace AppxUtils
 	{
 		String HashMethod{ get; };
 		Windows.Foundation.Collections.IMapView<String, AppxBlockMapFile> Files{ get; };
-
-		Windows.Storage.Streams.IInputStream GetBlockMapStream();
 	};
 
 	runtimeclass AppxBlockMap : [default] IAppxBlockMap
@@ -359,10 +357,23 @@ namespace AppxUtils
 		String ResourceId{ get; };
 
 		Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<AppxPackage> >  GetPackagesAsync();
-		Windows.Storage.Streams.IInputStream GetManifestStream();
 	};
 
-	runtimeclass AppxBundle : [default] IAppxBundleCore
+	enum AppxBundleFootprintFileType
+	{
+		Manifest = 0,
+		BlockMap = 1,
+		Signature = 2
+	};
+
+	[exclusiveto(AppxBundle)]
+	interface IAppxBundleFootprintFilesProvider
+	{
+		AppxPackagePayloadFile GetFootprintFile(AppxBundleFootprintFileType type);
+		Boolean TryGetFootprintFile(AppxBundleFootprintFileType type, out AppxPackagePayloadFile file);
+	};
+
+	runtimeclass AppxBundle : [default] IAppxBundleCore, IAppxBundleFootprintFilesProvider
 	{
 		
 	}
