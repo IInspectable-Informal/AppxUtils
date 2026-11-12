@@ -161,11 +161,17 @@ namespace ABI::AppxUtils::Internal
 								hr = E_OUTOFMEMORY;
 								pGIT->RevokeInterfaceFromGlobal(cookie);
 								pGIT->Release();
+								WindowsDeleteString(nameCopy);
 							}
 						}
 						else
-						{ pGIT->Release(); }
+						{
+							pGIT->Release();
+							WindowsDeleteString(nameCopy);
+						}
 					}
+					else
+					{ WindowsDeleteString(nameCopy); }
 				}
 			}
 			return hr;
@@ -910,7 +916,10 @@ namespace ABI::AppxUtils
 		IStream* stream{ nullptr };
 		hr = m_AppxPayloadFile->GetStream(&stream);
 		if (SUCCEEDED(hr))
-		{ hr = CreateRandomAccessStreamOverStream(stream, BSOS_DEFAULT, __uuidof(rdmStream), to_void_pp(rdmStream)); }
+		{
+			hr = CreateRandomAccessStreamOverStream(stream, BSOS_DEFAULT, __uuidof(rdmStream), to_void_pp(rdmStream));
+			stream->Release();
+		}
 		return hr;
 	}
 

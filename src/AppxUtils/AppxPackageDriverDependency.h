@@ -35,11 +35,13 @@ namespace ABI::AppxUtils
 		~AppxPackageDriverDependency() noexcept;
 
 	private:
-		IAppxManifestDriverDependency* m_DriverDependency{ nullptr };
+		IAppxManifestDriverDependency* const m_DriverDependency{ nullptr };
 
 		INIT_ONCE m_InitOnce{ INIT_ONCE_STATIC_INIT };
 		const struct AppxPackageDriverConstraint* m_Array{ nullptr };
 		UINT32 m_Size{ 0 };
+
+		HRESULT STDMETHODCALLTYPE InitList();
 
 		static BOOL WINAPI InitListStatic(INIT_ONCE* InitOnce, void* Parameter, void** Context);
 	};

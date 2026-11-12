@@ -744,6 +744,7 @@ namespace ABI::AppxUtils
                                             }
                                             else
                                             { hr = hr1 == E_OUTOFMEMORY ? E_OUTOFMEMORY : HRESULT_FROM_WIN32(ERROR_RESOURCE_NOT_AVAILABLE); }
+                                            resource->Release();
                                         }
                                         if (FAILED(hr))
                                         { break; }

@@ -94,7 +94,8 @@ namespace ABI::AppxUtils
 	//Windows.Foundation.Collections.IVectorView<AppxPackageDriverConstraint>
 	HRESULT STDMETHODCALLTYPE AppxPackageDriverDependency::GetAt(UINT32 index, struct AppxPackageDriverConstraint* item)
 	{
-		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, nullptr))
+		const HRESULT hr{ InitList() };
+		if (SUCCEEDED(hr))
 		{
 			if (index < m_Size)
 			{ return StructLifetimeFunctions<struct AppxPackageDriverConstraint>::DeepCopyStruct(m_Array[index], *item); }
@@ -102,59 +103,56 @@ namespace ABI::AppxUtils
 			{ return E_BOUNDS; }
 		}
 		else
-		{ return HRESULT_FROM_WIN32(GetLastError()); }
+		{ return hr; }
 	}
 
 	HRESULT STDMETHODCALLTYPE AppxPackageDriverDependency::get_Size(UINT32* size)
 	{
-		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, nullptr))
+		const HRESULT hr{ InitList() };
+		if (SUCCEEDED(hr))
 		{
 			*size = m_Size;
 			return S_OK;
 		}
 		else
-		{ return HRESULT_FROM_WIN32(GetLastError()); }
+		{ return hr; }
 	}
 
 	HRESULT STDMETHODCALLTYPE AppxPackageDriverDependency::IndexOf(struct AppxPackageDriverConstraint value, UINT32* index, boolean* found)
 	{
-		HRESULT hr{ S_OK };
-		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, reinterpret_cast<void**>(&hr)))
+		HRESULT hr{ InitList() };
+		if (SUCCEEDED(hr))
 		{
-			if (SUCCEEDED(hr))
+			for (UINT32 i = 0; i < m_Size; ++i)
 			{
-				for (UINT32 i = 0; i < m_Size; ++i)
+				bool result{};
+				StructLifetimeFunctions<struct AppxPackageDriverConstraint>::IsEqualStruct(m_Array[i], value, result);
+				if (result)
 				{
-					bool result{};
-					StructLifetimeFunctions<struct AppxPackageDriverConstraint>::IsEqualStruct(m_Array[i], value, result);
-					if (result)
-					{
-						*index = i;
-						*found = true;
-						return S_OK;
-					}
+					*index = i;
+					*found = true;
+					return S_OK;
 				}
-				*index = 0;
-				*found = false;
-				return S_OK;
 			}
-			else
-			{ return hr; }
+			*index = 0;
+			*found = false;
+			return S_OK;
 		}
 		else
-		{ return HRESULT_FROM_WIN32(GetLastError()); }
+		{ return hr; }
 	}
 
 	HRESULT STDMETHODCALLTYPE AppxPackageDriverDependency::GetMany(UINT32 startIndex, UINT32 capacity, struct AppxPackageDriverConstraint* value, UINT32* actual)
 	{
-		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, nullptr))
+		HRESULT hr{ InitList() };
+		if (SUCCEEDED(hr))
 		{
 			if (startIndex <= m_Size)
 			{
 				UINT32 itemsGot{ 0 };
 				for (UINT32 i{ startIndex }; itemsGot < capacity && i < m_Size; ++i, ++itemsGot)
 				{
-					HRESULT hr{ StructLifetimeFunctions<struct AppxPackageDriverConstraint>::DeepCopyStruct(m_Array[i], value[itemsGot]) };
+					hr = StructLifetimeFunctions<struct AppxPackageDriverConstraint>::DeepCopyStruct(m_Array[i], value[itemsGot]);
 					if (FAILED(hr))
 					{
 						for (UINT32 j{ 0 }; j < itemsGot; ++j)
@@ -169,13 +167,14 @@ namespace ABI::AppxUtils
 			{ return E_BOUNDS; }
 		}
 		else
-		{ return HRESULT_FROM_WIN32(GetLastError()); }
+		{ return hr; }
 	}
 
 	//Windows.Foundation.Collections.IIterable<AppxPackageDriverConstraint>
 	HRESULT STDMETHODCALLTYPE AppxPackageDriverDependency::First(ABI::IIterator<struct AppxPackageDriverConstraint>** first)
 	{
-		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, nullptr))
+		const HRESULT hr{ InitList() };
+		if (SUCCEEDED(hr))
 		{
 			auto* instance{ new AppxPackageDriverDependencyIterator{ m_Array, m_Size, this } };
 			if (instance)
@@ -187,7 +186,7 @@ namespace ABI::AppxUtils
 			{ return E_OUTOFMEMORY; }
 		}
 		else
-		{ return HRESULT_FROM_WIN32(GetLastError()); }
+		{ return hr; }
 	}
 
 	//IAppxPackageDriverDependencyInterop
@@ -217,6 +216,17 @@ namespace ABI::AppxUtils
 		}
 	}
 
+#pragma region Private methods
+	HRESULT STDMETHODCALLTYPE AppxPackageDriverDependency::InitList()
+	{
+		HRESULT hr{ S_OK };
+		if (InitOnceExecuteOnce(&m_InitOnce, InitListStatic, this, reinterpret_cast<void**>(&hr)))
+		{ return S_OK; }
+		else
+		{ return SUCCEEDED(hr) ? HRESULT_FROM_WIN32(GetLastError()) : hr; }
+	}
+#pragma endregion
+
 	//Static members
 	BOOL WINAPI AppxPackageDriverDependency::InitListStatic(INIT_ONCE* InitOnce, void* Parameter, void** Context)
 	{
@@ -238,7 +248,7 @@ namespace ABI::AppxUtils
 			hr = externalThis->m_DriverDependency->GetDriverConstraints(&enumerator);
 			if (SUCCEEDED(hr))
 			{
-				auto* constraints{ new struct AppxPackageDriverConstraint[count] };
+				auto* const constraints{ new struct AppxPackageDriverConstraint[count] };
 				if (constraints)
 				{
 					enumerator->GetHasCurrent(&hasNext);
