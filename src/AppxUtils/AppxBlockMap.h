@@ -38,7 +38,7 @@ namespace ABI::AppxUtils::Internal
 		using V_Logical = typename Windows::Foundation::Internal::GetLogicalType<V>::type;
 		using IKVPair = ABI::Windows::Foundation::Collections::IKeyValuePair<K_Logical, V_Logical>*;
 
-		class InternalSplitedMapView final
+		class InternalSplittedMapView final
 		{
 
 		};

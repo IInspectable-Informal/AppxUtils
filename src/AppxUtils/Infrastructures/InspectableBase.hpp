@@ -25,7 +25,7 @@ public:
         if (buffer)
         {
             for (ULONG i = 0; i < s_IIdCount; ++i)
-            { buffer[i] = s_IIds[i]; }
+            { CopyGuid(s_IIds[i], buffer[i]); }
             *iidCount = s_IIdCount;
             *iids = buffer;
             return S_OK;

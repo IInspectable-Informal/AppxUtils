@@ -18,6 +18,21 @@ namespace ABI::AppxUtils::Internal
 	constexpr bool IsTypeWinRTString<HSTRING>{ true };
 
 	template<typename T>
+	constexpr bool IsPointer{ false };
+
+	template<typename T>
+	constexpr bool IsPointer<T*>{ true };
+
+	template<typename T>
+	constexpr bool IsPointer<T* const>{ true };
+
+	template<typename T>
+	constexpr bool IsPointer<T* volatile>{ true };
+
+	template<typename T>
+	constexpr bool IsPointer<T* const volatile>{ true };
+
+	template<typename T>
 	constexpr bool IsNumericType{ false };
 
 	template<>

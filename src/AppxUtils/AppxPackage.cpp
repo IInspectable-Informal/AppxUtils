@@ -1045,27 +1045,27 @@ namespace ABI::AppxUtils
         switch (classType)
         {
             case AppxPackageCapabilityClassType::Default:
-                local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Capabilities), nullptr, nullptr));
+                local = static_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(to_void_pp(m_Capabilities), nullptr, nullptr));
                 break;
 
             case AppxPackageCapabilityClassType::General:
-                local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_GeneralCapabilities), nullptr, nullptr));
+                local = static_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(to_void_pp(m_GeneralCapabilities), nullptr, nullptr));
                 break;
 
             case AppxPackageCapabilityClassType::Restricted:
-                local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_RestrictedCapabilities), nullptr, nullptr));
+                local = static_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(to_void_pp(m_RestrictedCapabilities), nullptr, nullptr));
                 break;
 
             case AppxPackageCapabilityClassType::Windows:
-                local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_WindowsCapabilities), nullptr, nullptr));
+                local = static_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(to_void_pp(m_WindowsCapabilities), nullptr, nullptr));
                 break;
 
             case AppxPackageCapabilityClassType::All:
-                local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_AllCapabilities), nullptr, nullptr));
+                local = static_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(to_void_pp(m_AllCapabilities), nullptr, nullptr));
                 break;
 
             case AppxPackageCapabilityClassType::Custom:
-                local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_CustomCapabilities), nullptr, nullptr));
+                local = static_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(to_void_pp(m_CustomCapabilities), nullptr, nullptr));
                 break;
 
             default:
@@ -1079,27 +1079,27 @@ namespace ABI::AppxUtils
             switch (classType)
             {
                 case AppxPackageCapabilityClassType::Default:
-                    local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_Capabilities), nullptr, nullptr));
+                    local = static_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(to_void_pp(m_Capabilities), nullptr, nullptr));
                     break;
 
                 case AppxPackageCapabilityClassType::General:
-                    local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_GeneralCapabilities), nullptr, nullptr));
+                    local = static_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(to_void_pp(m_GeneralCapabilities), nullptr, nullptr));
                    break;
 
                 case AppxPackageCapabilityClassType::Restricted:
-                    local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_RestrictedCapabilities), nullptr, nullptr));
+                    local = static_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(to_void_pp(m_RestrictedCapabilities), nullptr, nullptr));
                     break;
 
                 case AppxPackageCapabilityClassType::Windows:
-                    local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_WindowsCapabilities), nullptr, nullptr));
+                    local = static_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(to_void_pp(m_WindowsCapabilities), nullptr, nullptr));
                     break;
 
                 case AppxPackageCapabilityClassType::All:
-                    local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_AllCapabilities), nullptr, nullptr));
+                    local = static_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(to_void_pp(m_AllCapabilities), nullptr, nullptr));
                     break;
 
                 case AppxPackageCapabilityClassType::Custom:
-                    local = reinterpret_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(reinterpret_cast<void**>(&m_CustomCapabilities), nullptr, nullptr));
+                    local = static_cast<IVectorView<HSTRING>*>(InterlockedCompareExchangePointer(to_void_pp(m_CustomCapabilities), nullptr, nullptr));
                     break;
             }
             if (local == nullptr)
@@ -1128,7 +1128,7 @@ namespace ABI::AppxUtils
                             hr = reader3->GetCapabilitiesByCapabilityClass(static_cast<APPX_CAPABILITY_CLASS_TYPE>(classType), &enumerator);
                             if (SUCCEEDED(hr))
                             {
-                                HSTRING* capabilities{ new HSTRING[count]{} };
+                                HSTRING* const capabilities{ new HSTRING[count]{} };
                                 if (capabilities)
                                 {
                                     enumerator->GetHasCurrent(&hasNext);
@@ -1157,7 +1157,7 @@ namespace ABI::AppxUtils
                                     }
                                     if (SUCCEEDED(hr))
                                     {
-                                        local = new VectorView<HSTRING>(capabilities, count);
+                                        local = new VectorView<HSTRING>{ capabilities, count };
                                         if (local)
                                         {
                                             switch (classType)

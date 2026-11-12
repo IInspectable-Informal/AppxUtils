@@ -72,7 +72,7 @@ namespace ABI::AppxUtils::Internal
 	class AppxPackagePayloadFileCopyAsyncOp final : public AsyncOperation<ABI::StorageFile*>
 	{
 	public:
-		HRESULT STDMETHODCALLTYPE LaunclAsyncTask()
+		HRESULT STDMETHODCALLTYPE LaunchAsyncTask()
 		{
 			this->AddRef();
 			if (TrySubmitThreadpoolCallback(CopyFileCallback, this, nullptr))
@@ -1017,29 +1017,34 @@ namespace ABI::AppxUtils
 				if (SUCCEEDED(hr))
 				{
 					const UINT32 length{ WStringLength(relativePath) };
-					UINT32 pos{ length - 1 };
-					bool hasExt{ true };
-					while (relativePath[pos] != L'.')
+					if (length)
 					{
-						if (relativePath[pos] != L'/' && relativePath[pos] != L'\\')
+						UINT32 pos{ length - 1 };
+						bool hasExt{ true };
+						while (relativePath[pos] != L'.')
 						{
-							if (pos)
-							{ --pos; }
+							if (relativePath[pos] != L'/' && relativePath[pos] != L'\\')
+							{
+								if (pos)
+								{ --pos; }
+								else
+								{
+									hasExt = false;
+									break;
+								}
+							}
 							else
 							{
+								pos = length - 1;
 								hasExt = false;
 								break;
 							}
 						}
+						if (hasExt)
+						{ hr = WindowsCreateString(relativePath + pos, length - pos, &m_FileType); }
 						else
-						{
-							pos = length - 1;
-							hasExt = false;
-							break;
-						}
+						{ hr = WindowsCreateString(nullptr, 0, &m_FileType); }
 					}
-					if (hasExt)
-					{ hr = WindowsCreateString(relativePath + pos, length - pos, &m_FileType); }
 					else
 					{ hr = WindowsCreateString(nullptr, 0, &m_FileType); }
 					CoTaskMemFree(relativePath);
@@ -1135,7 +1140,7 @@ namespace ABI::AppxUtils
 				hr = AppxPackagePayloadFileCopyAsyncOp::CreateInstance(this, destinationFolder, defaultName, ABI::NameCollisionOption_FailIfExists, instance);
 				if (SUCCEEDED(hr))
 				{
-					hr = instance->LaunclAsyncTask();
+					hr = instance->LaunchAsyncTask();
 					if (SUCCEEDED(hr))
 					{ *operation = instance; }
 					else
@@ -1161,7 +1166,7 @@ namespace ABI::AppxUtils
 			hr = AppxPackagePayloadFileCopyAsyncOp::CreateInstance(this, destinationFolder, desiredNewName, ABI::NameCollisionOption_FailIfExists, instance);
 			if (SUCCEEDED(hr))
 			{
-				hr = instance->LaunclAsyncTask();
+				hr = instance->LaunchAsyncTask();
 				if (SUCCEEDED(hr))
 				{
 					*operation = instance;
@@ -1188,7 +1193,7 @@ namespace ABI::AppxUtils
 			hr = AppxPackagePayloadFileCopyAsyncOp::CreateInstance(this, destinationFolder, desiredNewName, option, instance);
 			if (SUCCEEDED(hr))
 			{
-				hr = instance->LaunclAsyncTask();
+				hr = instance->LaunchAsyncTask();
 				if (SUCCEEDED(hr))
 				{
 					*operation = instance;
@@ -1295,21 +1300,26 @@ namespace ABI::AppxUtils
 				if (SUCCEEDED(hr))
 				{
 					const UINT32 length{ WStringLength(relativePath) };
-					UINT32 pos{ length - 1 };
-					bool hasSeparator{ true };
-					while (relativePath[pos] != L'\\' && relativePath[pos] != L'/')
+					if (length)
 					{
-						if (pos)
-						{ --pos; }
-						else
+						UINT32 pos{ length - 1 };
+						bool hasSeparator{ true };
+						while (relativePath[pos] != L'\\' && relativePath[pos] != L'/')
 						{
-							pos = length - 1;
-							hasSeparator = false;
-							break;
+							if (pos)
+							{ --pos; }
+							else
+							{
+								pos = length - 1;
+								hasSeparator = false;
+								break;
+							}
 						}
+						if (hasSeparator)
+						{ hr = WindowsCreateString(relativePath + pos + 1, length - 1 - pos, &m_Name); }
+						else
+						{ hr = WindowsCreateString(relativePath, length, &m_Name); }
 					}
-					if (hasSeparator)
-					{ hr = WindowsCreateString(relativePath + pos + 1, length - 1 - pos, &m_Name); }
 					else
 					{ hr = WindowsCreateString(relativePath, length, &m_Name); }
 					CoTaskMemFree(relativePath);

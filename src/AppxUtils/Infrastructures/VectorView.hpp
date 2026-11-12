@@ -93,9 +93,11 @@ namespace ABI::AppxUtils::Internal
 					T_ABI& element{ m_Array[this->m_Current] };
 					if constexpr (IsFundamentalType<T_ABI> || __is_enum(T_ABI))
 					{ *current = element; }
+					else if constexpr (IsSameType<T_ABI, GUID>)
+					{ CopyGuid(element, *current); }
 					else if constexpr (ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value)
 					{ *current = element; }
-					else if constexpr (__is_trivial(T_ABI) && __is_standard_layout(T_ABI))
+					else if constexpr (__is_class(T) && __is_trivial(T_ABI) && __is_standard_layout(T_ABI))
 					{
 						HRESULT hr{ StructLifetimeFunctions<T>::DeepCopyStruct(element, *current) };
 						if (FAILED(hr))
@@ -117,9 +119,11 @@ namespace ABI::AppxUtils::Internal
 					T_ABI& element{ m_Array[this->m_Current] };
 					if constexpr (IsFundamentalType<T_ABI> || __is_enum(T_ABI))
 					{ value[itemsGot] = element; }
+					else if constexpr (IsSameType<T_ABI, GUID>)
+					{ CopyGuid(element, value[itemsGot]); }
 					else if constexpr (ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value)
 					{ value[itemsGot] = element; }
-					else if constexpr (__is_trivial(T_ABI) && __is_standard_layout(T_ABI))
+					else if constexpr (__is_class(T) && __is_trivial(T_ABI) && __is_standard_layout(T_ABI))
 					{
 						HRESULT hr{ StructLifetimeFunctions<T>::DeepCopyStruct(element, value[itemsGot]) };
 						if (FAILED(hr))
@@ -175,9 +179,11 @@ namespace ABI::AppxUtils::Internal
 				T_ABI& element = m_Array[index];
 				if constexpr (IsFundamentalType<T_ABI> || __is_enum(T_ABI))
 				{ *item = element; }
+				else if constexpr (IsSameType<T_ABI, GUID>)
+				{ CopyGuid(element, *item); }
 				else if constexpr (ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value)
 				{ *item = element; }
-				else if constexpr (__is_trivial(T_ABI) && __is_standard_layout(T_ABI))
+				else if constexpr (__is_class(T) && __is_trivial(T_ABI) && __is_standard_layout(T_ABI))
 				{
 					HRESULT hr{ StructLifetimeFunctions<T>::DeepCopyStruct(element, *item) };
 					if (FAILED(hr))
@@ -223,7 +229,7 @@ namespace ABI::AppxUtils::Internal
 						return S_OK;
 					}
 				}
-				else if constexpr (__is_trivial(T_ABI) && __is_standard_layout(T_ABI))
+				else if constexpr (__is_class(T) && __is_trivial(T_ABI) && __is_standard_layout(T_ABI))
 				{
 					bool result{};
 					StructLifetimeFunctions<T>::IsEqualStruct(element, value, result);
@@ -259,9 +265,11 @@ namespace ABI::AppxUtils::Internal
 					T_ABI& element{ m_Array[i] };
 					if constexpr (IsFundamentalType<T_ABI> || __is_enum(T_ABI))
 					{ value[itemsGot] = element; }
+					else if constexpr (IsSameType<T_ABI, GUID>)
+					{ CopyGuid(element, value[itemsGot]); }
 					else if constexpr (ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value)
 					{ value[itemsGot] = element; }
-					else if constexpr (__is_trivial(T_ABI) && __is_standard_layout(T_ABI))
+					else if constexpr (__is_class(T) && __is_trivial(T_ABI) && __is_standard_layout(T_ABI))
 					{
 						HRESULT hr{ StructLifetimeFunctions<T>::DeepCopyStruct(element, value[itemsGot]) };
 						if (FAILED(hr))
@@ -284,7 +292,7 @@ namespace ABI::AppxUtils::Internal
 		//IIterable
 		HRESULT STDMETHODCALLTYPE First(ABI::Windows::Foundation::Collections::IIterator<T_Logical>** first)
 		{
-			InternalIterator* iterator{ new InternalIterator{ m_Array, this->m_Size, this } };
+			InternalIterator* const iterator{ new InternalIterator{ m_Array, this->m_Size, this } };
 			if (iterator)
 			{
 				*first = iterator;
@@ -308,7 +316,7 @@ namespace ABI::AppxUtils::Internal
 			for (UINT32 i = 0; i < this->m_Size; ++i)
 			{
 				T& element{ m_Array[i] };
-				if constexpr (!IsFundamentalType<T_ABI> && !__is_enum(T_ABI) && !ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value && __is_trivial(T_ABI) && __is_standard_layout(T_ABI))
+				if constexpr (!IsFundamentalType<T_ABI> && !__is_enum(T_ABI) && !ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value && __is_class(T) && __is_trivial(T_ABI) && __is_standard_layout(T_ABI))
 				{ StructLifetimeFunctions<T>::ReleaseStruct(element); }
 			}
 			delete[] m_Array;
@@ -507,7 +515,7 @@ namespace ABI::AppxUtils::Internal
 		//IIterable
 		HRESULT STDMETHODCALLTYPE First(ABI::Windows::Foundation::Collections::IIterator<T_Logical>** first)
 		{
-			InternalIterator* iterator{ new InternalIterator(m_Array, this->m_Size, this) };
+			InternalIterator* const iterator{ new InternalIterator(m_Array, this->m_Size, this) };
 			if (iterator)
 			{
 				*first = iterator;
@@ -687,7 +695,7 @@ namespace ABI::AppxUtils::Internal
 		//IIterable
 		HRESULT STDMETHODCALLTYPE First(ABI::Windows::Foundation::Collections::IIterator<HSTRING>** first)
 		{
-			InternalIterator* iterator{ new InternalIterator{ m_Array, m_Size, this } };
+			InternalIterator* const iterator{ new InternalIterator{ m_Array, m_Size, this } };
 			if (iterator)
 			{
 				*first = iterator;
@@ -708,7 +716,7 @@ namespace ABI::AppxUtils::Internal
 			delete[] m_Array;
 		}
 
-		static HRESULT STDMETHODCALLTYPE CreateInstance(HSTRING*& list, const UINT32 size, VectorView<HSTRING>*& result) noexcept
+		static HRESULT STDMETHODCALLTYPE CreateInstance(HSTRING* const list, const UINT32 size, VectorView<HSTRING>*& result) noexcept
 		{
 			auto* const instance{ new VectorView<HSTRING>{ list, size } };
 			if (instance)
@@ -720,7 +728,7 @@ namespace ABI::AppxUtils::Internal
 			{ return E_OUTOFMEMORY; }
 		}
 
-		VectorView(HSTRING*& list, const UINT32 size) noexcept : m_Array(list), VectorViewBase(size)
+		VectorView(HSTRING* const list, const UINT32 size) noexcept : m_Array(list), VectorViewBase(size)
 		{
 
 		}

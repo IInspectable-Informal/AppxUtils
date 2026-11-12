@@ -4,7 +4,18 @@
 
 namespace ABI::AppxUtils::Internal
 {
-	template<typename T>
+    template<typename T>
+    concept IReferenceAcceptableTypes = IsTypeWinRTString<T> ||
+        (
+            !IsPointer<T> && !IsSameType<T, void> && !IsSameType<T, std::nullptr_t> &&
+            (
+                IsFundamentalType<T> || __is_enum(T) ||
+                ABI::Windows::Foundation::Collections::is_foundation_struct<T>::value != false ||
+                (__is_class(T) && __is_trivial(T) && __is_standard_layout(T))
+            )
+        );
+
+	template<IReferenceAcceptableTypes T>
     class Reference final : public InspectableBase<BaseTrust,
         ABI::Windows::Foundation::IReference<T>,
         ABI::Windows::Foundation::IPropertyValue,
@@ -81,12 +92,17 @@ namespace ABI::AppxUtils::Internal
                 *value = m_Value;
                 return S_OK;
             }
+            else if constexpr (IsSameType<T_ABI, GUID>)
+            {
+                CopyGuid(m_Value, *value);
+                return S_OK;
+            }
             else if constexpr (ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value)
             {
                 *value = m_Value;
                 return S_OK;
             }
-            else if constexpr (__is_trivial(T_ABI) && __is_standard_layout(T_ABI))
+            else if constexpr (__is_class(T) && __is_trivial(T_ABI) && __is_standard_layout(T_ABI))
             { return StructLifetimeFunctions<T_ABI>::DeepCopyStruct(m_Value, *value); }
         }
 
@@ -332,7 +348,7 @@ namespace ABI::AppxUtils::Internal
         {
             if constexpr (IsSameType<T, GUID>)
             {
-                *value = m_Value;
+                CopyGuid(m_Value, *value);
                 return S_OK;
             }
             else
@@ -464,7 +480,7 @@ namespace ABI::AppxUtils::Internal
         {
             if constexpr (IsSameType<T, HSTRING>)
             { WindowsDeleteString(m_Value); }
-            else if constexpr (!IsFundamentalType<T_ABI> && !__is_enum(T_ABI) && !ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value && __is_trivial(T_ABI) && __is_standard_layout(T_ABI))
+            else if constexpr (!IsFundamentalType<T_ABI> && !__is_enum(T_ABI) && !ABI::Windows::Foundation::Collections::is_foundation_struct<T_ABI>::value && __is_class(T) && __is_trivial(T_ABI) && __is_standard_layout(T_ABI))
             { StructLifetimeFunctions<T_ABI>::ReleaseStruct(m_Value); }
         }
 
